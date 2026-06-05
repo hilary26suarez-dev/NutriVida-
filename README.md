@@ -18,7 +18,7 @@ Las funciones clínicas son de apoyo educativo y operativo. Cualquier cálculo o
 
 ## Privacidad
 
-El asistente no debe recibir datos identificables como nombre completo, cédula, expediente, teléfono, dirección o ubicación exacta. Las consultas al asistente se envían a una función serverless de Netlify y luego al proveedor de IA configurado mediante `OPENROUTER_API_KEY`.
+El asistente no debe recibir datos identificables como nombre completo, cédula, expediente, teléfono, dirección o ubicación exacta. Las consultas al asistente se envían a una función serverless de Netlify y luego a DeepSeek mediante `DEEPSEEK_API_KEY`.
 
 ## Desarrollo
 
@@ -38,7 +38,7 @@ npm run build
 Configurar esta variable de entorno en Netlify:
 
 ```text
-OPENROUTER_API_KEY=...
+DEEPSEEK_API_KEY=...
 ```
 
 La función del asistente vive en:
