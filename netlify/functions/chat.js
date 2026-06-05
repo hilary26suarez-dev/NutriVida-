@@ -116,7 +116,7 @@ export const handler = async (event) => {
         'X-Title': 'NutriVida Biotech',
       },
       body: JSON.stringify({
-        model: 'meta-llama/llama-3.3-70b-instruct:free',
+        model: 'google/gemini-2.0-flash-exp:free',
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           ...safeMessages,
