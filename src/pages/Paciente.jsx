@@ -2,6 +2,7 @@ import { useState } from 'react'
 import NavBar from '../components/NavBar'
 import LogisticaDomiciliaria from '../components/LogisticaDomiciliaria'
 import AsistenteIA from '../components/AsistenteIA'
+import SafetyNotice from '../components/SafetyNotice'
 import { Droplets, MessageCircle, AlertTriangle, Phone } from 'lucide-react'
 
 const tabs = [
@@ -25,6 +26,10 @@ export default function Paciente() {
           <p className="text-slate-500 mt-2 text-base leading-relaxed">
             Todo lo que necesita para su nutrición parenteral en casa, en un solo lugar.
           </p>
+        </div>
+
+        <div className="mb-4">
+          <SafetyNotice />
         </div>
 
         {/* Tabs */}

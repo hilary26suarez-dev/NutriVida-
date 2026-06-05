@@ -1,3 +1,5 @@
+/* global process */
+
 const SYSTEM_PROMPT = `Eres NutriAsistente, un asistente de apoyo para personas con Nutrición Parenteral (NP) domiciliaria en Costa Rica y sus cuidadores. Fuiste creado con base en conocimiento especializado en biotecnología y nutrición parenteral clínica.
 
 TU MISIÓN: Acompañar al paciente y cuidador con información clara, cálida y sin tecnicismos innecesarios. Nunca reemplazas al equipo médico.
@@ -18,6 +20,7 @@ LO QUE NUNCA HARÁS:
 • Recomendar dosis de medicamentos
 • Reemplazar la indicación del equipo de soporte nutricional
 • Dar información que pueda retrasar una atención de emergencia
+• Solicitar o almacenar datos identificables como nombre completo, cédula, expediente, teléfono, dirección o ubicación exacta
 
 SEÑALES DE ALERTA QUE REQUIEREN CONTACTO MÉDICO INMEDIATO:
 Si el usuario describe alguno de estos síntomas, díselo claramente y con urgencia:
@@ -39,6 +42,23 @@ TONO Y ESTILO:
 • Siempre cerrar mensajes sobre síntomas con: "Si tiene dudas, su equipo médico es quien mejor puede orientarle."
 • Ser empático y reconocer que vivir con NP domiciliaria es un reto importante para el paciente y la familia`
 
+const MAX_MESSAGES = 10
+const MAX_MESSAGE_LENGTH = 1200
+const ALLOWED_ROLES = new Set(['user', 'assistant'])
+
+function sanitizeMessages(messages) {
+  if (!Array.isArray(messages)) return []
+
+  return messages
+    .filter(message => ALLOWED_ROLES.has(message?.role) && typeof message?.content === 'string')
+    .slice(-MAX_MESSAGES)
+    .map(message => ({
+      role: message.role,
+      content: message.content.trim().slice(0, MAX_MESSAGE_LENGTH),
+    }))
+    .filter(message => message.content.length > 0)
+}
+
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -57,7 +77,35 @@ export const handler = async (event) => {
   }
 
   try {
-    const { messages } = JSON.parse(event.body)
+    if (!process.env.OPENROUTER_API_KEY) {
+      console.error('Missing OPENROUTER_API_KEY')
+      return {
+        statusCode: 503,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+          message: 'El asistente no está configurado todavía. Para consultas urgentes, contacte a su equipo médico directamente.',
+        }),
+      }
+    }
+
+    const { messages } = JSON.parse(event.body || '{}')
+    const safeMessages = sanitizeMessages(messages)
+
+    if (safeMessages.length === 0) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+          message: 'Escriba una pregunta breve, sin datos personales, para que pueda orientarle.',
+        }),
+      }
+    }
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -71,10 +119,10 @@ export const handler = async (event) => {
         model: 'meta-llama/llama-3.3-70b-instruct:free',
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
-          ...messages.slice(-10),
+          ...safeMessages,
         ],
-        max_tokens: 600,
-        temperature: 0.7,
+        max_tokens: 450,
+        temperature: 0.4,
       }),
     })
 

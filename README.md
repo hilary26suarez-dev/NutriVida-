@@ -1,16 +1,52 @@
-# React + Vite
+# NutriVida Biotech
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+NutriVida Biotech es una aplicación web de apoyo para pacientes, cuidadores y profesionales relacionados con nutrición parenteral domiciliaria en Costa Rica.
 
-Currently, two official plugins are available:
+El objetivo del proyecto es reducir errores evitables, mejorar la educación del paciente y facilitar conversaciones más claras con el equipo de salud. No sustituye la prescripción médica, la validación farmacéutica ni el entrenamiento clínico recibido por cada paciente.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Módulos
 
-## React Compiler
+- **Paciente y cuidador:** recordatorios de infusión, vencimiento de bolsa, retiro de bolsas, checklist diaria, señales de alarma y asistente educativo.
+- **Profesional:** calculadora inicial de nutrición parenteral, semáforo de estabilidad Ca-PO4 y consulta de compatibilidades.
+- **NutriAsistente:** asistente IA con instrucciones de seguridad para explicar conceptos, orientar sobre logística y reforzar cuándo contactar al equipo médico.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Seguridad del paciente
 
-## Expanding the ESLint configuration
+La aplicación refuerza que el paciente debe contactar a su equipo médico o al 911 si presenta fiebre mayor de 38 °C, escalofríos, dificultad respiratoria, dolor en el pecho, enrojecimiento o secreción en el catéter, hinchazón del brazo/cuello o una bolsa con partículas, capas separadas o color anormal.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Las funciones clínicas son de apoyo educativo y operativo. Cualquier cálculo o compatibilidad debe validarse con profesionales de soporte nutricional, farmacia clínica y lineamientos institucionales vigentes.
+
+## Privacidad
+
+El asistente no debe recibir datos identificables como nombre completo, cédula, expediente, teléfono, dirección o ubicación exacta. Las consultas al asistente se envían a una función serverless de Netlify y luego al proveedor de IA configurado mediante `OPENROUTER_API_KEY`.
+
+## Desarrollo
+
+```bash
+npm install
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+## Despliegue en Netlify
+
+Configurar esta variable de entorno en Netlify:
+
+```text
+OPENROUTER_API_KEY=...
+```
+
+La función del asistente vive en:
+
+```text
+netlify/functions/chat.js
+```
+
+## Nota clínica
+
+NutriVida Biotech es una herramienta de acompañamiento y educación. No diagnostica, no prescribe, no cambia dosis ni reemplaza la atención del equipo médico.

@@ -17,6 +17,24 @@ const LIPIDOS = [
   { id: 'microalgas', label: 'Omega-3 / Microalgas (Omegaven®)', omega3: true },
 ]
 
+const SEMAFORO_BG = {
+  rojo: 'bg-red-50 border-red-200',
+  amarillo: 'bg-amber-50 border-amber-200',
+  verde: 'bg-emerald-50 border-emerald-200',
+}
+
+const SEMAFORO_TEXT = {
+  rojo: 'text-red-700',
+  amarillo: 'text-amber-700',
+  verde: 'text-emerald-700',
+}
+
+function SemaforoIcon({ nivel }) {
+  if (nivel === 'rojo') return <AlertTriangle size={22} className="text-red-600" />
+  if (nivel === 'amarillo') return <AlertCircle size={22} className="text-amber-500" />
+  return <CheckCircle size={22} className="text-emerald-500" />
+}
+
 function calcBEE(peso, talla, edad, sexo) {
   if (sexo === 'M') return 66.5 + 13.75 * peso + 5.003 * talla - 6.775 * edad
   return 655.1 + 9.563 * peso + 1.85 * talla - 4.676 * edad
@@ -116,15 +134,6 @@ export default function CalculadoraNP() {
       lipido: LIPIDOS.find(l => l.id === form.lipido),
     })
   }
-
-  const SemaforoIcon = ({ nivel }) => {
-    if (nivel === 'rojo') return <AlertTriangle size={22} className="text-red-600" />
-    if (nivel === 'amarillo') return <AlertCircle size={22} className="text-amber-500" />
-    return <CheckCircle size={22} className="text-emerald-500" />
-  }
-
-  const semaforoBg = { rojo: 'bg-red-50 border-red-200', amarillo: 'bg-amber-50 border-amber-200', verde: 'bg-emerald-50 border-emerald-200' }
-  const semaforoText = { rojo: 'text-red-700', amarillo: 'text-amber-700', verde: 'text-emerald-700' }
 
   return (
     <div className="space-y-6">
@@ -352,30 +361,30 @@ export default function CalculadoraNP() {
 
           {/* Semáforo biotecnológico */}
           {resultado.estabilidad && (
-            <div className={`border rounded-xl p-4 ${semaforoBg[resultado.estabilidad.nivel]}`}>
+            <div className={`border rounded-xl p-4 ${SEMAFORO_BG[resultado.estabilidad.nivel]}`}>
               <div className="flex items-center gap-2 mb-2">
                 <div className={`w-3 h-3 rounded-full semaforo-pulse ${resultado.estabilidad.nivel === 'rojo' ? 'bg-red-500' : resultado.estabilidad.nivel === 'amarillo' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
                 <SemaforoIcon nivel={resultado.estabilidad.nivel} />
-                <span className={`font-bold text-sm ${semaforoText[resultado.estabilidad.nivel]}`}>
+                <span className={`font-bold text-sm ${SEMAFORO_TEXT[resultado.estabilidad.nivel]}`}>
                   Semáforo de Estabilidad Biotecnológica
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2 mb-3 text-xs">
                 <div className="bg-white/60 rounded-lg p-2 text-center">
                   <p className="text-slate-400">Ca²⁺ final</p>
-                  <p className={`font-bold ${semaforoText[resultado.estabilidad.nivel]}`}>{resultado.estabilidad.caConc} mEq/L</p>
+                  <p className={`font-bold ${SEMAFORO_TEXT[resultado.estabilidad.nivel]}`}>{resultado.estabilidad.caConc} mEq/L</p>
                 </div>
                 <div className="bg-white/60 rounded-lg p-2 text-center">
                   <p className="text-slate-400">PO₄³⁻ final</p>
-                  <p className={`font-bold ${semaforoText[resultado.estabilidad.nivel]}`}>{resultado.estabilidad.po4Conc} mmol/L</p>
+                  <p className={`font-bold ${SEMAFORO_TEXT[resultado.estabilidad.nivel]}`}>{resultado.estabilidad.po4Conc} mmol/L</p>
                 </div>
                 <div className="bg-white/60 rounded-lg p-2 text-center">
                   <p className="text-slate-400">Ca × PO₄</p>
-                  <p className={`font-bold ${semaforoText[resultado.estabilidad.nivel]}`}>{resultado.estabilidad.producto}</p>
+                  <p className={`font-bold ${SEMAFORO_TEXT[resultado.estabilidad.nivel]}`}>{resultado.estabilidad.producto}</p>
                 </div>
               </div>
               {resultado.estabilidad.mensajes.map((m, i) => (
-                <p key={i} className={`text-xs ${semaforoText[resultado.estabilidad.nivel]}`}>• {m}</p>
+                <p key={i} className={`text-xs ${SEMAFORO_TEXT[resultado.estabilidad.nivel]}`}>• {m}</p>
               ))}
             </div>
           )}
@@ -394,6 +403,15 @@ export default function CalculadoraNP() {
           )}
         </div>
       )}
+
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-500 leading-relaxed">
+        <p className="font-bold text-slate-700 mb-1">Alcance del cálculo</p>
+        <p>
+          Estimaciones basadas en Harris-Benedict, factores de estrés, relación kcal no proteicas:nitrógeno,
+          osmolaridad aproximada y reglas iniciales de estabilidad Ca-PO4. Deben validarse con el equipo de soporte nutricional,
+          farmacia clínica y lineamientos institucionales vigentes antes de preparar o administrar una mezcla.
+        </p>
+      </div>
     </div>
   )
 }

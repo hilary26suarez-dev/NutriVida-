@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Thermometer, Clock, Calendar, Trash2, Download, CheckCircle, AlertCircle, Timer } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Thermometer, Clock, Calendar, Trash2, Download, CheckCircle, AlertCircle, Timer, ClipboardCheck } from 'lucide-react'
 import { generateNPReminders, downloadICS } from '../utils/icsGenerator'
 
 function useTimer(targetTime) {
   const [diff, setDiff] = useState(null)
 
   useEffect(() => {
-    if (!targetTime) { setDiff(null); return }
+    if (!targetTime) return
     const tick = () => {
       const ms = new Date(targetTime) - Date.now()
       setDiff(ms)
@@ -16,7 +16,7 @@ function useTimer(targetTime) {
     return () => clearInterval(id)
   }, [targetTime])
 
-  return diff
+  return targetTime ? diff : null
 }
 
 function formatDuration(ms) {
@@ -44,6 +44,12 @@ export default function LogisticaDomiciliaria() {
   const [bolsaFecha, setBolsaFecha] = useState('')
   const [retiroFecha, setRetiroFecha] = useState('')
   const [configurado, setConfigurado] = useState(false)
+  const [checklist, setChecklist] = useState({
+    manos: false,
+    bolsa: false,
+    cateter: false,
+    equipo: false,
+  })
 
   const salidaFrioTime = infusionInicio
     ? new Date(infusionInicio).getTime() - 90 * 60 * 1000
@@ -125,6 +131,13 @@ export default function LogisticaDomiciliaria() {
     amber: { bg: 'bg-amber-50', border: 'border-amber-200', icon: 'text-amber-600', valor: 'text-amber-700' },
     purple: { bg: 'bg-violet-50', border: 'border-violet-200', icon: 'text-violet-600', valor: 'text-violet-700' },
   }
+
+  const pasosSeguros = [
+    { id: 'manos', texto: 'Me lavé las manos y preparé una superficie limpia.' },
+    { id: 'bolsa', texto: 'Revisé que la bolsa no tenga partículas, capas separadas ni color anormal.' },
+    { id: 'cateter', texto: 'Revisé que el sitio del catéter no tenga dolor, calor, secreción o enrojecimiento.' },
+    { id: 'equipo', texto: 'Tengo a mano el número de mi equipo médico por si aparece una señal de alarma.' },
+  ]
 
   return (
     <div className="space-y-5">
@@ -214,6 +227,33 @@ export default function LogisticaDomiciliaria() {
             </div>
           )
         })}
+      </div>
+
+      {/* Checklist diaria */}
+      <div className="bg-white rounded-2xl p-4 border border-slate-100">
+        <div className="flex items-center gap-2 mb-3">
+          <ClipboardCheck size={18} className="text-teal-600" />
+          <p className="font-bold text-slate-700 text-base">Checklist antes de conectar</p>
+        </div>
+        <div className="space-y-2">
+          {pasosSeguros.map(paso => (
+            <label
+              key={paso.id}
+              className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-sm text-slate-600"
+            >
+              <input
+                type="checkbox"
+                checked={checklist[paso.id]}
+                onChange={e => setChecklist(prev => ({ ...prev, [paso.id]: e.target.checked }))}
+                className="mt-0.5 h-4 w-4 accent-teal-600"
+              />
+              <span>{paso.texto}</span>
+            </label>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-slate-400">
+          Esta lista no reemplaza el entrenamiento recibido por su equipo de salud; le ayuda a no saltarse pasos importantes.
+        </p>
       </div>
 
       {/* Descargar recordatorios .ics */}

@@ -15,6 +15,9 @@ dist-ssr
 # Claude Code settings
 .claude/
 
+# Local nested repository; keep out of this GitHub project
+NutriVida biotech/
+
 # Environment variables — NEVER commit API keys
 .env
 .env.local

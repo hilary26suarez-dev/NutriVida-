@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, Loader, Dna, RefreshCw } from 'lucide-react'
+import { Send, Bot, User, Loader, Dna, RefreshCw, ShieldAlert } from 'lucide-react'
 
 const SUGERENCIAS = [
   '¿Qué hay dentro de mi bolsa de NP?',
@@ -51,7 +51,7 @@ export default function AsistenteIA() {
 
       const data = await res.json()
       setMensajes(prev => [...prev, { role: 'assistant', content: data.message }])
-    } catch (e) {
+    } catch {
       setError('No se pudo conectar con el asistente. Verifique su conexión e intente de nuevo.')
     } finally {
       setCargando(false)
@@ -146,6 +146,12 @@ export default function AsistenteIA() {
       {/* Sugerencias — solo al inicio */}
       {mensajes.length === 1 && (
         <div className="py-2 space-y-1.5">
+          <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+            <ShieldAlert size={15} className="mt-0.5 flex-shrink-0" />
+            <p>
+              No escriba nombre completo, cédula, expediente, teléfono ni dirección. En síntomas urgentes, contacte a su equipo médico o al 911.
+            </p>
+          </div>
           <p className="text-xs text-slate-400 font-medium">Preguntas frecuentes:</p>
           <div className="flex flex-wrap gap-1.5">
             {SUGERENCIAS.slice(0, 4).map((s, i) => (

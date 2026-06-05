@@ -2,6 +2,7 @@ import { useState } from 'react'
 import NavBar from '../components/NavBar'
 import CalculadoraNP from '../components/CalculadoraNP'
 import Compatibilidad from '../components/Compatibilidad'
+import SafetyNotice from '../components/SafetyNotice'
 import { Calculator, Pill, FlaskConical } from 'lucide-react'
 
 const tabs = [
@@ -28,6 +29,10 @@ export default function Profesional() {
           <p className="text-slate-500 text-sm ml-11">
             Herramientas clínicas con base biotecnológica para el equipo de soporte nutricional
           </p>
+        </div>
+
+        <div className="mb-4">
+          <SafetyNotice variant="professional" />
         </div>
 
         {/* Tabs */}

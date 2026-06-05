@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Dna, Home, Stethoscope, Heart } from 'lucide-react'
 
-export default function NavBar({ mode }) {
+export default function NavBar() {
   const location = useLocation()
 
   return (
