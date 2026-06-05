@@ -77,8 +77,8 @@ export const handler = async (event) => {
   }
 
   try {
-    if (!process.env.OPENROUTER_API_KEY) {
-      console.error('Missing OPENROUTER_API_KEY')
+    if (!process.env.DEEPSEEK_API_KEY) {
+      console.error('Missing DEEPSEEK_API_KEY')
       return {
         statusCode: 503,
         headers: {
@@ -107,50 +107,21 @@ export const handler = async (event) => {
       }
     }
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch('https://api.deepseek.com/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        Authorization: `Bearer ${process.env.DEEPSEEK_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': process.env.URL || 'https://nutrivida-biotech.netlify.app',
-        'X-Title': 'NutriVida Biotech',
       },
       body: JSON.stringify({
-        model: 'deepseek/deepseek-v4-0709:free',
+        model: 'deepseek-v4-pro',
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           ...safeMessages,
         ],
         max_tokens: 450,
         temperature: 0.4,
+        thinking: { type: 'disabled' },
+        stream: false,
       }),
     })
-
-    if (!response.ok) {
-      const err = await response.text()
-      console.error('OpenRouter error:', err)
-      throw new Error(`OpenRouter: ${response.status}`)
-    }
-
-    const data = await response.json()
-    const message = data.choices?.[0]?.message?.content || 'Lo siento, no pude procesar su consulta. Por favor intente de nuevo.'
-
-    return {
-      statusCode: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: JSON.stringify({ message }),
-    }
-  } catch (error) {
-    console.error('Function error:', error)
-    return {
-      statusCode: 500,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({
-        message: 'El asistente no está disponible en este momento. Para consultas urgentes, contacte a su equipo médico directamente.',
-      }),
-    }
-  }
-}
