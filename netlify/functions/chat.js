@@ -116,7 +116,7 @@ export const handler = async (event) => {
         'X-Title': 'NutriVida Biotech',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-exp:free',
+        model: 'deepseek/deepseek-chat:free',
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
           ...safeMessages,
