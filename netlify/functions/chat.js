@@ -114,14 +114,13 @@ export const handler = async (event) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'deepseek-v4-pro',
+        model: 'deepseek-chat',
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
-          ...safeMessages,
+          ...safeMsgs,
         ],
         max_tokens: 450,
         temperature: 0.4,
-        thinking: { type: 'disabled' },
         stream: false,
       }),
     })
