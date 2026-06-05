@@ -50,8 +50,12 @@ export default function AsistenteIA() {
       })
 
       const data = await res.json()
-      setMensajes(prev => [...prev, { role: 'assistant', content: data.message }])
-    } catch {
+      const respuesta = typeof data?.message === 'string' && data.message.length > 0
+        ? data.message
+        : 'Lo siento, no pude procesar la consulta. Por favor intente de nuevo.'
+      setMensajes(prev => [...prev, { role: 'assistant', content: respuesta }])
+    } catch (e) {
+      console.error('AsistenteIA error:', e)
       setError('No se pudo conectar con el asistente. Verifique su conexión e intente de nuevo.')
     } finally {
       setCargando(false)
@@ -66,6 +70,7 @@ export default function AsistenteIA() {
   }
 
   const renderTexto = (texto) => {
+    if (!texto || typeof texto !== 'string') return null
     return texto.split('\n').map((linea, i) => (
       <span key={i}>
         {linea}
@@ -194,3 +199,4 @@ export default function AsistenteIA() {
     </div>
   )
 }
+
