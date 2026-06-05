@@ -152,6 +152,9 @@ export default function Landing() {
         <p className="text-slate-400 text-xs mt-1">
           Desarrollada con apoyo de ACONEP y FELANPE · No reemplaza la indicación médica
         </p>
+        <p className="text-slate-300 text-xs mt-3">
+          En honor a Gerardo Fonseca, por una vida que inspira cuidado, ciencia y humanidad.
+        </p>
       </footer>
     </div>
   )
