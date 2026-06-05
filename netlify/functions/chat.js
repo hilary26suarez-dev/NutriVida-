@@ -107,30 +107,45 @@ export const handler = async (event) => {
       }
     }
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://nutrividabio.netlify.app',
-        'X-Title': 'NutriVida Biotech',
-      },
-      body: JSON.stringify({
-        model: 'meta-llama/llama-3.3-70b-instruct:free',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          ...safeMessages,
-        ],
-        max_tokens: 450,
-        temperature: 0.4,
-        stream: false,
-      }),
-    })
+    const MODELS = [
+      'meta-llama/llama-3.3-70b-instruct:free',
+      'mistralai/mistral-7b-instruct:free',
+      'google/gemma-3-12b-it:free',
+    ]
+
+    const callOpenRouter = async (model) => {
+      return fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://nutrividabio.netlify.app',
+          'X-Title': 'NutriVida Biotech',
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            ...safeMessages,
+          ],
+          max_tokens: 450,
+          temperature: 0.4,
+          stream: false,
+        }),
+      })
+    }
+
+    let response
+    for (const model of MODELS) {
+      response = await callOpenRouter(model)
+      if (response.ok) break
+      const errText = await response.text()
+      console.warn(`Model ${model} failed (${response.status}):`, errText)
+      if (response.status !== 429) throw new Error(`OpenRouter: ${response.status}`)
+    }
 
     if (!response.ok) {
-      const err = await response.text()
-      console.error('OpenRouter error:', err)
-      throw new Error(`OpenRouter: ${response.status}`)
+      throw new Error('All models rate-limited')
     }
 
     const data = await response.json()
@@ -155,4 +170,3 @@ export const handler = async (event) => {
     }
   }
 }
-
