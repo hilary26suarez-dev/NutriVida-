@@ -108,10 +108,8 @@ export const handler = async (event) => {
     }
 
     const MODELS = [
-      'meta-llama/llama-3.3-70b-instruct:free',
-      'meta-llama/llama-3.1-8b-instruct:free',
-      'google/gemma-3-12b-it:free',
-      'qwen/qwen3-8b:free',
+      'z-ai/glm-4.5-air:free',
+      'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
     ]
 
     const callOpenRouter = async (model) => {
