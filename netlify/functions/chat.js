@@ -113,36 +113,53 @@ export const handler = async (event) => {
     ]
 
     const callOpenRouter = async (model) => {
-      return fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://nutrividabio.netlify.app',
-          'X-Title': 'NutriVida Biotech',
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            ...safeMessages,
-          ],
-          max_tokens: 450,
-          temperature: 0.4,
-          stream: false,
-        }),
-      })
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 8000)
+      try {
+        return await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          signal: controller.signal,
+          headers: {
+            Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://nutrividabio.netlify.app',
+            'X-Title': 'NutriVida Biotech',
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: SYSTEM_PROMPT },
+              ...safeMessages,
+            ],
+            max_tokens: 450,
+            temperature: 0.4,
+            stream: false,
+          }),
+        })
+      } finally {
+        clearTimeout(timer)
+      }
     }
 
-    let response
+    let response = null
     for (const model of MODELS) {
-      response = await callOpenRouter(model)
-      if (response.ok) break
-      const errText = await response.text()
-      console.warn(`Model ${model} failed (${response.status}):`, errText)
+      try {
+        response = await callOpenRouter(model)
+        if (response.ok) break
+        const errText = await response.text()
+        console.warn(`Model ${model} failed (${response.status}):`, errText)
+        response = null
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          console.warn(`Model ${model} timed out after 8s`)
+        } else {
+          console.warn(`Model ${model} error:`, e.message)
+        }
+        response = null
+      }
     }
 
-    if (!response.ok) {
+    if (!response?.ok) {
       throw new Error('All models unavailable')
     }
 
@@ -168,4 +185,5 @@ export const handler = async (event) => {
     }
   }
 }
+
 
