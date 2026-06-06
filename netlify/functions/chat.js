@@ -109,8 +109,9 @@ export const handler = async (event) => {
 
     const MODELS = [
       'meta-llama/llama-3.3-70b-instruct:free',
-      'mistralai/mistral-7b-instruct:free',
+      'meta-llama/llama-3.1-8b-instruct:free',
       'google/gemma-3-12b-it:free',
+      'qwen/qwen3-8b:free',
     ]
 
     const callOpenRouter = async (model) => {
@@ -141,11 +142,10 @@ export const handler = async (event) => {
       if (response.ok) break
       const errText = await response.text()
       console.warn(`Model ${model} failed (${response.status}):`, errText)
-      if (response.status !== 429) throw new Error(`OpenRouter: ${response.status}`)
     }
 
     if (!response.ok) {
-      throw new Error('All models rate-limited')
+      throw new Error('All models unavailable')
     }
 
     const data = await response.json()
@@ -170,3 +170,4 @@ export const handler = async (event) => {
     }
   }
 }
+
