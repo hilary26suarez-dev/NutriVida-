@@ -108,13 +108,13 @@ export const handler = async (event) => {
     }
 
     const MODELS = [
+      'meta-llama/llama-3.3-70b-instruct:free',
       'z-ai/glm-4.5-air:free',
-      'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
     ]
 
     const callOpenRouter = async (model) => {
       const controller = new AbortController()
-      const timer = setTimeout(() => controller.abort(), 8000)
+      const timer = setTimeout(() => controller.abort(), 20000)
       try {
         return await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
