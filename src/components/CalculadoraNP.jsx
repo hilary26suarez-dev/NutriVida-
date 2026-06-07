@@ -170,6 +170,12 @@ export default function CalculadoraNP() {
     const viaZone        = osmolaridad > 900 ? 'alta' : osmolaridad > 700 ? 'media' : 'baja'
     const viaRecomendada = osmolaridad > 900 ? 'Central — CVC obligatorio' : osmolaridad > 700 ? 'Preferir vía central' : 'Periférica o Central'
 
+    const volAA     = Math.round(protG / 0.1)
+    const volDex    = Math.round(dextrosaG / 0.5)
+    const volLipido = form.conLipidos ? Math.round(lipidoG / 0.2) : 0
+    const volumenComponentes = volAA + volDex + volLipido
+    const porcentajeOcupado  = (volumenComponentes / vol) * 100
+
     setResultado({
       bee: bee ? Math.round(bee) : null,
       ten: Math.round(ten),
@@ -177,9 +183,12 @@ export default function CalculadoraNP() {
       protFuente: protFromUUN ? 'UUN (laboratorio)' : 'Ecuación metabólica',
       dextrosaG: Math.round(dextrosaG), lipidoG: Math.round(lipidoG),
       nitrogeno: nitrogeno.toFixed(1), npcN: Math.round(npcN),
-      volAA:     Math.round(protG    / 0.1),
-      volDex:    Math.round(dextrosaG / 0.5),
-      volLipido: form.conLipidos ? Math.round(lipidoG / 0.2) : 0,
+      volAA, volDex, volLipido,
+      volumenComponentes,
+      porcentajeOcupado: Math.round(porcentajeOcupado),
+      volumenExcedido:   volumenComponentes > vol,
+      volumenJusto:      porcentajeOcupado > 90 && volumenComponentes <= vol,
+      volSugerido:       Math.ceil((volumenComponentes + 150) / 100) * 100,
       osmolaridad, viaZone, viaRecomendada,
       npcNEstado: npcN < 80 ? 'bajo' : npcN > 150 ? 'alto' : 'optimo',
       estabilidad,
@@ -525,6 +534,44 @@ export default function CalculadoraNP() {
                 </div>
               ))}
             </div>
+
+            {/* Alerta de viabilidad física de la mezcla */}
+            {resultado.volumenExcedido ? (
+              <div className="mt-3 flex items-start gap-3 bg-red-50 border border-red-300 rounded-xl p-4 text-sm">
+                <AlertTriangle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-red-800">Inviabilidad física — la mezcla no cabe en la bolsa</p>
+                  <p className="text-xs text-red-700 mt-1">
+                    Los componentes puros suman <strong>{resultado.volumenComponentes} mL</strong> ({resultado.porcentajeOcupado}% de la bolsa),
+                    superando el volumen configurado de <strong>{resultado.volTotal} mL</strong>.
+                    El farmacéutico no puede preparar esta mezcla sin desbordamiento ni alteración de concentraciones.
+                  </p>
+                  <p className="text-xs text-red-800 font-semibold mt-2">
+                    Opciones: aumentar el volumen total a ≥{resultado.volSugerido} mL · o solicitar AA 15% / Dextrosa 70% (reduce el volumen de componentes).
+                  </p>
+                </div>
+              </div>
+            ) : resultado.volumenJusto ? (
+              <div className="mt-3 flex items-start gap-3 bg-amber-50 border border-amber-300 rounded-xl p-4 text-sm">
+                <AlertCircle size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-amber-800">Espacio remanente limitado ({100 - resultado.porcentajeOcupado}%)</p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    Los componentes puros ocupan <strong>{resultado.volumenComponentes} mL</strong> ({resultado.porcentajeOcupado}%) del total.
+                    Quedan solo <strong>{resultado.volTotal - resultado.volumenComponentes} mL</strong> para electrolitos, agua estéril y oligoelementos.
+                    Verificar con farmacia si el espacio es suficiente para los aditivos prescritos.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3 flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                <CheckCircle size={14} className="text-emerald-500 flex-shrink-0" />
+                <span>
+                  Espacio remanente: <strong>{resultado.volTotal - resultado.volumenComponentes} mL</strong> ({100 - resultado.porcentajeOcupado}%) —
+                  disponible para electrolitos y agua estéril.
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Tasa de infusión */}
