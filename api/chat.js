@@ -49,9 +49,9 @@ const RATE_LIMIT_WINDOW_MS = 60_000
 const rateLimitMap        = new Map()
 
 const DEFAULT_ALLOWED_ORIGINS = [
-  'https://nutrividabio.vercel.app',      // dominio Vercel — ajustar si es distinto
-  'https://www.nutrividabio.vercel.app',
-  'https://nutrividabio.netlify.app',     // mantener durante transición
+  'https://nutri-vida-khaki.vercel.app',
+  'https://www.nutri-vida-khaki.vercel.app',
+  'https://nutrividabio.netlify.app',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
 ]
@@ -193,7 +193,7 @@ export default async function handler(req, res) {
       headers: {
         Authorization:  `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://nutrividabio.vercel.app',
+        'HTTP-Referer': 'https://nutri-vida-khaki.vercel.app',
         'X-Title':      'NutriVida Biotech',
       },
       body: JSON.stringify({
