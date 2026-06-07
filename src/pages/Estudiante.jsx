@@ -6,7 +6,7 @@ import {
   Users, Heart, Microscope, Stethoscope, Pill,
 } from 'lucide-react'
 
-const ATLAS_URL = 'https://atlas-proteico.vercel.app/proteina/sod1'
+const ATLAS_URL = 'https://atlas-proteico.vercel.app/'
 
 function PortalAtlas() {
   return (
