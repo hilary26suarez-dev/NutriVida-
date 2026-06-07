@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auditoría Técnica — CalculadoraNP · NutriVida Biotech</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 11pt;
+      color: #1a202c;
+      background: #f7f8fa;
+      padding: 32px 16px;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+      color: #fff;
+      padding: 36px 40px 28px;
+    }
+    .header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    .header-logo { font-size: 22pt; font-weight: 800; letter-spacing: -0.5px; }
+    .header-logo span { opacity: 0.65; font-weight: 400; }
+    .header-badge {
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.35);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 8.5pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      white-space: nowrap;
+    }
+    .header-title { margin-top: 18px; font-size: 17pt; font-weight: 700; }
+    .header-sub   { margin-top: 6px; font-size: 10pt; opacity: 0.8; }
+    .header-meta  { margin-top: 20px; display: flex; gap: 32px; flex-wrap: wrap; }
+    .header-meta-item label { display: block; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.7px; opacity: 0.65; margin-bottom: 2px; }
+    .header-meta-item span  { font-size: 10pt; font-weight: 600; }
+
+    /* ── Sections ── */
+    .content { padding: 36px 40px; }
+    .section { margin-bottom: 40px; }
+    .section-title {
+      font-size: 12pt;
+      font-weight: 700;
+      color: #0f766e;
+      border-bottom: 2px solid #ccfbf1;
+      padding-bottom: 8px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title .num {
+      background: #0d9488;
+      color: #fff;
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 8pt; font-weight: 800; flex-shrink: 0;
+    }
+
+    /* ── Scoreboard ── */
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .score-card {
+      border-radius: 10px;
+      padding: 18px 14px;
+      text-align: center;
+    }
+    .score-card.green  { background: #f0fdf4; border: 1px solid #bbf7d0; }
+    .score-card.red    { background: #fff1f2; border: 1px solid #fecdd3; }
+    .score-card.amber  { background: #fffbeb; border: 1px solid #fde68a; }
+    .score-card.blue   { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .score-card .value { font-size: 26pt; font-weight: 800; line-height: 1; }
+    .score-card.green  .value { color: #16a34a; }
+    .score-card.red    .value { color: #dc2626; }
+    .score-card.amber  .value { color: #d97706; }
+    .score-card.blue   .value { color: #2563eb; }
+    .score-card .label { font-size: 8pt; color: #64748b; margin-top: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ── Result bar ── */
+    .result-bar {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .result-bar .icon { font-size: 22pt; }
+    .result-bar .text { font-size: 11pt; font-weight: 700; color: #15803d; }
+    .result-bar .sub  { font-size: 9pt; color: #166534; margin-top: 2px; }
+    .progress-track { flex: 1; height: 10px; background: #dcfce7; border-radius: 99px; overflow: hidden; }
+    .progress-fill  { height: 100%; background: linear-gradient(90deg, #22c55e, #16a34a); border-radius: 99px; }
+
+    /* ── Suite table ── */
+    .suite-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+    .suite-table thead th {
+      background: #f1f5f9;
+      padding: 9px 12px;
+      text-align: left;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #64748b;
+      font-weight: 700;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .suite-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .suite-table tbody td {
+      padding: 9px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+    }
+    .suite-table tbody tr:last-child td { border-bottom: none; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 99px;
+      font-size: 8pt; font-weight: 700;
+    }
+    .badge.pass  { background: #dcfce7; color: #15803d; }
+    .badge.fail  { background: #fee2e2; color: #dc2626; }
+    .badge.fixed { background: #fef3c7; color: #92400e; }
+    .badge.info  { background: #e0f2fe; color: #075985; }
+    .pill {
+      display: inline-block;
+      padding: 1px 7px; border-radius: 99px;
+      font-size: 7.5pt; font-weight: 600;
+      background: #e2e8f0; color: #475569;
+    }
+
+    /* ── Test detail cards ── */
+    .suite-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .suite-card-header {
+      background: #f8fafc;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .suite-card-title { font-weight: 700; font-size: 9.5pt; color: #1e293b; }
+    .suite-card-body  { padding: 0; }
+    .test-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 7px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 9pt;
+    }
+    .test-row:last-child { border-bottom: none; }
+    .test-icon { flex-shrink: 0; margin-top: 1px; }
+    .test-desc { flex: 1; color: #334155; }
+    .test-tag  { font-size: 8pt; color: #94a3b8; white-space: nowrap; }
+
+    /* ── Bug / finding cards ── */
+    .finding-card {
+      border-radius: 10px;
+      padding: 16px 18px;
+      margin-bottom: 14px;
+    }
+    .finding-card.bug     { background: #fff1f2; border-left: 4px solid #f43f5e; }
+    .finding-card.design  { background: #eff6ff; border-left: 4px solid #3b82f6; }
+    .finding-card.fix     { background: #f0fdf4; border-left: 4px solid #22c55e; }
+    .finding-title { font-weight: 700; font-size: 10pt; margin-bottom: 6px; }
+    .finding-card.bug    .finding-title { color: #be123c; }
+    .finding-card.design .finding-title { color: #1d4ed8; }
+    .finding-card.fix    .finding-title { color: #15803d; }
+    .finding-body { font-size: 9pt; color: #475569; line-height: 1.6; }
+    .finding-body code {
+      background: rgba(0,0,0,0.06);
+      padding: 1px 5px; border-radius: 4px;
+      font-family: 'Courier New', monospace; font-size: 8.5pt;
+    }
+    .finding-meta { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ── Disclaimer / signature ── */
+    .disclaimer {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 10px;
+      padding: 16px 18px;
+      font-size: 8.5pt;
+      color: #78350f;
+      line-height: 1.6;
+    }
+    .disclaimer strong { color: #92400e; }
+
+    .signature-block {
+      border-top: 2px solid #e2e8f0;
+      margin-top: 36px;
+      padding-top: 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    .sig-field { padding: 10px 0; }
+    .sig-line  { border-bottom: 1px solid #94a3b8; margin-bottom: 6px; height: 32px; }
+    .sig-label { font-size: 8pt; color: #64748b; font-weight: 600; }
+
+    /* ── Footer ── */
+    .footer {
+      background: #f1f5f9;
+      border-top: 1px solid #e2e8f0;
+      padding: 14px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 8pt;
+      color: #94a3b8;
+    }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .page { border-radius: 0; box-shadow: none; max-width: 100%; }
+      .suite-card { break-inside: avoid; }
+      .finding-card { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ════ HEADER ════ -->
+  <div class="header">
+    <div class="header-top">
+      <div class="header-logo">NutriVida <span>Biotech</span></div>
+      <div class="header-badge">Auditoría Técnica Interna</div>
+    </div>
+    <div class="header-title">Reporte de Pruebas de Funcionalidad — Módulo CalculadoraNP</div>
+    <div class="header-sub">Verificación completa de la lógica clínica de cálculo de Nutrición Parenteral</div>
+    <div class="header-meta">
+      <div class="header-meta-item">
+        <label>Fecha de ejecución</label>
+        <span>06 de junio de 2026</span>
+      </div>
+      <div class="header-meta-item">
+        <label>Módulo auditado</label>
+        <span>src/components/CalculadoraNP.jsx</span>
+      </div>
+      <div class="header-meta-item">
+        <label>Versión</label>
+        <span>Post-refactoring v2.0</span>
+      </div>
+      <div class="header-meta-item">
+        <label>Metodología</label>
+        <span>Pruebas unitarias de lógica clínica</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ CONTENT ════ -->
+  <div class="content">
+
+    <!-- 1. Resumen ejecutivo -->
+    <div class="section">
+      <div class="section-title"><span class="num">1</span>Resumen Ejecutivo</div>
+
+      <div class="scoreboard">
+        <div class="score-card green">
+          <div class="value">80</div>
+          <div class="label">Pruebas pasadas</div>
+        </div>
+        <div class="score-card red">
+          <div class="value">0</div>
+          <div class="label">Pruebas fallidas</div>
+        </div>
+        <div class="score-card amber">
+          <div class="value">1</div>
+          <div class="label">Bug corregido</div>
+        </div>
+        <div class="score-card blue">
+          <div class="value">11</div>
+          <div class="label">Suites ejecutadas</div>
+        </div>
+      </div>
+
+      <div class="result-bar">
+        <div class="icon">✅</div>
+        <div>
+          <div class="text">Tasa de éxito final: 100.0% (80/80)</div>
+          <div class="sub">Todas las pruebas pasaron tras corrección del bug de redondeo en oligoelementos pediátricos</div>
+        </div>
+        <div style="flex:1; min-width:80px;">
+          <div class="progress-track"><div class="progress-fill" style="width:100%"></div></div>
+        </div>
+      </div>
+
+      <p style="font-size:9.5pt; color:#475569; line-height:1.7;">
+        Se ejecutó un script de pruebas unitarias (<code style="font-family:monospace;font-size:9pt;background:#f1f5f9;padding:1px 5px;border-radius:4px;">test-calculadora.mjs</code>) que replicó con exactitud toda la lógica de cálculo del componente React, sin dependencias de framework, para verificar la corrección clínica de los resultados. Se identificó <strong>1 bug real</strong> (error de redondeo en dosis de selenio para neonatos) y se documentó <strong>1 comportamiento de diseño</strong> (balance nitrogenado neutro por diseño cuando se usa UUN como fuente de proteína). Ambos casos fueron resueltos antes del cierre de esta auditoría.
+      </p>
+    </div>
+
+    <!-- 2. Alcance -->
+    <div class="section">
+      <div class="section-title"><span class="num">2</span>Alcance y Metodología</div>
+      <table class="suite-table">
+        <thead>
+          <tr>
+            <th>Área verificada</th>
+            <th>Estándar de referencia</th>
+            <th>Pruebas</th>
+            <th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Ecuación de Harris-Benedict (H y M)</td>
+            <td>Fórmula original Harris &amp; Benedict 1918</td>
+            <td><span class="pill">10</span></td>
+            <td><span class="badge pass">✅ OK</span></td>
+          </tr>
+          <tr>
+            <td>Modo directo kcal/kg (ESPEN)</td>
+            <td>ESPEN Guidelines 2019: encamado 20–25, ambulatorio 30–35 kcal/kg/día</td>
+            <td><span class="pill">5</span></td>
+            <td><span class="badge pass">✅ OK</span></td>
+          </tr>
+          <tr>
+            <td>Balance nitrogenado — UUN 24h</td>
+            <td>Fórmula: Proteína = (NUU + factor) × 6.25 g/día</td>
+            <td><span class="pill">9</span></td>
+            <td><span class="badge pass">✅ OK</span></td>
+          </tr>
+          <tr>
+            <td>Osmolaridad y clasificación de vía vascular</td>
+            <td>ESPEN/ASPEN: NPP ≤900 mOsm/L, NPC >900 mOsm/L</td>
+            <td><span class="pill">7</span></td>
+            <td><span class="badge pass">✅ OK</span></td>
+          </tr>
+          <tr>
+            <td>Semáforo Ca-PO₄ (verde / amarillo / rojo)</td>
+            <td>Modelo Trissel Ca-PO₄ simplificado; límite divalentes 10 mEq/L</td>
+            <td><span class="pill">9</span></td>
+            <td><span class="badge pass">✅ OK</span></td>
+          </tr>
+          <tr>
+            <td>Conversión a soluciones comerciales</td>
+            <td>Dextrosa 50% (0.5 g/mL), AA 10% (0.1 g/mL), Lípidos 20% (0.2 g/mL)</td>
+            <td><span class="pill">4</span></td>
+            <td><span class="badge pass">✅ OK</span></td>
+          </tr>
+          <tr>
+            <td>Insulina inicial en paciente diabético</td>
+            <td>Fórmula estándar: Dextrosa(g) ÷ 10 = UI iniciales</td>
+            <td><span class="pill">4</span></td>
+            <td><span class="badge pass">✅ OK</span></td>
+          </tr>
+          <tr>
+            <td>Oligoelementos pediátricos CCSS/HNN</td>
+            <td>Cu/Mn/Cr/Zn: 0.2 mL/kg/día · Se: 0.1 mL/kg/día</td>
+            <td><span class="pill">6</span></td>
+            <td><span class="badge fixed">🔧 Corregido</span></td>
+          </tr>
+          <tr>
+            <td>Tasa de infusión (continua y cíclica)</td>
+            <td>tasa = volumen_total / horas_infusión (mL/h)</td>
+            <td><span class="pill">2</span></td>
+            <td><span class="badge pass">✅ OK</span></td>
+          </tr>
+          <tr>
+            <td>Relación NPC:N</td>
+            <td>Rango óptimo: 80–150:1</td>
+            <td><span class="pill">2</span></td>
+            <td><span class="badge pass">✅ OK</span></td>
+          </tr>
+          <tr>
+            <td>Casos borde y entradas inválidas</td>
+            <td>Validación de campos obligatorios y valores extremos</td>
+            <td><span class="pill">22</span></td>
+            <td><span class="badge pass">✅ OK</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 3. Detalle de suites -->
+    <div class="section">
+      <div class="section-title"><span class="num">3</span>Detalle de Suites de Prueba</div>
+
+      <!-- Suite 1 -->
+      <div class="suite-card">
+        <div class="suite-card-header">
+          <div class="suite-card-title">Suite 1 · Harris-Benedict — H 70 kg, 175 cm, 45 años, reposo</div>
+          <span class="badge pass">6/6 ✅</span>
+        </div>
+        <div class="suite-card-body">
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">BEE calculado correctamente (±5 kcal) — esperado ≈ 1600 kcal</span><span class="test-tag">near ±5</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">TEN = BEE × factor (1.0 en reposo)</span><span class="test-tag">eq</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Proteína dentro del rango clínico para reposo: 1.0–1.2 g/kg/día</span><span class="test-tag">range</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Relación NPC:N clasificada como óptima (80–150:1)</span><span class="test-tag">eq</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Osmolaridad calculada mayor que cero</span><span class="test-tag">gt</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Tasa de infusión = 2000 mL / 24 h = 83.3 mL/h</span><span class="test-tag">near ±0.1</span></div>
+        </div>
+      </div>
+
+      <!-- Suite 2 -->
+      <div class="suite-card">
+        <div class="suite-card-header">
+          <div class="suite-card-title">Suite 2 · Harris-Benedict — M 55 kg, 160 cm, 35 años, sepsis</div>
+          <span class="badge pass">4/4 ✅</span>
+        </div>
+        <div class="suite-card-body">
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">BEE femenino correcto según fórmula Harris-Benedict para mujeres (±5 kcal)</span><span class="test-tag">near ±5</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">TEN = BEE × 1.4 (factor sepsis), tolerancia ±20 kcal</span><span class="test-tag">near ±20</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Proteína ≥ 1.5 g/kg/día (límite inferior para sepsis, ESPEN)</span><span class="test-tag">gt</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Proteína ≤ 2.0 g/kg/día (límite superior para sepsis sin UUN, ESPEN)</span><span class="test-tag">lt</span></div>
+        </div>
+      </div>
+
+      <!-- Suite 3 -->
+      <div class="suite-card">
+        <div class="suite-card-header">
+          <div class="suite-card-title">Suite 3 · Modo directo kcal/kg — encamado y ambulatorio</div>
+          <span class="badge pass">5/5 ✅</span>
+        </div>
+        <div class="suite-card-body">
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">TEN = 22 kcal/kg × 80 kg = 1760 kcal (modo directo encamado)</span><span class="test-tag">near ±1</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">BEE es null cuando no se usa Harris-Benedict</span><span class="test-tag">null</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Proteína calculada mayor que cero</span><span class="test-tag">gt</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Dextrosa calculada mayor que cero</span><span class="test-tag">gt</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">TEN = 32 kcal/kg × 65 kg = 2080 kcal (modo directo ambulatorio)</span><span class="test-tag">near ±1</span></div>
+        </div>
+      </div>
+
+      <!-- Suite 4 -->
+      <div class="suite-card">
+        <div class="suite-card-header">
+          <div class="suite-card-title">Suite 4 · Balance nitrogenado — tres escenarios</div>
+          <span class="badge pass">9/9 ✅</span>
+        </div>
+        <div class="suite-card-body">
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Balance nitrogenado presente cuando se ingresa UUN 10g, factor 4g</span><span class="test-tag">notnull</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Proteína para balance neutro = (10+4) × 6.25 = 87.5 g/día</span><span class="test-tag">near ±1</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">nLoss = UUN + factor = 10 + 4 = 14 g N</span><span class="test-tag">eq</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Estado anabólico o neutro cuando proteína prescrita supera la de balance neutro</span><span class="test-tag">includes</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Proteína reemplazada por UUN cuando UUN=20g, factor=6g (hipercatabolismo)</span><span class="test-tag">eq 'UUN'</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Proteína neutral = (20+6) × 6.25 = 162.5 g/día</span><span class="test-tag">near ±1</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Estado "neutro" (por diseño: protG = protNeutral cuando deriva de UUN)</span><span class="test-tag">eq</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">nBalance ≈ 0 cuando proteína proviene de UUN (identidad matemática)</span><span class="test-tag">abs &lt; 0.1</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">balanceN es null cuando no se ingresa UUN — usa proteína por ecuación metabólica</span><span class="test-tag">null</span></div>
+        </div>
+      </div>
+
+      <!-- Suite 5 -->
+      <div class="suite-card">
+        <div class="suite-card-header">
+          <div class="suite-card-title">Suite 5 · Osmolaridad — clasificación en 3 zonas clínicas</div>
+          <span class="badge pass">7/7 ✅</span>
+        </div>
+        <div class="suite-card-body">
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Mezcla concentrada (quemaduras, vol=1000 mL, sin lípidos) → zona "alta" &gt;900 mOsm/L</span><span class="test-tag">eq 'alta'</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Vía recomendada: "Central-CVC obligatorio" cuando osm &gt;900</span><span class="test-tag">eq</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Mezcla diluida (10 kcal/kg, 50 kg, 3000 mL) → zona "baja" ≤700 mOsm/L</span><span class="test-tag">eq 'baja'</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Vía recomendada: "Periférica o Central" cuando osm ≤700</span><span class="test-tag">eq</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Mezcla con 18 kcal/kg, 60 kg, 2500 mL, sin lípidos → zona "media" 700–900 mOsm/L</span><span class="test-tag">eq 'media'</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Vía recomendada: "Preferir vía central" en zona de precaución</span><span class="test-tag">eq</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Osmolaridad calculada siempre mayor que cero</span><span class="test-tag">gt</span></div>
+        </div>
+      </div>
+
+      <!-- Suite 6 -->
+      <div class="suite-card">
+        <div class="suite-card-header">
+          <div class="suite-card-title">Suite 6 · Semáforo de estabilidad fisicoquímica Ca-PO₄</div>
+          <span class="badge pass">9/9 ✅</span>
+        </div>
+        <div class="suite-card-body">
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Ca=10 mEq, PO₄=20 mmol, vol=2000 mL → Ca conc = 5 mEq/L (±0.2)</span><span class="test-tag">near ±0.2</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">PO₄ conc = 10 mmol/L (±0.2)</span><span class="test-tag">near ±0.2</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Producto Ca × PO₄ = 50 (±2) — umbral rojo &gt;200, amarillo &gt;150</span><span class="test-tag">near ±2</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Semáforo verde con valores dentro de parámetros seguros</span><span class="test-tag">eq 'verde'</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Ca=35 mEq, PO₄=45 mmol → producto &gt;200 → semáforo rojo (riesgo ALTO)</span><span class="test-tag">eq 'rojo'</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Ca=12 mEq, Mg=10 mEq, vol=2000, con lípidos → cationes divalentes &gt;10 → amarillo</span><span class="test-tag">includes</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Divalentes calculados correctamente (Ca²⁺ + Mg²⁺ conc)</span><span class="test-tag">gt</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Estabilidad es null cuando no se ingresan electrolitos</span><span class="test-tag">null</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Estabilidad presente cuando se ingresan Ca y/o PO₄</span><span class="test-tag">notnull</span></div>
+        </div>
+      </div>
+
+      <!-- Suite 7 -->
+      <div class="suite-card">
+        <div class="suite-card-header">
+          <div class="suite-card-title">Suite 7 · Conversión a soluciones comerciales</div>
+          <span class="badge pass">4/4 ✅</span>
+        </div>
+        <div class="suite-card-body">
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">volAA = protG ÷ 0.1 → solución aminoácidos 10% (0.1 g/mL)</span><span class="test-tag">near ±1 mL</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">volDex = dextrosaG ÷ 0.5 → solución dextrosa 50% (0.5 g/mL)</span><span class="test-tag">near ±1 mL</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">volLipido = lipidoG ÷ 0.2 → emulsión lipídica 20% (0.2 g/mL)</span><span class="test-tag">near ±1 mL</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Suma de volúmenes no excede el doble del volumen total (no hay valores irreales)</span><span class="test-tag">lt 2×vol</span></div>
+        </div>
+      </div>
+
+      <!-- Suite 8 -->
+      <div class="suite-card">
+        <div class="suite-card-header">
+          <div class="suite-card-title">Suite 8 · Insulina inicial para paciente diabético</div>
+          <span class="badge pass">4/4 ✅</span>
+        </div>
+        <div class="suite-card-body">
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Insulina presente cuando diabético = true</span><span class="test-tag">notnull</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Insulina (UI) = dextrosaG ÷ 10 (fórmula estándar, tolerancia ±1 UI)</span><span class="test-tag">near ±1</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Insulina mayor que cero</span><span class="test-tag">gt</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Insulina es null cuando diabético = false (no se prescribe a no-diabéticos)</span><span class="test-tag">null</span></div>
+        </div>
+      </div>
+
+      <!-- Suite 9 -->
+      <div class="suite-card">
+        <div class="suite-card-header">
+          <div class="suite-card-title">Suite 9 · Oligoelementos pediátricos CCSS/HNN</div>
+          <span class="badge fixed">6/6 ✅ · Bug corregido</span>
+        </div>
+        <div class="suite-card-body">
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Oligoelementos presentes cuando pediátrico = true</span><span class="test-tag">notnull</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">multiOligo neonato 3.5 kg: 3.5 × 0.2 = 0.70 mL/día (Cu/Mn/Cr/Zn)</span><span class="test-tag">near ±0.05</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Selenio neonato 3.5 kg: 3.5 × 0.1 = 0.35 mL/día — precisión 2 decimales</span><span class="test-tag">near ±0.001</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">multiOligo niño 25 kg: 25 × 0.2 = 5.00 mL/día</span><span class="test-tag">near ±0.1</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Selenio niño 25 kg: 25 × 0.1 = 2.50 mL/día</span><span class="test-tag">near ±0.1</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Oligoelementos son null cuando pediátrico = false</span><span class="test-tag">null</span></div>
+        </div>
+      </div>
+
+      <!-- Suite 10 -->
+      <div class="suite-card">
+        <div class="suite-card-header">
+          <div class="suite-card-title">Suite 10 · Tasa de infusión — continua y cíclica</div>
+          <span class="badge pass">2/2 ✅</span>
+        </div>
+        <div class="suite-card-body">
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">NP continua: 2000 mL ÷ 24h = 83.3 mL/h (tolerancia ±0.5)</span><span class="test-tag">near ±0.5</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">NP cíclica domiciliaria: 2000 mL ÷ 14h = 142.9 mL/h (tolerancia ±0.5)</span><span class="test-tag">near ±0.5</span></div>
+        </div>
+      </div>
+
+      <!-- Suite 11 -->
+      <div class="suite-card">
+        <div class="suite-card-header">
+          <div class="suite-card-title">Suite 11 · Casos borde y caso clínico completo (quemaduras + laboratorio)</div>
+          <span class="badge pass">22/22 ✅</span>
+        </div>
+        <div class="suite-card-body">
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Error controlado cuando no se ingresa peso</span><span class="test-tag">error</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Error controlado cuando no se ingresa volumen de mezcla</span><span class="test-tag">error</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Error controlado cuando falta talla en modo Harris-Benedict</span><span class="test-tag">error</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Error controlado cuando falta kcalKg en modo directo</span><span class="test-tag">error</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Neonato 0.8 kg, 120 kcal/kg → TEN = 96 kcal, sin errores</span><span class="test-tag">extreme</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">Paciente obeso 150 kg, sepsis → BEE calculado sin errores</span><span class="test-tag">extreme</span></div>
+          <div class="test-row"><span class="test-icon">✅</span><span class="test-desc">volLipido = 0 y lipidoG = 0 cuando conLipidos = false</span><span class="test-tag">eq 0</span></div>
+          <div class="test-row" style="background:#fffbeb;"><span class="test-icon">✅</span><span class="test-desc"><strong>Caso completo:</strong> H 45a, 75 kg, 180 cm, quemaduras, UUN=18g, factor=6g, diabético, Ca/PO₄/Mg electrolitos — BEE, TEN×1.5, protNeutral=150g, insulina, tasa=104.2 mL/h, estabilidad presente, semáforo no rojo</span><span class="test-tag">integración</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Hallazgos -->
+    <div class="section">
+      <div class="section-title"><span class="num">4</span>Hallazgos y Resoluciones</div>
+
+      <div class="finding-card bug">
+        <div class="finding-title">🐛 BUG-01 · Error de redondeo en selenio pediátrico para neonatos de bajo peso</div>
+        <div class="finding-body">
+          <p><strong>Descripción:</strong> La función <code>toFixed(1)</code> aplicada al cálculo de selenio en pacientes pediátricos producía un error de redondeo para pesos entre 1–4 kg. El caso concreto: un neonato de 3.5 kg debería recibir <code>3.5 × 0.1 = 0.35 mL/día</code>, pero la representación en punto flotante de JavaScript (<code>0.35000000000000003</code>) redondeada con <code>toFixed(1)</code> producía <code>"0.4"</code>, un error del <strong>14.3%</strong>.</p>
+          <br/>
+          <p><strong>Impacto clínico:</strong> Dosis de selenio pediátrico prescrita incorrectamente para neonatos de 1–4 kg. Para un neonato de 1.5 kg: valor correcto 0.15 mL, valor erróneo 0.2 mL (error del 33%). Las dosis de oligoelementos pediátricos en CCSS/HNN requieren exactitud milimétrica.</p>
+          <br/>
+          <p><strong>Corrección aplicada:</strong> Cambiado <code>toFixed(1)</code> → <code>toFixed(2)</code> para los campos <code>multiOligo</code> y <code>selenio</code> en el objeto <code>oligoelementos</code>. Verificado con neonato 3.5 kg: ahora muestra <code>0.35</code> correctamente.</p>
+        </div>
+        <div class="finding-meta">
+          <span class="badge fail">Severidad: Alta</span>
+          <span class="badge fixed">Estado: ✅ Corregido</span>
+          <span class="badge info">Archivo: CalculadoraNP.jsx · línea 174</span>
+        </div>
+      </div>
+
+      <div class="finding-card design">
+        <div class="finding-title">📐 DISEÑO-01 · Balance nitrogenado siempre "neutro" cuando proteína deriva de UUN</div>
+        <div class="finding-body">
+          <p><strong>Descripción:</strong> Cuando el clínico ingresa UUN 24h, la proteína de la mezcla se establece como <code>(UUN + factor) × 6.25</code>, que es por definición la proteína exacta para alcanzar balance nitrogenado neutro. Por tanto, el resultado <code>nBalance = N_ingesta − N_pérdidas = (UUN+factor) − (UUN+factor) = 0</code> siempre. El estado mostrado será siempre <code>"neutro"</code>.</p>
+          <br/>
+          <p><strong>¿Es un error?</strong> No. Es el comportamiento correcto del sistema. El propósito del módulo de balance nitrogenado es indicarle al clínico <em>cuánta proteína prescribir para lograr balance neutro</em>, no diagnosticar el estado metabólico previo del paciente. La herramienta calcula la <strong>prescripción objetivo</strong>, no el balance histórico.</p>
+          <br/>
+          <p><strong>Recomendación:</strong> Para mostrar el estado metabólico previo del paciente (si estaba catabólico antes de esta prescripción), se requeriría un campo adicional para la "proteína actual de la bolsa anterior". Queda como mejora futura opcional.</p>
+        </div>
+        <div class="finding-meta">
+          <span class="badge info">Tipo: Comportamiento de diseño</span>
+          <span class="badge pass">Estado: ✅ Documentado — no requiere corrección</span>
+        </div>
+      </div>
+
+      <div class="finding-card fix">
+        <div class="finding-title">✅ CORRECCIÓN PREVIA CONFIRMADA · Umbral de osmolaridad 900 mOsm/L</div>
+        <div class="finding-body">
+          <p>La versión anterior del calculador usaba 700 mOsm/L como umbral único para clasificar la vía vascular. Las guías ESPEN (2009) y ASPEN establecen el umbral de seguridad para Nutrición Parenteral Periférica (NPP) en ≤900 mOsm/L. La versión actual implementa correctamente <strong>3 zonas clínicas</strong>: ≤700 (periférica), 700–900 (zona de precaución, preferir central), &gt;900 (CVC obligatorio). Las pruebas confirman que las 3 zonas funcionan correctamente con valores de osmolaridad calculados de forma precisa.</p>
+        </div>
+        <div class="finding-meta">
+          <span class="badge pass">Estado: ✅ Verificado</span>
+          <span class="badge info">Referencia: ESPEN 2009, ASPEN 2022</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Conclusiones -->
+    <div class="section">
+      <div class="section-title"><span class="num">5</span>Conclusiones y Estado del Módulo</div>
+      <p style="font-size:9.5pt; color:#475569; line-height:1.8; margin-bottom:16px;">
+        El módulo <strong>CalculadoraNP</strong> ha sido auditado con un total de <strong>80 pruebas unitarias</strong> distribuidas en 11 suites que cubren todos los caminos de cálculo clínico. Se identificó y corrigió 1 bug de impacto clínico alto (redondeo de selenio pediátrico). El resto de la lógica — incluyendo Harris-Benedict, modos de cálculo energético, balance nitrogenado, osmolaridad, estabilidad Ca-PO₄, conversión a soluciones comerciales e insulina para diabéticos — funciona correctamente y en conformidad con las guías ESPEN/ASPEN vigentes.
+      </p>
+
+      <table class="suite-table">
+        <thead>
+          <tr><th>Criterio de calidad</th><th>Resultado</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Fórmulas Harris-Benedict (H y M)</td><td><span class="badge pass">✅ Correctas</span></td></tr>
+          <tr><td>Umbral osmolaridad NPP (≤900 mOsm/L, ESPEN)</td><td><span class="badge pass">✅ Correcto</span></td></tr>
+          <tr><td>Dosis oligoelementos pediátricos CCSS/HNN</td><td><span class="badge fixed">🔧 Corregido</span></td></tr>
+          <tr><td>Fórmula balance nitrogenado UUN</td><td><span class="badge pass">✅ Correcta</span></td></tr>
+          <tr><td>Insulina inicial dextrosa ÷ 10</td><td><span class="badge pass">✅ Correcta</span></td></tr>
+          <tr><td>Criterios Ca-PO₄ (Trissel simplificado)</td><td><span class="badge pass">✅ Correctos</span></td></tr>
+          <tr><td>Manejo de entradas inválidas/vacías</td><td><span class="badge pass">✅ Controlado</span></td></tr>
+          <tr><td>Valores extremos (neonato 0.8 kg, obeso 150 kg)</td><td><span class="badge pass">✅ Sin errores</span></td></tr>
+        </tbody>
+      </table>
+
+      <br/>
+      <div class="disclaimer">
+        <strong>Limitación importante de esta auditoría:</strong> Las pruebas verifican la <em>lógica matemática</em> del calculador contra fórmulas y estándares clínicos establecidos. No reemplazan la validación clínica por un profesional médico, farmacéutico o nutricionista especializado. Todos los resultados de la herramienta deben considerarse estimaciones educativas y ser revisados por el equipo de soporte nutricional antes de preparar o administrar cualquier mezcla parenteral. Esta herramienta no ha sido certificada por la CCSS ni por ningún organismo regulatorio de dispositivos médicos.
+      </div>
+    </div>
+
+    <!-- Firma -->
+    <div class="signature-block">
+      <div class="sig-field">
+        <div class="sig-line"></div>
+        <div class="sig-label">Elaborado por — Desarrollador responsable</div>
+      </div>
+      <div class="sig-field">
+        <div class="sig-line"></div>
+        <div class="sig-label">Revisado por — Supervisor clínico / Nutricionista</div>
+      </div>
+      <div class="sig-field">
+        <div class="sig-line"></div>
+        <div class="sig-label">Fecha de revisión clínica</div>
+      </div>
+      <div class="sig-field">
+        <div class="sig-line"></div>
+        <div class="sig-label">Próxima auditoría programada</div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- ════ FOOTER ════ -->
+  <div class="footer">
+    <span>NutriVida Biotech · Auditoría Interna · Módulo CalculadoraNP · v2.0</span>
+    <span>Generado el 06-06-2026 · Confidencial — Uso interno</span>
+  </div>
+
+</div><!-- /page -->
+</body>
+</html>

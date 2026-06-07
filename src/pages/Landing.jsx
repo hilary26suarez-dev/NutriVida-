@@ -1,5 +1,5 @@
+import { ChevronRight, Dna, FlaskConical, Heart, ShieldCheck, Star, Stethoscope, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { Dna, Stethoscope, Heart, ShieldCheck, FlaskConical, Users, ChevronRight, Star } from 'lucide-react'
 
 export default function Landing() {
   return (

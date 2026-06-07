@@ -18,7 +18,7 @@ Las funciones clínicas son de apoyo educativo y operativo. Cualquier cálculo o
 
 ## Privacidad
 
-El asistente no debe recibir datos identificables como nombre completo, cédula, expediente, teléfono, dirección o ubicación exacta. Las consultas al asistente se envían a una función serverless de Netlify y luego a DeepSeek mediante `DEEPSEEK_API_KEY`.
+El asistente no debe recibir datos identificables como nombre completo, cédula, expediente, teléfono, dirección o ubicación exacta. Las consultas al asistente se envían a una función serverless de Netlify y luego a OpenRouter mediante `OPENROUTER_API_KEY`.
 
 ## Desarrollo
 
@@ -35,10 +35,17 @@ npm run build
 
 ## Despliegue en Netlify
 
-Configurar esta variable de entorno en Netlify:
+Configurar estas variables de entorno en Netlify:
 
 ```text
-DEEPSEEK_API_KEY=...
+OPENROUTER_API_KEY=...
+ALLOWED_ORIGINS=https://nutrividabio.netlify.app
+```
+
+Si usa un entorno de desarrollo local, puede incluir también:
+
+```text
+ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173,https://nutrividabio.netlify.app
 ```
 
 La función del asistente vive en:

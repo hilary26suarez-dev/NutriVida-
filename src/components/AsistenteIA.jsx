@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
-import { Send, Bot, User, Loader, Dna, RefreshCw, ShieldAlert } from 'lucide-react'
+import { Bot, Dna, Loader, RefreshCw, Send, ShieldAlert, User } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
 const SUGERENCIAS = [
   '¿Qué hay dentro de mi bolsa de NP?',
@@ -15,6 +15,15 @@ const MENSAJE_BIENVENIDA = {
   content: '¡Hola! Soy NutriAsistente, su acompañante en nutrición parenteral. Estoy aquí para resolver sus dudas sobre su tratamiento, la logística en casa y el cuidado de su catéter.\n\n¿En qué puedo ayudarle hoy?',
 }
 
+const MAX_INPUT_LENGTH = 800
+
+function sanitizeInput(text) {
+  return String(text || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, MAX_INPUT_LENGTH)
+}
+
 export default function AsistenteIA() {
   const [mensajes, setMensajes] = useState([MENSAJE_BIENVENIDA])
   const [input, setInput] = useState('')
@@ -28,7 +37,7 @@ export default function AsistenteIA() {
   }, [mensajes, cargando])
 
   const enviar = async (texto) => {
-    const msg = texto || input.trim()
+    const msg = sanitizeInput(texto || input)
     if (!msg || cargando) return
 
     const nuevos = [...mensajes, { role: 'user', content: msg }]
@@ -40,14 +49,19 @@ export default function AsistenteIA() {
     try {
       const historial = nuevos
         .filter(m => m.role !== 'assistant' || m.content !== MENSAJE_BIENVENIDA.content)
-        .slice(-10)
-        .map(({ role, content }) => ({ role, content }))
+        .slice(-3)
+        .map(({ role, content }) => ({ role, content: sanitizeInput(content) }))
 
       const res = await fetch('/.netlify/functions/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: historial }),
       })
+
+      if (!res.ok) {
+        const errorPayload = await res.json().catch(() => null)
+        throw new Error(errorPayload?.message || `Error ${res.status}`)
+      }
 
       const data = await res.json()
       const respuesta = typeof data?.message === 'string' && data.message.length > 0
@@ -56,7 +70,7 @@ export default function AsistenteIA() {
       setMensajes(prev => [...prev, { role: 'assistant', content: respuesta }])
     } catch (e) {
       console.error('AsistenteIA error:', e)
-      setError('No se pudo conectar con el asistente. Verifique su conexión e intente de nuevo.')
+      setError(e.message || 'No se pudo conectar con el asistente. Verifique su conexión e intente de nuevo.')
     } finally {
       setCargando(false)
       inputRef.current?.focus()
@@ -71,10 +85,11 @@ export default function AsistenteIA() {
 
   const renderTexto = (texto) => {
     if (!texto || typeof texto !== 'string') return null
-    return texto.split('\n').map((linea, i) => (
+    const lineas = texto.split('\n')
+    return lineas.map((linea, i) => (
       <span key={i}>
         {linea}
-        {i < texto.split('\n').length - 1 && <br />}
+        {i < lineas.length - 1 && <br />}
       </span>
     ))
   }
@@ -99,6 +114,14 @@ export default function AsistenteIA() {
         >
           <RefreshCw size={16} />
         </button>
+      </div>
+
+      {/* Aviso clínico permanente */}
+      <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800 mb-3 flex-shrink-0">
+        <ShieldAlert size={13} className="flex-shrink-0" />
+        <p>
+          <strong>Apoyo educativo</strong> — no sustituye consulta médica. Emergencias: <strong>911</strong> o su equipo de soporte nutricional.
+        </p>
       </div>
 
       {/* Mensajes */}
@@ -151,12 +174,6 @@ export default function AsistenteIA() {
       {/* Sugerencias — solo al inicio */}
       {mensajes.length === 1 && (
         <div className="py-2 space-y-1.5">
-          <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
-            <ShieldAlert size={15} className="mt-0.5 flex-shrink-0" />
-            <p>
-              No escriba nombre completo, cédula, expediente, teléfono ni dirección. En síntomas urgentes, contacte a su equipo médico o al 911.
-            </p>
-          </div>
           <p className="text-xs text-slate-400 font-medium">Preguntas frecuentes:</p>
           <div className="flex flex-wrap gap-1.5">
             {SUGERENCIAS.slice(0, 4).map((s, i) => (
