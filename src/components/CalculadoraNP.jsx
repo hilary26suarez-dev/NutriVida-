@@ -1,4 +1,4 @@
-import { Activity, AlertCircle, AlertTriangle, Baby, CheckCircle, Clock, Dna, Download, Info, Printer, RotateCcw, Syringe } from 'lucide-react'
+import { Activity, AlertCircle, AlertTriangle, Baby, BookOpen, CheckCircle, ChevronDown, ChevronUp, Clock, Dna, Download, Info, Printer, RotateCcw, Syringe } from 'lucide-react'
 import { useState } from 'react'
 
 const CONDICIONES = [
@@ -16,6 +16,149 @@ const LIPIDOS = [
   { id: 'mixto',      label: 'Mixto SMOF (soja/MCT/oliva/pez)',      omega3: true  },
   { id: 'microalgas', label: 'Omega-3 / Microalgas (Omegaven®)',     omega3: true  },
 ]
+
+const BASE_CONOCIMIENTO = {
+  postop_menor: {
+    titulo: 'Respuesta metabólica al estrés quirúrgico menor',
+    mecanismo: 'La cirugía activa el eje hipotálamo-hipófisis-suprarrenal elevando cortisol y catecolaminas 2–4× sobre basal durante 24–72 horas. Esto produce proteólisis muscular leve y resistencia periférica a la insulina por reducción de GLUT-4 en músculo.',
+    cambios: [
+      'Proteólisis muscular leve — balance nitrogenado negativo transitorio',
+      'Hiperglucemia de estrés por gluconeogénesis hepática aumentada',
+      'Síntesis de proteínas de fase aguda: PCR, fibrinógeno (↑ consumo de aminoácidos)',
+      'Retención hídrica moderada mediada por ADH y aldosterona',
+    ],
+    fundamento: 'ESPEN 2019 recomienda 1.2–1.5 g proteína/kg/día en cirugía electiva menor. El factor de estrés ×1.1 se aplica sobre el GEB calculado por Harris-Benedict para estimar el GET real.',
+    referencias: [
+      'ESPEN Guidelines on Clinical Nutrition in Surgery. Clin Nutr. 2017;36(3):623-650.',
+      'ASPEN Clinical Guidelines: Nutrition Support of Hospitalized Adult Patients (2016).',
+    ],
+  },
+  trauma_moderado: {
+    titulo: 'Síndrome de Respuesta Inflamatoria Sistémica (SIRS)',
+    mecanismo: 'La infección o trauma desencadena liberación de IL-1β, IL-6 y TNF-α. Estas citoquinas aceleran el catabolismo proteico en músculo esquelético para proveer aminoácidos a la síntesis de proteínas de emergencia y proliferación de células inmunitarias. La glutamina es consumida a 3–5× sobre la tasa basal.',
+    cambios: [
+      'Catabolismo proteico acelerado: hasta 20% sobre basal',
+      'Gluconeogénesis hepática sostenida — hiperglucemia resistente al aporte calórico exógeno',
+      'Hipertrigliceridemia por lipólisis mediada por TNF-α y IL-6',
+      'Déficit de zinc, selenio y vitaminas antioxidantes (A, C, E) por consumo aumentado',
+      'Relación caloría-nitrógeno óptima: 100–150 kcal/g N para minimizar catabolismo neto',
+    ],
+    fundamento: 'ASPEN/SCCM 2016 recomiendan 1.5–1.8 g proteína/kg/día en SIRS moderado. La relación NPC:N de 100–150:1 minimiza la utilización de aminoácidos como sustrato energético.',
+    referencias: [
+      'ASPEN/SCCM Guidelines for Provision of Nutrition Support Therapy in the Adult Critically Ill Patient (2016).',
+      'ESPEN Intensive Care Guidelines. Clin Nutr. 2019;38(1):48-79.',
+    ],
+  },
+  cirugia_mayor: {
+    titulo: 'Respuesta catabólica severa — cirugía mayor / infección grave',
+    mecanismo: 'La cirugía mayor provoca pico de cortisol 4–6× sobre basal sostenido 48–72 horas. La GH sube paradójicamente pero con resistencia periférica (estado catabólico paradójico). La proteólisis muscular puede alcanzar 150–200 g de músculo/día sin soporte nutricional adecuado.',
+    cambios: [
+      'Pérdida muscular de 0.5–1 kg/día si el aporte proteico es insuficiente',
+      'Hiperglucemia de estrés — objetivo glucémico UCI: 140–180 mg/dL (ASPEN 2016)',
+      'Síntesis hepática prioritaria de fibrinógeno, PCR, alfa-2 macroglobulina',
+      'Hipertrigliceridemia si el aporte lipídico excede la capacidad oxidativa (> 1.5 g/kg/día)',
+      'Hipocalemia e hipofosfatemia por captación celular aumentada durante la síntesis proteica',
+    ],
+    fundamento: 'ESPEN 2021: iniciar NP dentro de 24–48h si la vía enteral es imposible. Aporte proteico 1.5–2.0 g/kg/día. En IMC > 30 ajustar al peso ideal. Evitar sobrealimentación calórica la primera semana (riesgo de síndrome de realimentación).',
+    referencias: [
+      'ESPEN Guidelines on Clinical Nutrition in Surgery. Clin Nutr. 2017;36(3):623-650.',
+      'ESPEN ICU Guidelines — actualización 2021. Clin Nutr. 2021;40(10):5271-5319.',
+      'ASPEN Perioperative Nutrition Support Guidelines (2013).',
+    ],
+  },
+  sepsis: {
+    titulo: 'Sepsis y trauma severo — estado hipercatabólico',
+    mecanismo: 'La sepsis induce "metabolic reprogramming" en macrófagos M1: la glucólisis aeróbica (efecto Warburg inmune) consume glucosa y glutamina a velocidad 10× basal. La proteólisis muscular puede superar 300 g de tejido/día. La respuesta CARS posterior al SIRS produce inmunoparálisis y mayor vulnerabilidad a infecciones secundarias.',
+    cambios: [
+      'Depleción de glutamina plasmática (< 420 μmol/L = marcador de mal pronóstico)',
+      'Gluconeogénesis hepática sostenida incluso con aportes exógenos de glucosa',
+      'Disfunción mitocondrial — reducida capacidad oxidativa celular',
+      'Hipoalbuminemia dilucional y por redistribución (no marcador nutricional en fase aguda)',
+      'Insulinorresistencia severa — frecuente necesidad de insulina en infusión continua',
+      'Deficiencia de selenio, zinc y vitamina C por consumo antioxidante elevado',
+    ],
+    fundamento: 'ASPEN/SCCM 2016: en sepsis iniciar NP hipocalórica (< 20 kcal/kg/día) la primera semana. La sobrealimentación eleva el CO₂ y empeora el pronóstico ventilatorio. Meta proteica: 1.5–2.0 g/kg/día tolerando balance calórico negativo durante la fase aguda.',
+    referencias: [
+      'ASPEN/SCCM Guidelines for Adult ICU Nutrition (2016). JPEN. 2016;40(2):159-211.',
+      'ESPEN Intensive Care Guidelines. Clin Nutr. 2019;38(1):48-79.',
+      'Singer et al. — Surviving Sepsis Campaign: Nutrition Recommendations (2018). Crit Care Med. 2018;46(12).',
+    ],
+  },
+  quemaduras: {
+    titulo: 'Quemaduras extensas — hipermetabolismo extremo',
+    mecanismo: 'El paciente quemado presenta el mayor estado hipercatabólico conocido en medicina clínica. La destrucción de la barrera cutánea genera pérdida proteica directa por exudado (30–50 g/m² SCQ/día). Las catecolaminas permanecen elevadas durante semanas, produciendo un GEB que puede duplicar el valor basal sin responder a la nutrición convencional.',
+    cambios: [
+      'GEB 1.5–2.0× sobre basal sostenido semanas (no solo días)',
+      'Pérdida proteica directa por herida: 30–50 g/m² de SCQ quemada/día',
+      'Hipercatabolismo muscular: pérdida de 15–25% de masa muscular en 3 semanas',
+      'Insulinorresistencia severa — prácticamente universal en quemaduras > 30% SCT',
+      'Hipocalemia, hipofosfatemia y déficit de vitaminas liposolubles por pérdidas en exudado',
+      'Inmunosupresión severa — alto riesgo de sepsis secundaria por Pseudomonas y Candida',
+    ],
+    fundamento: 'ASPEN 2013: iniciar NE/NP dentro de 6 horas del quemado severo. Meta proteica: 1.5–2.5 g/kg/día (3.0 g/kg en niños). En quemaduras > 50% SCT, el factor ×1.5 sobre Harris-Benedict subestima; preferir calorimetría indirecta o fórmula de Curreri: 25 kcal/kg + 40 kcal × % SCQ.',
+    referencias: [
+      'ASPEN Burn Support Nutrition Guidelines (2013). JPEN. 2013;37(3):305-316.',
+      'Williams & Barbul — Nutrition in Burn Patients. Surg Clin North Am. 2004;84(3):681-703.',
+      'ESPEN Guidelines on Clinical Nutrition in Surgery (2017).',
+    ],
+  },
+}
+
+function BaseConocimientoPanel({ datos }) {
+  const [abierto, setAbierto] = useState(false)
+  return (
+    <div className="border border-indigo-200 rounded-xl bg-indigo-50 overflow-hidden">
+      <button
+        onClick={() => setAbierto(p => !p)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-indigo-100 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <BookOpen size={15} className="text-indigo-600 flex-shrink-0" />
+          <span className="text-xs font-bold text-indigo-700">{datos.titulo}</span>
+          <span className="text-[10px] bg-indigo-200 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">ASPEN / ESPEN</span>
+        </div>
+        {abierto ? <ChevronUp size={14} className="text-indigo-500" /> : <ChevronDown size={14} className="text-indigo-500" />}
+      </button>
+
+      {abierto && (
+        <div className="px-4 pb-4 space-y-3 border-t border-indigo-200">
+          <div className="pt-3">
+            <p className="text-[11px] font-bold text-indigo-700 uppercase tracking-wide mb-1">Mecanismo fisiológico</p>
+            <p className="text-xs text-indigo-900 leading-relaxed">{datos.mecanismo}</p>
+          </div>
+
+          <div>
+            <p className="text-[11px] font-bold text-indigo-700 uppercase tracking-wide mb-1">Cambios metabólicos esperados</p>
+            <ul className="space-y-1">
+              {datos.cambios.map((c, i) => (
+                <li key={i} className="flex items-start gap-1.5 text-xs text-indigo-900">
+                  <span className="text-indigo-400 mt-0.5 flex-shrink-0">▸</span>
+                  {c}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="bg-white rounded-lg p-3 border border-indigo-100">
+            <p className="text-[11px] font-bold text-indigo-700 uppercase tracking-wide mb-1">Fundamento científico</p>
+            <p className="text-xs text-slate-700 leading-relaxed">{datos.fundamento}</p>
+          </div>
+
+          <div>
+            <p className="text-[11px] font-bold text-indigo-700 uppercase tracking-wide mb-1">Referencias</p>
+            {datos.referencias.map((r, i) => (
+              <p key={i} className="text-[11px] text-slate-500 italic leading-snug">{r}</p>
+            ))}
+          </div>
+
+          <p className="text-[10px] text-indigo-400 text-center pt-1 border-t border-indigo-100">
+            Contenido educativo — no sustituye valoración clínica individualizada
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const SEMAFORO_BG   = { rojo: 'bg-red-50 border-red-200',     amarillo: 'bg-amber-50 border-amber-200',  verde: 'bg-emerald-50 border-emerald-200' }
 const SEMAFORO_TEXT = { rojo: 'text-red-700',                  amarillo: 'text-amber-700',                verde: 'text-emerald-700' }
@@ -472,6 +615,11 @@ export default function CalculadoraNP() {
               </p>
             )}
           </div>
+
+          {/* Base de conocimiento biotecnológica */}
+          {BASE_CONOCIMIENTO[form.condicion] && (
+            <BaseConocimientoPanel datos={BASE_CONOCIMIENTO[form.condicion]} />
+          )}
 
           {/* Proteína */}
           <div>
