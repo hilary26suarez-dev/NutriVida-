@@ -1,5 +1,58 @@
 import { useState } from 'react'
-import { AlertTriangle, CheckCircle, Phone, Eye, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle, Eye, Phone, XCircle, ShieldCheck } from 'lucide-react'
+
+// ─── Guía visual ─────────────────────────────────────────────────────────────
+
+const nivelVisual = [
+  {
+    nivel: 'normal',
+    titulo: 'Sitio sano — sin alarma',
+    color: { bg: 'bg-emerald-50', border: 'border-emerald-300', titulo: 'text-emerald-800', badge: 'bg-emerald-500' },
+    descripcion: 'Así debe lucir el sitio del catéter cada día. Conózcalo bien para detectar cambios.',
+    caracteristicas: [
+      'Piel alrededor del catéter de color normal, igual al resto del brazo o tórax.',
+      'Sin hinchazón ni edema visible en la zona de inserción.',
+      'Apósito limpio, seco y bien adherido a la piel, sin despegues en los bordes.',
+      'Sin líquido, secreción ni costras bajo o alrededor del apósito.',
+      'Sin sensación de calor al tocar suavemente la piel alrededor.',
+      'El catéter o aguja de acceso se mantiene en la posición correcta sin moverse.',
+    ],
+    accion: 'Continúe su rutina normal. Registre mentalmente cómo se ve hoy para compararlo mañana.',
+  },
+  {
+    nivel: 'temprano',
+    titulo: 'Señales tempranas — llame hoy',
+    color: { bg: 'bg-amber-50', border: 'border-amber-400', titulo: 'text-amber-800', badge: 'bg-amber-500' },
+    descripcion: 'Cambios leves que no deben ignorarse. No son emergencia pero requieren contacto con su equipo.',
+    caracteristicas: [
+      'Enrojecimiento leve (< 2 cm) alrededor del punto de inserción.',
+      'Leve sensibilidad o molestia al tocar la zona, sin dolor intenso.',
+      'Apósito levantado en los bordes o con pequeñas arrugas que acumulan humedad.',
+      'El sitio luce diferente a como estaba ayer, aunque sea difícil describir el cambio.',
+      'Pequeña cantidad de líquido claro o transparente bajo el apósito.',
+      'Leve calor local comparado con la piel circundante.',
+    ],
+    accion: 'Llame a su equipo de salud o farmacéutico hoy. No interrumpa la infusión, pero documente lo que ve.',
+  },
+  {
+    nivel: 'alarma',
+    titulo: 'Señales de alarma — actúe ya',
+    color: { bg: 'bg-red-50', border: 'border-red-500', titulo: 'text-red-800', badge: 'bg-red-500' },
+    descripcion: 'Estos signos requieren atención médica urgente. Detenga la infusión de inmediato.',
+    caracteristicas: [
+      'Enrojecimiento que se extiende más de 2 cm o que avanza rápidamente hacia el brazo o tórax.',
+      'Hinchazón visible y notable alrededor o bajo el catéter.',
+      'Secreción amarilla, verde, blanca o con mal olor (pus) en el sitio.',
+      'Calor intenso y evidente al tocar la zona afectada.',
+      'Dolor que va aumentando y no cede con el tiempo.',
+      'Fiebre mayor de 38 °C, con o sin escalofríos.',
+      'La línea (tubería) no fluye normalmente, hay resistencia o extravasación (hinchazón en tejido).',
+    ],
+    accion: 'DETENGA la infusión. Cubra el sitio con gasa estéril y llame al 911 o diríjase a urgencias.',
+  },
+]
+
+// ─── Inspector interactivo ────────────────────────────────────────────────────
 
 const signos = [
   { id: 'enrojecimiento', label: 'Enrojecimiento en el sitio del catéter', severidad: 'amarillo' },
@@ -24,35 +77,26 @@ function calcularNivel(seleccionados) {
 
 const resultados = {
   verde: {
-    bg: 'bg-emerald-50',
-    border: 'border-emerald-300',
-    iconBg: 'bg-emerald-500',
-    titulo: 'El sitio luce bien',
-    mensaje:
-      'No hay señales de alarma visibles. Continúe con su rutina habitual y revise el sitio nuevamente antes de la próxima infusión.',
+    bg: 'bg-emerald-50', border: 'border-emerald-300', iconBg: 'bg-emerald-500',
+    titulo: 'El sitio luce bien', mensaje: 'No hay señales de alarma visibles. Continúe con su rutina habitual y revise el sitio nuevamente antes de la próxima infusión.',
     accion: null,
   },
   amarillo: {
-    bg: 'bg-amber-50',
-    border: 'border-amber-400',
-    iconBg: 'bg-amber-500',
-    titulo: 'Preste atención',
-    mensaje:
-      'Hay signos que deben monitorearse. No interrumpa la infusión aún, pero contacte a su equipo de salud en las próximas 24 horas.',
+    bg: 'bg-amber-50', border: 'border-amber-400', iconBg: 'bg-amber-500',
+    titulo: 'Preste atención', mensaje: 'Hay signos que deben monitorearse. No interrumpa la infusión aún, pero contacte a su equipo de salud en las próximas 24 horas.',
     accion: 'Llame a su equipo de salud hoy',
   },
   rojo: {
-    bg: 'bg-red-50',
-    border: 'border-red-500',
-    iconBg: 'bg-red-500',
-    titulo: 'Señal de alarma',
-    mensaje:
-      'Estos síntomas pueden indicar una infección activa. Detenga la infusión de inmediato y contacte a su equipo de salud o llame al 911.',
+    bg: 'bg-red-50', border: 'border-red-500', iconBg: 'bg-red-500',
+    titulo: 'Señal de alarma', mensaje: 'Estos síntomas pueden indicar una infección activa. Detenga la infusión de inmediato y contacte a su equipo de salud o llame al 911.',
     accion: '911',
   },
 }
 
+// ─── Componente principal ─────────────────────────────────────────────────────
+
 export default function InspectorInfecciones() {
+  const [vista, setVista] = useState('guia') // 'guia' | 'inspector'
   const [seleccionados, setSeleccionados] = useState([])
 
   const toggle = (id) =>
@@ -64,161 +108,212 @@ export default function InspectorInfecciones() {
   const resultado = resultados[nivel]
 
   return (
-    <div className="space-y-5">
-      {/* Intro */}
-      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
-        <div className="flex items-start gap-3">
-          <div className="bg-teal-600 text-white p-2.5 rounded-xl flex-shrink-0">
-            <Eye size={22} />
-          </div>
-          <div>
-            <p className="font-bold text-slate-800 text-lg leading-snug">
-              ¿Cómo está el sitio del catéter hoy?
-            </p>
-            <p className="text-slate-500 text-base mt-1 leading-relaxed">
-              Marque todo lo que observe ahora mismo. La app le dirá qué hacer.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Signos */}
-      <div className="space-y-3">
-        {signos.map((signo) => {
-          const activo = seleccionados.includes(signo.id)
-          const esRojo = rojoIds.has(signo.id)
-          return (
-            <button
-              key={signo.id}
-              onClick={() => toggle(signo.id)}
-              className={`w-full flex items-center gap-4 rounded-2xl border-2 px-5 py-4 text-left transition-all duration-150 ${
-                activo
-                  ? esRojo
-                    ? 'bg-red-50 border-red-400'
-                    : 'bg-amber-50 border-amber-400'
-                  : 'bg-white border-slate-200 hover:border-teal-300'
-              }`}
-            >
-              <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
-                  activo
-                    ? esRojo
-                      ? 'bg-red-500 border-red-500'
-                      : 'bg-amber-500 border-amber-500'
-                    : 'bg-white border-slate-300'
-                }`}
-              >
-                {activo && <CheckCircle size={18} className="text-white" />}
-              </div>
-              <span
-                className={`text-base font-medium leading-snug ${
-                  activo
-                    ? esRojo
-                      ? 'text-red-800'
-                      : 'text-amber-800'
-                    : 'text-slate-700'
-                }`}
-              >
-                {signo.label}
-              </span>
-              {esRojo && activo && (
-                <span className="ml-auto flex-shrink-0 text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-lg">
-                  Urgente
-                </span>
-              )}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Limpiar selección */}
-      {seleccionados.length > 0 && (
+    <div className="space-y-4">
+      {/* Tabs */}
+      <div className="flex bg-slate-100 rounded-2xl p-1 gap-1">
         <button
-          onClick={() => setSeleccionados([])}
-          className="flex items-center gap-2 text-slate-400 text-sm font-medium hover:text-slate-600 transition-colors mx-auto"
+          onClick={() => setVista('guia')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
+            vista === 'guia' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+          }`}
         >
-          <XCircle size={16} />
-          Limpiar selección
+          <Eye size={16} />
+          Guía visual
         </button>
-      )}
-
-      {/* Resultado */}
-      <div className={`rounded-2xl border-2 p-5 ${resultado.bg} ${resultado.border} transition-all duration-300`}>
-        <div className="flex items-start gap-4">
-          <div className={`${resultado.iconBg} text-white p-3 rounded-xl flex-shrink-0`}>
-            {nivel === 'verde' && <CheckCircle size={26} />}
-            {nivel === 'amarillo' && <AlertTriangle size={26} />}
-            {nivel === 'rojo' && <AlertTriangle size={26} />}
-          </div>
-          <div className="flex-1">
-            <p
-              className={`font-bold text-xl leading-tight mb-2 ${
-                nivel === 'verde'
-                  ? 'text-emerald-800'
-                  : nivel === 'amarillo'
-                  ? 'text-amber-800'
-                  : 'text-red-800'
-              }`}
-            >
-              {resultado.titulo}
-            </p>
-            <p
-              className={`text-base leading-relaxed ${
-                nivel === 'verde'
-                  ? 'text-emerald-700'
-                  : nivel === 'amarillo'
-                  ? 'text-amber-700'
-                  : 'text-red-700'
-              }`}
-            >
-              {resultado.mensaje}
-            </p>
-
-            {nivel === 'rojo' && (
-              <a
-                href="tel:911"
-                className="mt-4 flex items-center justify-center gap-3 bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-2xl text-xl transition-colors w-full"
-              >
-                <Phone size={24} />
-                Llamar al 911
-              </a>
-            )}
-            {nivel === 'amarillo' && (
-              <div className="mt-4 bg-white rounded-xl p-4 border border-amber-200 space-y-3">
-                <p className="text-amber-800 font-bold text-base">Contactos de su equipo</p>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-700 text-base">Ébais / Área de Salud</span>
-                  <span className="text-slate-400 text-sm">Su número local</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-700 text-base">ACONEP</span>
-                  <span className="text-teal-600 text-base font-medium">aconep.cr</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <button
+          onClick={() => setVista('inspector')}
+          className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all ${
+            vista === 'inspector' ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <CheckCircle size={16} />
+          ¿Qué observo hoy?
+        </button>
       </div>
 
-      {/* Siempre disponible: emergencia */}
-      {nivel !== 'rojo' && (
-        <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 flex items-center justify-between">
-          <div>
-            <p className="font-bold text-slate-700 text-base">Emergencias CCSS</p>
-            <p className="text-slate-400 text-sm">Disponible las 24 horas</p>
+      {/* ── Vista: Guía visual ───────────────────────────────────────────── */}
+      {vista === 'guia' && (
+        <div className="space-y-4">
+          <div className="bg-teal-50 border border-teal-200 rounded-2xl p-4">
+            <div className="flex items-start gap-3">
+              <ShieldCheck size={20} className="text-teal-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-teal-800 text-base">Conozca primero lo normal</p>
+                <p className="text-teal-600 text-base mt-1 leading-relaxed">
+                  La mejor forma de detectar una infección es conocer cómo luce el sitio cuando está sano. Revise el catéter todos los días antes de conectar.
+                </p>
+              </div>
+            </div>
           </div>
-          <a
-            href="tel:911"
-            className="bg-red-500 hover:bg-red-600 text-white font-bold px-6 py-3 rounded-xl text-lg transition-colors"
+
+          {nivelVisual.map((nivel) => (
+            <div key={nivel.nivel} className={`${nivel.color.bg} border-2 ${nivel.color.border} rounded-2xl overflow-hidden`}>
+              <div className="px-5 pt-5 pb-3">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className={`${nivel.color.badge} text-white text-xs font-bold px-3 py-1 rounded-full`}>
+                    {nivel.titulo}
+                  </span>
+                </div>
+                <p className={`text-sm leading-relaxed ${nivel.color.titulo} mb-3`}>{nivel.descripcion}</p>
+                <div className="space-y-2">
+                  {nivel.caracteristicas.map((c, i) => (
+                    <div key={i} className="flex items-start gap-3 bg-white/70 rounded-xl p-3">
+                      {nivel.nivel === 'normal'
+                        ? <CheckCircle size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                        : nivel.nivel === 'temprano'
+                        ? <AlertTriangle size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                        : <XCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+                      }
+                      <p className="text-slate-700 text-base leading-relaxed">{c}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className={`px-5 py-3 border-t ${nivel.color.border} bg-white/40`}>
+                <p className={`text-sm font-bold ${nivel.color.titulo}`}>→ {nivel.accion}</p>
+              </div>
+            </div>
+          ))}
+
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2">
+            <p className="font-bold text-slate-700 text-base">Tipos de catéter — qué revisar</p>
+            {[
+              { tipo: 'PICC (línea media en brazo)', puntos: 'Revise el brazo completo desde la inserción hasta el hombro en busca de enrojecimiento, venas visibles o hinchazón.' },
+              { tipo: 'CVC tunelizado (ej. Hickman, Broviac)', puntos: 'Verifique tanto el sitio de salida en el tórax como el trayecto del túnel subcutáneo si está accesible.' },
+              { tipo: 'Port-a-cath (reservorio implantado)', puntos: 'Inspect la piel sobre el reservorio. Cuando está accedido, revise el sitio de la aguja huber.' },
+            ].map((t, i) => (
+              <div key={i} className="bg-white rounded-xl p-3 border border-slate-100">
+                <p className="font-semibold text-teal-700 text-sm">{t.tipo}</p>
+                <p className="text-slate-500 text-sm mt-0.5 leading-relaxed">{t.puntos}</p>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setVista('inspector')}
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 rounded-2xl text-base transition-colors"
           >
-            911
-          </a>
+            Revisar el sitio ahora →
+          </button>
         </div>
       )}
 
-      <p className="text-center text-slate-400 text-sm pb-2">
-        Esta herramienta no reemplaza la evaluación de su equipo médico.
-      </p>
+      {/* ── Vista: Inspector interactivo ─────────────────────────────────── */}
+      {vista === 'inspector' && (
+        <div className="space-y-4">
+          <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
+            <div className="flex items-start gap-3">
+              <div className="bg-teal-600 text-white p-2.5 rounded-xl flex-shrink-0">
+                <Eye size={22} />
+              </div>
+              <div>
+                <p className="font-bold text-slate-800 text-lg leading-snug">¿Qué observa hoy?</p>
+                <p className="text-slate-500 text-base mt-1 leading-relaxed">
+                  Marque todo lo que observe ahora mismo. La app le dirá qué hacer.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {signos.map((signo) => {
+              const activo = seleccionados.includes(signo.id)
+              const esRojo = rojoIds.has(signo.id)
+              return (
+                <button
+                  key={signo.id}
+                  onClick={() => toggle(signo.id)}
+                  className={`w-full flex items-center gap-4 rounded-2xl border-2 px-5 py-4 text-left transition-all duration-150 ${
+                    activo
+                      ? esRojo ? 'bg-red-50 border-red-400' : 'bg-amber-50 border-amber-400'
+                      : 'bg-white border-slate-200 hover:border-teal-300'
+                  }`}
+                >
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-colors ${
+                    activo
+                      ? esRojo ? 'bg-red-500 border-red-500' : 'bg-amber-500 border-amber-500'
+                      : 'bg-white border-slate-300'
+                  }`}>
+                    {activo && <CheckCircle size={18} className="text-white" />}
+                  </div>
+                  <span className={`text-base font-medium leading-snug ${
+                    activo ? esRojo ? 'text-red-800' : 'text-amber-800' : 'text-slate-700'
+                  }`}>
+                    {signo.label}
+                  </span>
+                  {esRojo && activo && (
+                    <span className="ml-auto flex-shrink-0 text-xs font-bold text-red-600 bg-red-100 px-2 py-1 rounded-lg">
+                      Urgente
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          {seleccionados.length > 0 && (
+            <button
+              onClick={() => setSeleccionados([])}
+              className="flex items-center gap-2 text-slate-400 text-sm font-medium hover:text-slate-600 transition-colors mx-auto"
+            >
+              <XCircle size={16} />
+              Limpiar selección
+            </button>
+          )}
+
+          <div className={`rounded-2xl border-2 p-5 ${resultado.bg} ${resultado.border} transition-all duration-300`}>
+            <div className="flex items-start gap-4">
+              <div className={`${resultado.iconBg} text-white p-3 rounded-xl flex-shrink-0`}>
+                {nivel === 'verde' ? <CheckCircle size={26} /> : <AlertTriangle size={26} />}
+              </div>
+              <div className="flex-1">
+                <p className={`font-bold text-xl leading-tight mb-2 ${
+                  nivel === 'verde' ? 'text-emerald-800' : nivel === 'amarillo' ? 'text-amber-800' : 'text-red-800'
+                }`}>
+                  {resultado.titulo}
+                </p>
+                <p className={`text-base leading-relaxed ${
+                  nivel === 'verde' ? 'text-emerald-700' : nivel === 'amarillo' ? 'text-amber-700' : 'text-red-700'
+                }`}>
+                  {resultado.mensaje}
+                </p>
+
+                {nivel === 'rojo' && (
+                  <a href="tel:911" className="mt-4 flex items-center justify-center gap-3 bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-2xl text-xl transition-colors w-full">
+                    <Phone size={24} />
+                    Llamar al 911
+                  </a>
+                )}
+                {nivel === 'amarillo' && (
+                  <div className="mt-4 bg-white rounded-xl p-4 border border-amber-200 space-y-2">
+                    <p className="text-amber-800 font-bold text-base">Contacte a su equipo hoy</p>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-700 text-base">Ébais / Área de Salud</span>
+                      <span className="text-slate-400 text-sm">Su número local</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {nivel !== 'rojo' && (
+            <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 flex items-center justify-between">
+              <div>
+                <p className="font-bold text-slate-700 text-base">Emergencias CCSS</p>
+                <p className="text-slate-400 text-sm">Disponible las 24 horas</p>
+              </div>
+              <a href="tel:911" className="bg-red-500 hover:bg-red-600 text-white font-bold px-6 py-3 rounded-xl text-lg transition-colors">
+                911
+              </a>
+            </div>
+          )}
+
+          <p className="text-center text-slate-400 text-sm pb-2">
+            Esta herramienta no reemplaza la evaluación de su equipo médico.
+          </p>
+        </div>
+      )}
     </div>
   )
 }

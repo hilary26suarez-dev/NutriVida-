@@ -1,41 +1,80 @@
 import { useState } from 'react'
 import NavBar from '../components/NavBar'
+import BiotecnologiaNP from '../components/BiotecnologiaNP'
 import {
-  BookOpen,
-  Calculator,
-  FlaskConical,
-  GitBranch,
-  ChevronDown,
-  ChevronUp,
-  AlertTriangle,
-  CheckCircle,
-  Info,
+  BookOpen, Calculator, ChevronDown, ChevronLeft, ChevronUp,
+  CheckCircle, AlertTriangle, FlaskConical, GitBranch, Info,
+  Users, Heart, Stethoscope, Pill,
 } from 'lucide-react'
 
-// ─── Utility ────────────────────────────────────────────────────────────────
+// ─── Lema ────────────────────────────────────────────────────────────────────
 
-function r(n, d = 1) {
-  return Math.round(n * 10 ** d) / 10 ** d
+function LemaEquipo() {
+  return (
+    <div className="bg-gradient-to-r from-teal-600 to-teal-700 rounded-2xl p-5 text-white mb-5">
+      <p className="font-bold text-lg leading-tight text-center">
+        Un equipo multidisciplinario unido para salvar vidas
+      </p>
+      <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
+        {[
+          { label: 'Farmacia', color: 'bg-violet-400' },
+          { label: 'Medicina', color: 'bg-blue-400' },
+          { label: 'Nutrición', color: 'bg-emerald-400' },
+          { label: 'Enfermería', color: 'bg-pink-400' },
+        ].map((c, i, arr) => (
+          <span key={c.label} className="flex items-center gap-2">
+            <span className={`${c.color} text-white text-xs font-bold px-3 py-1.5 rounded-full`}>{c.label}</span>
+            {i < arr.length - 1 && <span className="text-teal-300 font-bold">+</span>}
+          </span>
+        ))}
+      </div>
+      <p className="text-teal-200 text-sm text-center mt-3 leading-relaxed">
+        Cada carrera es una pieza esencial. Juntos garantizan que el paciente reciba su NP de forma segura, eficaz y humana.
+      </p>
+    </div>
+  )
 }
 
-// ─── Formula Step Display ────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function r(n, d = 1) { return Math.round(n * 10 ** d) / 10 ** d }
+
+function Acordeon({ titulo, icono: Icono, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-slate-50 transition-colors">
+        {Icono && <Icono size={18} className="text-teal-600 flex-shrink-0" />}
+        <span className="font-bold text-slate-800 text-base flex-1">{titulo}</span>
+        {open ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+      </button>
+      {open && <div className="px-5 pb-5 space-y-3">{children}</div>}
+    </div>
+  )
+}
+
+function Dato({ label, valor, color = 'teal' }) {
+  const p = { teal: 'bg-teal-50 text-teal-700 border-teal-200', blue: 'bg-blue-50 text-blue-700 border-blue-200', amber: 'bg-amber-50 text-amber-700 border-amber-200', red: 'bg-red-50 text-red-700 border-red-200', violet: 'bg-violet-50 text-violet-700 border-violet-200', emerald: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+  return (
+    <div className={`border rounded-xl p-3 ${p[color] || p.teal}`}>
+      <p className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-0.5">{label}</p>
+      <p className="font-bold text-base">{valor}</p>
+    </div>
+  )
+}
 
 function PasoCalculo({ numero, titulo, formula, sustitucion, resultado, color = 'teal', nota }) {
-  const colores = {
+  const c = {
     teal: { bg: 'bg-teal-50', border: 'border-teal-200', num: 'bg-teal-600', titulo: 'text-teal-800', res: 'text-teal-700' },
-    blue: { bg: 'bg-blue-50', border: 'border-blue-200', num: 'bg-blue-600', titulo: 'text-blue-800', res: 'text-blue-700' },
-    violet: { bg: 'bg-violet-50', border: 'border-violet-200', num: 'bg-violet-600', titulo: 'text-violet-800', res: 'text-violet-700' },
     amber: { bg: 'bg-amber-50', border: 'border-amber-200', num: 'bg-amber-500', titulo: 'text-amber-800', res: 'text-amber-700' },
+    violet: { bg: 'bg-violet-50', border: 'border-violet-200', num: 'bg-violet-600', titulo: 'text-violet-800', res: 'text-violet-700' },
+    blue: { bg: 'bg-blue-50', border: 'border-blue-200', num: 'bg-blue-600', titulo: 'text-blue-800', res: 'text-blue-700' },
     emerald: { bg: 'bg-emerald-50', border: 'border-emerald-200', num: 'bg-emerald-600', titulo: 'text-emerald-800', res: 'text-emerald-700' },
-  }
-  const c = colores[color] || colores.teal
-
+  }[color] || {}
   return (
     <div className={`${c.bg} border ${c.border} rounded-2xl p-5`}>
       <div className="flex items-start gap-3 mb-3">
-        <div className={`${c.num} text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0`}>
-          {numero}
-        </div>
+        <div className={`${c.num} text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0`}>{numero}</div>
         <p className={`font-bold text-base ${c.titulo}`}>{titulo}</p>
       </div>
       <div className="bg-white rounded-xl p-4 font-mono text-sm space-y-1 border border-slate-100">
@@ -43,531 +82,600 @@ function PasoCalculo({ numero, titulo, formula, sustitucion, resultado, color = 
         <p className="text-slate-600">= {sustitucion}</p>
         <p className={`font-bold text-base ${c.res}`}>= {resultado}</p>
       </div>
-      {nota && (
-        <p className="mt-3 text-sm text-slate-500 flex items-start gap-2">
-          <Info size={14} className="flex-shrink-0 mt-0.5" />
-          {nota}
-        </p>
+      {nota && <p className="mt-3 text-sm text-slate-500 flex items-start gap-2"><Info size={14} className="flex-shrink-0 mt-0.5" />{nota}</p>}
+    </div>
+  )
+}
+
+// ─── FARMACIA ─────────────────────────────────────────────────────────────────
+
+const condicionesF = {
+  normal:   { label: 'Sin estrés', factor: 1.2, prot: [0.8, 1.0] },
+  leve:     { label: 'Estrés leve', factor: 1.3, prot: [1.0, 1.2] },
+  moderado: { label: 'Estrés moderado', factor: 1.4, prot: [1.2, 1.5] },
+  severo:   { label: 'Estrés severo', factor: 1.5, prot: [1.5, 2.0] },
+  renal:    { label: 'IRC sin diálisis', factor: 1.2, prot: [0.6, 0.8] },
+}
+
+function FarmaciaCalculadora() {
+  const [form, setForm] = useState({ peso: '', talla: '', edad: '', sexo: 'M', condicion: 'normal' })
+  const [res, setRes] = useState(null)
+  const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
+  const calcular = () => {
+    const P = parseFloat(form.peso), A = parseFloat(form.talla), E = parseFloat(form.edad)
+    if (!P || !A || !E) return
+    const cond = condicionesF[form.condicion]
+    const ree = form.sexo === 'M' ? 66.5 + 13.75*P + 5.003*A - 6.775*E : 655.1 + 9.563*P + 1.85*A - 4.676*E
+    const get = ree * cond.factor
+    const [pMin] = cond.prot
+    const protG = r(pMin * P), protKcal = r(protG * 4)
+    const npCal = r(get - protKcal)
+    const dexG = r(npCal * 0.65 / 3.4), lipG = r(npCal * 0.35 / 9)
+    const vig = r(dexG * 1000 / (P * 1440), 2)
+    const osm = r(protG * 8 + dexG * 5.5 + 154)
+    setRes({ P, A, E, ree: r(ree), get: r(get), factor: cond.factor, pMin, pMax: cond.prot[1],
+      protMin: r(cond.prot[0]*P), protMax: r(cond.prot[1]*P), protKcal, dexG, lipG, vig, osm, condLabel: cond.label, sexo: form.sexo })
+  }
+  return (
+    <div className="space-y-4">
+      <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          {[['peso','Peso (kg)','ej: 70'],['talla','Talla (cm)','ej: 170'],['edad','Edad (años)','ej: 45']].map(([k,l,p]) => (
+            <div key={k} className={k === 'edad' ? '' : ''}>
+              <label className="block text-sm font-semibold text-slate-600 mb-1">{l}</label>
+              <input type="number" placeholder={p} value={form[k]} onChange={e => set(k, e.target.value)}
+                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:border-teal-400 bg-slate-50" />
+            </div>
+          ))}
+          <div>
+            <label className="block text-sm font-semibold text-slate-600 mb-1">Sexo</label>
+            <select value={form.sexo} onChange={e => set('sexo', e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:border-teal-400 bg-slate-50">
+              <option value="M">Masculino</option><option value="F">Femenino</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-600 mb-1">Condición clínica</label>
+          <select value={form.condicion} onChange={e => set('condicion', e.target.value)} className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:border-teal-400 bg-slate-50">
+            {Object.entries(condicionesF).map(([k,v]) => <option key={k} value={k}>{v.label}</option>)}
+          </select>
+        </div>
+        <button onClick={calcular} className="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-3.5 rounded-xl text-base transition-colors flex items-center justify-center gap-2">
+          <Calculator size={18} /> Calcular con fórmulas
+        </button>
+      </div>
+      {res && (
+        <div className="space-y-3">
+          <div className="bg-violet-600 text-white rounded-2xl p-4 text-center">
+            <p className="text-violet-200 text-sm">{res.P} kg · {res.A} cm · {res.E} años · {res.sexo === 'M' ? 'M' : 'F'} · {res.condLabel}</p>
+          </div>
+          <PasoCalculo numero="1" color="violet" titulo={`Harris-Benedict (${res.sexo === 'M' ? 'Hombre' : 'Mujer'})`}
+            formula={res.sexo === 'M' ? 'REE = 66.5 + (13.75×P) + (5.003×A) - (6.775×edad)' : 'REE = 655.1 + (9.563×P) + (1.850×A) - (4.676×edad)'}
+            sustitucion={res.sexo === 'M' ? `66.5+(13.75×${res.P})+(5.003×${res.A})-(6.775×${res.E})` : `655.1+(9.563×${res.P})+(1.850×${res.A})-(4.676×${res.E})`}
+            resultado={`${res.ree} kcal/día`} />
+          <PasoCalculo numero="2" color="teal" titulo="GET con factor de estrés" formula="GET = REE × Factor"
+            sustitucion={`${res.ree} × ${res.factor}`} resultado={`${res.get} kcal/día`} nota={`Factor ${res.factor} = ${res.condLabel}`} />
+          <PasoCalculo numero="3" color="emerald" titulo="Proteínas" formula={`${res.pMin}–${res.pMax} g/kg/día × ${res.P} kg`}
+            sustitucion={`rango ${res.pMin}–${res.pMax}`} resultado={`${res.protMin}–${res.protMax} g/día`} />
+          <PasoCalculo numero="4" color="amber" titulo="Dextrosa (65% kcal no prot.)" formula="g = (kcalNP × 0.65) ÷ 3.4"
+            sustitucion={`(${r(res.get-res.protKcal)} × 0.65) ÷ 3.4`} resultado={`${res.dexG} g/día — VIG: ${res.vig} mg/kg/min ${res.vig > 5 ? '⚠️ supera máx' : '✓'}`} />
+          <PasoCalculo numero="5" color="violet" titulo="Lípidos (35% kcal no prot.)" formula="g = (kcalNP × 0.35) ÷ 9"
+            sustitucion={`(${r(res.get-res.protKcal)} × 0.35) ÷ 9`} resultado={`${res.lipG} g/día (máx ${r(res.P*2.5)} g/día)`} />
+          <PasoCalculo numero="6" color="teal" titulo="Osmolalidad estimada" formula="Osm ≈ (AA×8) + (Dex×5.5) + base"
+            sustitucion={`(${res.protMin}×8) + (${res.dexG}×5.5) + 154`}
+            resultado={`≈ ${res.osm} mOsm/L → ${res.osm > 900 ? '🔴 Vía CENTRAL' : '🟢 Periférica posible'}`} />
+        </div>
       )}
     </div>
   )
 }
 
-// ─── Accordion ──────────────────────────────────────────────────────────────
-
-function Seccion({ titulo, icono: Icono, children, defaultOpen = false }) {
-  const [open, setOpen] = useState(defaultOpen)
-  return (
-    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-      <button
-        onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-slate-50 transition-colors"
-      >
-        {Icono && <Icono size={20} className="text-teal-600 flex-shrink-0" />}
-        <span className="font-bold text-slate-800 text-base flex-1">{titulo}</span>
-        {open ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
-      </button>
-      {open && <div className="px-5 pb-5 space-y-4">{children}</div>}
-    </div>
-  )
-}
-
-// ─── Píldora de dato ─────────────────────────────────────────────────────────
-
-function Dato({ label, valor, color = 'teal' }) {
-  const paleta = {
-    teal: 'bg-teal-50 text-teal-700 border-teal-200',
-    blue: 'bg-blue-50 text-blue-700 border-blue-200',
-    amber: 'bg-amber-50 text-amber-700 border-amber-200',
-    red: 'bg-red-50 text-red-700 border-red-200',
-    violet: 'bg-violet-50 text-violet-700 border-violet-200',
-  }
-  return (
-    <div className={`border rounded-xl p-3 ${paleta[color]}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide opacity-70 mb-0.5">{label}</p>
-      <p className="font-bold text-base">{valor}</p>
-    </div>
-  )
-}
-
-// ─── Tab: Fundamentos ────────────────────────────────────────────────────────
-
-function Fundamentos() {
+function FarmaciaEstabilidad() {
   return (
     <div className="space-y-4">
-      <Seccion titulo="¿Qué es la Nutrición Parenteral?" icono={BookOpen} defaultOpen>
-        <p className="text-slate-600 text-base leading-relaxed">
-          La nutrición parenteral (NP) es la administración intravenosa de todos los nutrientes necesarios para mantener el metabolismo cuando el tracto gastrointestinal no puede usarse. La mezcla contiene aminoácidos, dextrosa, lípidos, electrolitos, vitaminas y oligoelementos en una sola bolsa (3-en-1 o "todo en uno").
-        </p>
+      <Acordeon titulo="Osmolalidad y acceso venoso" icono={FlaskConical} defaultOpen>
         <div className="grid grid-cols-2 gap-3">
-          <Dato label="NP Central" valor="Vena cava superior · Osmolaridad libre" color="teal" />
-          <Dato label="NP Periférica" valor="Vena periférica · ≤ 900 mOsm/L" color="blue" />
+          <Dato label="Periférica" valor="≤ 900 mOsm/L" color="teal" />
+          <Dato label="Central" valor="> 900 mOsm/L" color="red" />
         </div>
-        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-          <p className="font-bold text-slate-700 text-sm mb-2">Indicaciones principales</p>
-          <ul className="space-y-1.5 text-slate-600 text-sm">
-            {['Síndrome de intestino corto', 'Enfermedad de Crohn activa grave', 'Fístulas enterocutáneas de alto gasto',
-              'Íleo postoperatorio prolongado (> 7 días)', 'Oncología con tracto gastrointestinal no funcional',
-              'Prematuridad extrema (neonatología)'].map((item, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <CheckCircle size={14} className="text-teal-500 flex-shrink-0 mt-0.5" />
-                {item}
-              </li>
-            ))}
-          </ul>
+        <div className="bg-slate-50 border rounded-xl p-4 font-mono text-sm">
+          <p className="font-sans text-xs font-bold text-slate-500 mb-2">Fórmula simplificada:</p>
+          <p>Osm ≈ (AA g/L × 8) + (Dextrosa g/L × 5.5)</p>
+          <p>    + (Na mEq/L × 2) + (K mEq/L × 2)</p>
         </div>
-      </Seccion>
+      </Acordeon>
+      <Acordeon titulo="Producto Ca × P — precipitación letal" icono={AlertTriangle}>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <p className="font-mono text-red-700 text-base font-bold">Ca (mEq/L) × P (mmol/L) &lt; 200</p>
+          <p className="text-red-600 text-sm mt-1">Límite institucional CCSS y mayoría de centros: &lt; 150 para margen de seguridad.</p>
+        </div>
+        {['Los aminoácidos quelatan el calcio y aumentan la solubilidad del Ca-P.',
+          'pH ácido (5–6 en bolsas sin bicarbonato) favorece la solubilidad del fosfato.',
+          'El EDUS calcula y alerta automáticamente cuando se supera el límite.',
+          'Agregar el calcio al final, con agitación, y separado del fosfato en el proceso.'].map((t, i) => (
+          <div key={i} className="flex items-start gap-2 text-slate-600 text-sm">
+            <CheckCircle size={14} className="text-teal-500 flex-shrink-0 mt-0.5" />{t}
+          </div>
+        ))}
+      </Acordeon>
+      <Acordeon titulo="Estabilidad de la emulsión lipídica" icono={FlaskConical}>
+        {[
+          { factor: 'pH', efecto: 'Rango seguro: 5.5–8.0. Fuera de este rango puede haber coalescencia.' },
+          { factor: 'Ca²⁺ y Mg²⁺', efecto: 'Concentraciones altas reducen el potencial zeta y desestabilizan la emulsión.' },
+          { factor: 'Temperatura', efecto: 'Conservar 2–8 °C. La emulsión no debe congelarse ni exponerse a calor.' },
+          { factor: 'Luz UV', efecto: 'Degrada vitaminas liposolubles y oxida PUFA. Usar bolsas con cobertura opaca.' },
+        ].map((it, i) => (
+          <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <p className="font-semibold text-slate-700 text-sm">{it.factor}</p>
+            <p className="text-slate-500 text-sm mt-0.5">{it.efecto}</p>
+          </div>
+        ))}
+      </Acordeon>
+      <Acordeon titulo="Preparación estéril — área blanca">
+        <p className="text-slate-600 text-base leading-relaxed">La NP se prepara en cabinas de flujo laminar (ISO 5 / clase A) ubicadas en zona limpia (ISO 7 / clase B). El técnico en farmacia sigue el orden de adición de componentes para evitar incompatibilidades. En hospitales con compounder automático (Baxter ExactaMix, B. Braun APEX), las instrucciones del EDUS se envían directamente al equipo.</p>
+        <div className="grid grid-cols-3 gap-2 text-center text-xs">
+          {['ISO 5 — flujo laminar', 'Orden controlado Ca/P', 'Gravimetría de verificación'].map((p, i) => (
+            <div key={i} className="bg-violet-50 border border-violet-100 rounded-xl py-3 px-2">
+              <p className="font-bold text-violet-700">{p}</p>
+            </div>
+          ))}
+        </div>
+      </Acordeon>
+    </div>
+  )
+}
 
-      <Seccion titulo="Macronutrientes y su función" icono={FlaskConical}>
-        <div className="space-y-4">
-          <div className="border-l-4 border-teal-400 pl-4">
-            <p className="font-bold text-teal-800 text-base">Aminoácidos (proteínas)</p>
-            <p className="text-slate-600 text-sm mt-1 leading-relaxed">Fuente nitrogenada para síntesis proteica, cicatrización y función inmune. Concentraciones habituales: 8.5–15 %. Producidos por fermentación microbiana de <em>Corynebacterium glutamicum</em>.</p>
-            <p className="text-slate-500 text-sm mt-1">Rango clínico: 0.8 – 2.0 g/kg/día · Aporte calórico: 4 kcal/g</p>
-          </div>
-          <div className="border-l-4 border-amber-400 pl-4">
-            <p className="font-bold text-amber-800 text-base">Dextrosa (glucosa)</p>
-            <p className="text-slate-600 text-sm mt-1 leading-relaxed">Principal fuente energética. Concentraciones: 5–70 %. La dextrosa monohidratada aporta 3.4 kcal/g (no 4 kcal/g como glucosa oral). VIG máximo adulto: 5 mg/kg/min.</p>
-          </div>
-          <div className="border-l-4 border-violet-400 pl-4">
-            <p className="font-bold text-violet-800 text-base">Emulsión lipídica</p>
-            <p className="text-slate-600 text-sm mt-1 leading-relaxed">Las emulsiones SMOF (soja, TCM, oliva, pescado) combinan omega-3 y omega-6 para modular inflamación. Aportan 9 kcal/g. La emulsión al 20 % es iso-osmótica (~350 mOsm/L).</p>
-            <p className="text-slate-500 text-sm mt-1">Máx: 2.5 g/kg/día · Velocidad máx: 0.1 g/kg/h</p>
-          </div>
-        </div>
-      </Seccion>
+function FarmaciaFlujoCCSS() {
+  return <FlujoCCSS carrera="farmacia" />
+}
 
-      <Seccion titulo="Micronutrientes, electrolitos y oligoelementos" icono={FlaskConical}>
+// ─── MEDICINA ─────────────────────────────────────────────────────────────────
+
+function MedicinaIndicaciones() {
+  return (
+    <div className="space-y-4">
+      <Acordeon titulo="Indicaciones establecidas de NP" icono={Stethoscope} defaultOpen>
+        <p className="text-slate-600 text-base leading-relaxed">La NP está indicada cuando el tracto gastrointestinal no es funcional, accesible o seguro por un período significativo (generalmente &gt; 7 días en adultos). <strong>Siempre</strong> es preferible la vía enteral o oral cuando sea factible.</p>
+        <div className="space-y-2">
+          {[
+            { cond: 'Síndrome de intestino corto', detalle: 'Principal indicación de NP crónica. < 100–150 cm de intestino delgado funcional.' },
+            { cond: 'Fístulas enterocutáneas alto gasto', detalle: '> 500 mL/día. Reposo intestinal mientras se planea manejo quirúrgico.' },
+            { cond: 'Obstrucción intestinal no resoluble', detalle: 'Cuando la cirugía no es inmediata y el paciente no puede tolerar enteral.' },
+            { cond: 'Enfermedad de Crohn activa grave', detalle: 'Cuando la nutrición enteral no es tolerada o está contraindicada.' },
+            { cond: 'Quimioterapia con mucositis severa', detalle: 'Grado 3–4 que impide ingesta oral o enteral por más de 7–10 días.' },
+            { cond: 'Post-op de cirugía GI mayor', detalle: 'Cuando se anticipa ayuno > 7 días o el íleo es prolongado.' },
+          ].map((it, i) => (
+            <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <p className="font-bold text-slate-700 text-sm">{it.cond}</p>
+              <p className="text-slate-500 text-sm mt-0.5">{it.detalle}</p>
+            </div>
+          ))}
+        </div>
+      </Acordeon>
+      <Acordeon titulo="Contraindicaciones relativas" icono={AlertTriangle}>
+        {['Tracto GI funcional y accesible — siempre preferir nutrición enteral.',
+          'Pronóstico que no justifica el riesgo (terminalidad con confort como objetivo).',
+          'Paciente hemodinámicamente inestable (iniciar NP solo tras estabilización).',
+          'Ayuno esperado < 5–7 días en paciente previamente bien nutrido.',
+          'Acceso venoso central con riesgo muy elevado.'].map((t, i) => (
+          <div key={i} className="flex items-start gap-2 text-slate-600 text-base">
+            <AlertTriangle size={15} className="text-amber-500 flex-shrink-0 mt-0.5" />{t}
+          </div>
+        ))}
+      </Acordeon>
+      <Acordeon titulo="Monitoreo del paciente con NP" icono={BookOpen}>
+        <p className="text-slate-600 text-sm mb-3">Frecuencia orientativa — ajustar según estabilidad clínica:</p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-teal-50 text-teal-700">
-                <th className="text-left p-3 rounded-l-lg font-semibold">Componente</th>
-                <th className="text-left p-3 font-semibold">Rango adulto/día</th>
-                <th className="text-left p-3 rounded-r-lg font-semibold">Consideración clave</th>
-              </tr>
-            </thead>
+            <thead><tr className="bg-blue-50 text-blue-700">
+              <th className="text-left p-3 rounded-l-lg font-semibold">Parámetro</th>
+              <th className="text-left p-3 font-semibold">Inicio</th>
+              <th className="text-left p-3 rounded-r-lg font-semibold">Estable</th>
+            </tr></thead>
             <tbody className="divide-y divide-slate-100">
-              {[
-                ['Sodio (Na⁺)', '1–2 mEq/kg', 'Ajustar en hipernatremia / edema'],
-                ['Potasio (K⁺)', '1–2 mEq/kg', 'Monitorear en falla renal; riesgo arritmia'],
-                ['Fósforo (PO₄)', '20–40 mmol', 'Crítico: riesgo de síndrome de realimentación'],
-                ['Calcio (Ca²⁺)', '10–15 mEq', 'Ca × P < 200 (precipitación)'],
-                ['Magnesio (Mg²⁺)', '8–24 mEq', 'Hipomagnesemia frecuente en NP prolongada'],
-                ['Vitaminas A/C/E/K', 'Preparado estándar', 'Vitamina K puede interferir con anticoagulantes'],
-                ['Zinc, cobre, selenio', 'Multitrace estándar', 'Zinc extra en ostomías de alto gasto'],
-              ].map(([comp, rango, nota], i) => (
-                <tr key={i} className="hover:bg-slate-50">
-                  <td className="p-3 font-medium text-slate-700">{comp}</td>
-                  <td className="p-3 text-teal-700 font-mono text-xs">{rango}</td>
-                  <td className="p-3 text-slate-500">{nota}</td>
+              {[['Glucemia','c/ 6h','1× día'],['Electrolitos (Na,K,Mg,P)','Diario','2–3×/sem'],['BUN/creatinina','Diario','Semanal'],['Hemograma','Diario','Semanal'],['Función hepática','2–3×/sem','Mensual'],['Triglicéridos','Basal + c/72h','Semanal'],['Balance nitrogenado','Semanal','Mensual']].map(([p,i,e], idx) => (
+                <tr key={idx} className="hover:bg-slate-50">
+                  <td className="p-3 font-medium text-slate-700">{p}</td>
+                  <td className="p-3 text-blue-600 font-mono text-xs">{i}</td>
+                  <td className="p-3 text-slate-500">{e}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </Seccion>
-    </div>
-  )
-}
-
-// ─── Tab: Calculadora Educativa ──────────────────────────────────────────────
-
-const condiciones = {
-  normal:   { label: 'Sin estrés metabólico', factor: 1.2, prot: [0.8, 1.0] },
-  leve:     { label: 'Estrés leve (cirugía menor, infección leve)', factor: 1.3, prot: [1.0, 1.2] },
-  moderado: { label: 'Estrés moderado (trauma, sepsis leve)', factor: 1.4, prot: [1.2, 1.5] },
-  severo:   { label: 'Estrés severo (quemados, sepsis grave, TCE)', factor: 1.5, prot: [1.5, 2.0] },
-  renal:    { label: 'Insuficiencia renal (sin diálisis)', factor: 1.2, prot: [0.6, 0.8] },
-  dialisis: { label: 'Diálisis / TRRC activa', factor: 1.3, prot: [1.2, 1.5] },
-}
-
-function CalculadoraEducativa() {
-  const [form, setForm] = useState({ peso: '', talla: '', edad: '', sexo: 'M', condicion: 'normal' })
-  const [resultado, setResultado] = useState(null)
-
-  const set = (k, v) => setForm((p) => ({ ...p, [k]: v }))
-
-  const calcular = () => {
-    const P = parseFloat(form.peso)
-    const A = parseFloat(form.talla)
-    const E = parseFloat(form.edad)
-    if (!P || !A || !E || P <= 0 || A <= 0 || E <= 0) return
-
-    const cond = condiciones[form.condicion]
-    const ree =
-      form.sexo === 'M'
-        ? 66.5 + 13.75 * P + 5.003 * A - 6.775 * E
-        : 655.1 + 9.563 * P + 1.85 * A - 4.676 * E
-
-    const totalKcal = ree * cond.factor
-    const [pMin, pMax] = cond.prot
-    const protMin = pMin * P
-    const protMax = pMax * P
-    const protKcalMin = protMin * 4
-
-    const kcalNoProteinicas = totalKcal - protKcalMin
-    const glucosaG = r((kcalNoProteinicas * 0.65) / 3.4)
-    const lipidosG = r((kcalNoProteinicas * 0.35) / 9)
-    const vig = r((glucosaG * 1000) / (P * 1440), 2)
-
-    const osmEstimada = r(glucosaG * 5.5 + r(protMin) * 8 + 154)
-
-    setResultado({ P, A, E, ree: r(ree), totalKcal: r(totalKcal), factor: cond.factor,
-      protMin: r(protMin), protMax: r(protMax), protKcalMin: r(protKcalMin),
-      glucosaG, lipidosG, vig, osmEstimada, condLabel: cond.label,
-      pMin, pMax, sexo: form.sexo })
-  }
-
-  return (
-    <div className="space-y-5">
-      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
-        <p className="text-blue-800 font-bold text-base mb-1">Calculadora paso a paso</p>
-        <p className="text-blue-600 text-sm leading-relaxed">
-          Ingrese los datos del paciente y vea cómo se calcula cada requerimiento con la fórmula completa. Modo educativo — no para uso clínico directo.
-        </p>
-      </div>
-
-      {/* Formulario */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-600 mb-1.5">Peso (kg)</label>
-            <input type="number" placeholder="ej: 70" value={form.peso}
-              onChange={e => set('peso', e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-teal-400 bg-slate-50" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-600 mb-1.5">Talla (cm)</label>
-            <input type="number" placeholder="ej: 170" value={form.talla}
-              onChange={e => set('talla', e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-teal-400 bg-slate-50" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-600 mb-1.5">Edad (años)</label>
-            <input type="number" placeholder="ej: 45" value={form.edad}
-              onChange={e => set('edad', e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-teal-400 bg-slate-50" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-600 mb-1.5">Sexo</label>
-            <select value={form.sexo} onChange={e => set('sexo', e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-teal-400 bg-slate-50">
-              <option value="M">Masculino</option>
-              <option value="F">Femenino</option>
-            </select>
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-slate-600 mb-1.5">Condición clínica</label>
-          <select value={form.condicion} onChange={e => set('condicion', e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-teal-400 bg-slate-50">
-            {Object.entries(condiciones).map(([k, v]) => (
-              <option key={k} value={k}>{v.label}</option>
-            ))}
-          </select>
-        </div>
-        <button onClick={calcular}
-          className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 rounded-xl text-base transition-colors flex items-center justify-center gap-2">
-          <Calculator size={20} />
-          Calcular paso a paso
-        </button>
-      </div>
-
-      {/* Resultados */}
-      {resultado && (
-        <div className="space-y-4">
-          <div className="bg-teal-600 text-white rounded-2xl p-4 text-center">
-            <p className="text-teal-200 text-sm font-medium mb-1">Paciente: {resultado.P} kg · {resultado.A} cm · {resultado.E} años · {resultado.sexo === 'M' ? 'Masculino' : 'Femenino'}</p>
-            <p className="font-bold text-lg">{resultado.condLabel}</p>
-          </div>
-
-          <PasoCalculo
-            numero="1" color="teal"
-            titulo={`Gasto Energético en Reposo — Harris-Benedict (${resultado.sexo === 'M' ? 'Hombre' : 'Mujer'})`}
-            formula={resultado.sexo === 'M'
-              ? 'REE = 66.5 + (13.75 × P) + (5.003 × A) - (6.775 × edad)'
-              : 'REE = 655.1 + (9.563 × P) + (1.850 × A) - (4.676 × edad)'}
-            sustitucion={resultado.sexo === 'M'
-              ? `66.5 + (13.75 × ${resultado.P}) + (5.003 × ${resultado.A}) - (6.775 × ${resultado.E})`
-              : `655.1 + (9.563 × ${resultado.P}) + (1.850 × ${resultado.A}) - (4.676 × ${resultado.E})`}
-            resultado={`${resultado.ree} kcal/día`}
-          />
-
-          <PasoCalculo
-            numero="2" color="blue"
-            titulo="Requerimiento calórico total (con factor de estrés)"
-            formula="GET = REE × Factor de estrés"
-            sustitucion={`${resultado.ree} × ${resultado.factor}`}
-            resultado={`${resultado.totalKcal} kcal/día`}
-            nota={`Factor ${resultado.factor} corresponde a: ${resultado.condLabel}`}
-          />
-
-          <PasoCalculo
-            numero="3" color="emerald"
-            titulo="Proteínas"
-            formula={`Proteínas = ${resultado.pMin}–${resultado.pMax} g/kg/día × peso`}
-            sustitucion={`${resultado.pMin}–${resultado.pMax} × ${resultado.P} kg`}
-            resultado={`${resultado.protMin}–${resultado.protMax} g/día  (${resultado.protKcalMin}–${r(resultado.protMax * 4)} kcal de proteína)`}
-          />
-
-          <PasoCalculo
-            numero="4" color="amber"
-            titulo="Dextrosa — con control del VIG"
-            formula="Glucosa (g) = (kcal no proteínicas × 65%) ÷ 3.4 kcal/g"
-            sustitucion={`(${r(resultado.totalKcal - resultado.protKcalMin)} × 0.65) ÷ 3.4`}
-            resultado={`${resultado.glucosaG} g/día`}
-            nota={`VIG = ${resultado.vig} mg/kg/min ${resultado.vig > 5 ? '⚠️ Supera el máximo de 5 mg/kg/min — reducir dosis' : '✓ Dentro del rango seguro (≤ 5 mg/kg/min)'}`}
-          />
-
-          <PasoCalculo
-            numero="5" color="violet"
-            titulo="Lípidos"
-            formula="Lípidos (g) = (kcal no proteínicas × 35%) ÷ 9 kcal/g"
-            sustitucion={`(${r(resultado.totalKcal - resultado.protKcalMin)} × 0.35) ÷ 9`}
-            resultado={`${resultado.lipidosG} g/día  (máx recomendado: ${r(resultado.P * 2.5)} g/día)`}
-            nota={resultado.lipidosG > resultado.P * 2.5 ? `⚠️ Supera 2.5 g/kg/día — ajustar distribución calórica` : undefined}
-          />
-
-          <PasoCalculo
-            numero="6" color="teal"
-            titulo="Osmolaridad estimada (simplificada)"
-            formula="Osm ≈ (AA g × 8) + (Dextrosa g × 5.5) + electrolitos base"
-            sustitucion={`(${resultado.protMin} × 8) + (${resultado.glucosaG} × 5.5) + 154`}
-            resultado={`≈ ${resultado.osmEstimada} mOsm/L → ${resultado.osmEstimada > 900 ? '🔴 Vía CENTRAL obligatoria' : '🟢 Compatible con vía periférica'}`}
-            nota="Esta fórmula es una estimación educativa. La osmolalidad real depende de todos los aditivos."
-          />
-
-          {/* Resumen compacto */}
-          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5">
-            <p className="font-bold text-slate-700 text-base mb-3">Resumen del perfil diario</p>
-            <div className="grid grid-cols-2 gap-3">
-              <Dato label="Energía total" valor={`${resultado.totalKcal} kcal`} color="teal" />
-              <Dato label="Proteínas" valor={`${resultado.protMin}–${resultado.protMax} g`} color="teal" />
-              <Dato label="Dextrosa" valor={`${resultado.glucosaG} g`} color="amber" />
-              <Dato label="Lípidos" valor={`${resultado.lipidosG} g`} color="violet" />
-              <Dato label="VIG" valor={`${resultado.vig} mg/kg/min`} color={resultado.vig > 5 ? 'red' : 'blue'} />
-              <Dato label="Osmolaridad" valor={`≈ ${resultado.osmEstimada} mOsm/L`} color={resultado.osmEstimada > 900 ? 'red' : 'blue'} />
-            </div>
-          </div>
-
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-            <p className="text-amber-700 text-sm leading-relaxed">
-              <span className="font-bold">Nota académica: </span>
-              Estos cálculos son una estimación inicial. En la práctica clínica se ajustan según balance nitrogenado, glucometría, perfil de lípidos y función renal/hepática del paciente.
-            </p>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Tab: Estabilidad ────────────────────────────────────────────────────────
-
-function Estabilidad() {
-  return (
-    <div className="space-y-4">
-      <Seccion titulo="Osmolalidad y acceso venoso" icono={FlaskConical} defaultOpen>
-        <p className="text-slate-600 text-base leading-relaxed">
-          La osmolalidad determina si la NP puede administrarse por una vena periférica. Concentraciones hiperosmolares dañan el endotelio venoso y causan flebitis química.
-        </p>
-        <div className="grid grid-cols-2 gap-3">
-          <Dato label="Periférica (seguro)" valor="≤ 900 mOsm/L" color="teal" />
-          <Dato label="Central (obligatorio)" valor="> 900 mOsm/L" color="red" />
-        </div>
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 font-mono text-sm">
-          <p className="text-slate-500 text-xs mb-2 font-sans font-semibold">Fórmula simplificada:</p>
-          <p>Osm ≈ (AA g/L × 8)</p>
-          <p>    + (Dextrosa g/L × 5.5)</p>
-          <p>    + (Na mEq/L × 2)</p>
-          <p>    + (K mEq/L × 2)</p>
-          <p>    + otros electrolitos</p>
-        </div>
-        <p className="text-slate-500 text-sm leading-relaxed">Los lípidos son iso-osmóticos (≈ 350 mOsm/L) y no elevan significativamente la osmolalidad total de la mezcla 3-en-1.</p>
-      </Seccion>
-
-      <Seccion titulo="Producto Ca × P — precipitación" icono={AlertTriangle}>
-        <p className="text-slate-600 text-base leading-relaxed">
-          La precipitación de fosfato de calcio es un riesgo letal en NP. El precipitado puede pasar a la circulación y causar embolia pulmonar.
-        </p>
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <p className="font-bold text-red-800 text-base mb-2">Límite de seguridad</p>
-          <p className="font-mono text-red-700 text-base">Ca (mEq/L) × P (mmol/L) &lt; 200</p>
-          <p className="text-red-600 text-sm mt-2">Muchas instituciones usan &lt; 150 como margen de seguridad adicional.</p>
-        </div>
-        <div className="space-y-2 text-slate-600 text-sm">
-          <p className="flex items-start gap-2"><CheckCircle size={14} className="text-teal-500 flex-shrink-0 mt-0.5" />Los aminoácidos actúan como quelantes y aumentan el límite de solubilidad del Ca-P.</p>
-          <p className="flex items-start gap-2"><CheckCircle size={14} className="text-teal-500 flex-shrink-0 mt-0.5" />pH más ácido (pH 5-6 en bolsas sin bicarbonato) favorece la solubilidad del fosfato.</p>
-          <p className="flex items-start gap-2"><CheckCircle size={14} className="text-teal-500 flex-shrink-0 mt-0.5" />El calcio debe añadirse al final, con agitación, y antes de los fosfatos si es posible.</p>
-          <p className="flex items-start gap-2"><AlertTriangle size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />El EDUS calcula automáticamente este producto y alerta si se supera el límite institucional.</p>
-        </div>
-      </Seccion>
-
-      <Seccion titulo="Estabilidad de la emulsión lipídica" icono={FlaskConical}>
-        <p className="text-slate-600 text-base leading-relaxed">
-          Las emulsiones lipídicas son sistemas termodinámicamente inestables. La coalescencia (fusión de gotas de grasa) puede causar embolia grasa.
-        </p>
-        <div className="grid grid-cols-1 gap-3">
+      </Acordeon>
+      <Acordeon titulo="Complicaciones principales" icono={AlertTriangle}>
+        <div className="space-y-3">
           {[
-            { factor: 'pH', efecto: 'pH &lt; 5 o &gt; 8 desestabiliza la emulsión. Rango seguro: 5.5–8.0' },
-            { factor: 'Cationes divalentes (Ca²⁺, Mg²⁺)', efecto: 'Concentraciones elevadas reducen el potencial zeta y promueven coalescencia.' },
-            { factor: 'Temperatura', efecto: 'La emulsión debe mantenerse entre 2–8 °C hasta 24–48 h antes del uso.' },
-            { factor: 'Luz UV', efecto: 'Degrada vitaminas liposolubles y puede oxidar los ácidos grasos poliinsaturados.' },
-          ].map((item, i) => (
-            <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-3">
-              <p className="font-semibold text-slate-700 text-sm">{item.factor}</p>
-              <p className="text-slate-500 text-sm mt-0.5">{item.efecto}</p>
+            { tipo: 'Infecciosas', items: ['Bacteremia asociada a catéter (CLABSI) — la más grave', 'Infección del sitio de inserción', 'Fungemia (Candida) en pacientes inmunodeprimidos'] },
+            { tipo: 'Metabólicas', items: ['Hiperglucemia — riesgo en UCI, diabetes, sepsis', 'Síndrome de realimentación (hipoP, hipoK, hipoMg) — especialmente en desnutrición grave', 'Enfermedad hepática asociada a NP (IFALD) — en NP prolongada', 'Hiperlipidemia por infusión de lípidos excesiva'] },
+            { tipo: 'Mecánicas', items: ['Neumotórax en inserción de CVC', 'Trombosis venosa relacionada a catéter', 'Oclusión del catéter', 'Extravasación y tromboflebitis (vía periférica)'] },
+          ].map((grupo, i) => (
+            <div key={i}>
+              <p className="font-bold text-slate-700 text-sm mb-2">{grupo.tipo}</p>
+              {grupo.items.map((it, j) => (
+                <div key={j} className="flex items-start gap-2 text-slate-600 text-sm py-1">
+                  <AlertTriangle size={13} className="text-amber-400 flex-shrink-0 mt-0.5" />{it}
+                </div>
+              ))}
             </div>
           ))}
         </div>
-      </Seccion>
+      </Acordeon>
     </div>
   )
 }
 
-// ─── Tab: Flujo CCSS ─────────────────────────────────────────────────────────
+// ─── NUTRICIÓN ────────────────────────────────────────────────────────────────
 
-function FlujoCCSS() {
+function NutricionEvaluacion() {
+  return (
+    <div className="space-y-4">
+      <Acordeon titulo="Tamizaje nutricional" icono={BookOpen} defaultOpen>
+        <p className="text-slate-600 text-base leading-relaxed mb-3">El tamizaje identifica el riesgo nutricional antes de iniciar NP. En la CCSS se usan principalmente NRS-2002 (adultos hospitalizados) y MUST (comunitario/ambulatorio).</p>
+        <div className="space-y-3">
+          {[
+            { herr: 'NRS-2002', cuando: 'Adultos hospitalizados', puntaje: '≥ 3 = riesgo nutricional. Indicar intervención.', dim: 'Estado nutricional + severidad de enfermedad + edad > 70' },
+            { herr: 'MUST', cuando: 'Comunidad y ambulatorio', puntaje: '0 = bajo riesgo, 1 = riesgo medio, ≥ 2 = alto riesgo', dim: 'IMC + pérdida de peso + enfermedad aguda' },
+            { herr: 'NUTRIC Score', cuando: 'UCI', puntaje: '≥ 5 (sin IL-6) = alto riesgo. Inicio precoz de soporte nutricional.', dim: 'Edad, APACHE II, SOFA, comorbilidades' },
+          ].map((h, i) => (
+            <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full">{h.herr}</span>
+                <span className="text-slate-500 text-xs">{h.cuando}</span>
+              </div>
+              <p className="text-slate-600 text-sm">{h.dim}</p>
+              <p className="text-emerald-700 font-semibold text-sm mt-1">{h.puntaje}</p>
+            </div>
+          ))}
+        </div>
+      </Acordeon>
+      <Acordeon titulo="Parámetros de evaluación nutricional" icono={Calculator}>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="bg-emerald-50 text-emerald-700">
+              <th className="text-left p-3 rounded-l-lg font-semibold">Parámetro</th>
+              <th className="text-left p-3 font-semibold">Referencia</th>
+              <th className="text-left p-3 rounded-r-lg font-semibold">Limitaciones</th>
+            </tr></thead>
+            <tbody className="divide-y divide-slate-100">
+              {[['IMC','18.5–24.9 kg/m²','No refleja composición corporal'],['Albúmina','3.5–5.0 g/dL','Reactante de fase aguda — no es marcador nutricional puro'],['Prealbúmina (transtirretina)','18–45 mg/dL','Mejor para seguimiento a corto plazo'],['PCR','< 5 mg/L','Refleja inflamación; inversamente relacionada con prealbúmina'],['Balance nitrogenado','> 0 = anabolismo','N ingerido(g) - N excretado(g de urea+4)'],['Fuerza de agarre (dinamometría)','≥ 30 kg (H), ≥ 20 kg (M)','Marcador funcional — no depende de inflamación']].map(([p,r,l], i) => (
+                <tr key={i} className="hover:bg-slate-50">
+                  <td className="p-3 font-medium text-slate-700">{p}</td>
+                  <td className="p-3 text-emerald-700 font-mono text-xs">{r}</td>
+                  <td className="p-3 text-slate-400 text-xs">{l}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Acordeon>
+      <Acordeon titulo="Síndrome de realimentación" icono={AlertTriangle}>
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-3">
+          <p className="font-bold text-red-800 text-base">Complicación metabólica grave al reiniciar la nutrición</p>
+          <p className="text-red-700 text-sm mt-1 leading-relaxed">Ocurre al iniciar NP (o nutrición enteral) en pacientes con desnutrición grave, ayuno prolongado o alcoholismo crónico. La entrada de carbohidratos activa la insulina → captación celular de fosfato, potasio y magnesio → hipofosforemia, hipocalemia e hipomagnesemia severas.</p>
+        </div>
+        <p className="font-semibold text-slate-700 text-sm mb-2">Factores de riesgo:</p>
+        {['IMC < 16 kg/m²', 'Pérdida de peso > 15% en 3–6 meses', 'Ayuno > 10 días', 'Alcoholismo crónico', 'Anorexia nerviosa'].map((t, i) => (
+          <div key={i} className="flex items-start gap-2 text-slate-600 text-sm"><CheckCircle size={13} className="text-emerald-500 flex-shrink-0 mt-0.5" />{t}</div>
+        ))}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mt-3">
+          <p className="font-bold text-amber-800 text-sm">Prevención:</p>
+          <p className="text-amber-700 text-sm mt-1">Iniciar con 10 kcal/kg/día (máx 20 kcal/kg/día) los primeros 2–3 días. Reponer tiamina (B1) ANTES de iniciar la NP. Monitorear electrolitos cada 6–12h el primer día.</p>
+        </div>
+      </Acordeon>
+      <Acordeon titulo="Transición NP → Nutrición Enteral → Oral">
+        <p className="text-slate-600 text-base leading-relaxed mb-3">La transición debe ser gradual para evitar desnutrición durante el cambio. El criterio principal es que la vía enteral/oral cubra al menos el 60% de los requerimientos antes de suspender la NP.</p>
+        <div className="space-y-2">
+          {['Iniciar NE o ingesta oral en cuanto el GI sea funcional, aunque sea parcialmente.',
+            'Reducir la NP en un 25–50% por cada comida tolerada de modo significativo.',
+            'Suspender la NP cuando el aporte oral o enteral cubre ≥ 60% de las necesidades por 2 días consecutivos.',
+            'Monitorear el peso, la glucemia y los electrolitos durante la transición.',
+            'En intestino corto: la adaptación intestinal puede tardar 1–2 años. La NP puede reducirse progresivamente.'].map((t, i) => (
+            <div key={i} className="flex items-start gap-2 text-slate-600 text-sm"><CheckCircle size={13} className="text-emerald-500 flex-shrink-0 mt-0.5" />{t}</div>
+          ))}
+        </div>
+      </Acordeon>
+    </div>
+  )
+}
+
+// ─── ENFERMERÍA ───────────────────────────────────────────────────────────────
+
+function EnfermeriaContenido() {
+  return (
+    <div className="space-y-4">
+      <Acordeon titulo="Técnica aséptica en administración de NP" icono={CheckCircle} defaultOpen>
+        <div className="space-y-3">
+          {[
+            { paso: '1. Higiene de manos', detalle: 'Lavado quirúrgico o uso de alcohol gel al 70% antes de cualquier manipulación. Es la intervención más eficaz para prevenir CLABSI.' },
+            { paso: '2. Preparar el campo estéril', detalle: 'Superficie limpia y desinfectada. Materiales abiertos sin contaminar la punta. Gorro, mascarilla y guantes según protocolo institucional.' },
+            { paso: '3. Desinfección del conector', detalle: 'Frotar el conector needlefree con torunda de alcohol 70% durante 15 segundos con fricción activa. Dejar secar 15 segundos antes de conectar.' },
+            { paso: '4. Verificación de la bolsa', detalle: 'Confirmar: nombre del paciente, fecha de elaboración, fecha de vencimiento, aspecto visual (homogéneo, sin partículas). No usar si hay dudas.' },
+            { paso: '5. Purga de la tubuladura', detalle: 'Eliminar todo el aire antes de conectar. Una pequeña cantidad de aire puede causar embolia gaseosa en vía central.' },
+            { paso: '6. Registro', detalle: 'Anotar hora de inicio, volumen de la bolsa, velocidad de infusión y estado del sitio de inserción al inicio.' },
+          ].map((p, i) => (
+            <div key={i} className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded-xl p-4">
+              <CheckCircle size={18} className="text-pink-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-slate-700 text-sm">{p.paso}</p>
+                <p className="text-slate-500 text-sm mt-0.5 leading-relaxed">{p.detalle}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Acordeon>
+      <Acordeon titulo="Cuidados del catéter venoso central" icono={Heart}>
+        {[
+          { aspecto: 'Apósito', cuidado: 'Cambio cada 5–7 días con apósito transparente semipermeable, o antes si está húmedo, despegado o sucio. Usar clorhexidina en gel para limpieza del sitio.' },
+          { aspecto: 'Conector needlefree', cuidado: 'Cambiar según protocolo institucional (generalmente cada 72–96 h). Limpiar siempre antes de usar.' },
+          { aspecto: 'Tubuladura de NP', cuidado: 'Cambio cada 24 horas para la NP, dado el alto contenido en nutrientes que favorece el crecimiento bacteriano.' },
+          { aspecto: 'Permeabilidad del catéter', cuidado: 'Flush con solución salina antes y después de la infusión. Heparinización según indicación. No forzar si hay resistencia.' },
+          { aspecto: 'Restricciones en el lumen NP', cuidado: 'Idealmente dedicar un lumen exclusivo para la NP. No extraer sangre ni administrar otros medicamentos por el mismo lumen durante la infusión de NP.' },
+        ].map((it, i) => (
+          <div key={i} className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <p className="font-semibold text-pink-700 text-sm">{it.aspecto}</p>
+            <p className="text-slate-600 text-sm mt-0.5 leading-relaxed">{it.cuidado}</p>
+          </div>
+        ))}
+      </Acordeon>
+      <Acordeon titulo="Monitoreo durante la infusión">
+        <p className="text-slate-600 text-sm mb-3">Controles mínimos durante la infusión de NP en paciente hospitalizado:</p>
+        <div className="space-y-2">
+          {[
+            ['Cada 30 min (primeras 2h)', 'Signos vitales, sitio de inserción, flujo correcto'],
+            ['Cada 1–2 horas', 'Temperatura, presión arterial, estado de conciencia'],
+            ['Cada 4–6 horas', 'Glucometría capilar en paciente con riesgo de hiperglucemia'],
+            ['Inicio y fin de cada bolsa', 'Registro de la hora, volumen infundido, aspecto del catéter'],
+            ['Al detectar cambios', 'Enrojecimiento, fiebre, escalofríos, rechazo de flujo → notificar de inmediato'],
+          ].map(([fr, acc], i) => (
+            <div key={i} className="flex gap-3 bg-slate-50 border border-slate-200 rounded-xl p-3">
+              <span className="bg-pink-100 text-pink-700 text-xs font-bold px-2 py-1 rounded-lg flex-shrink-0 h-fit">{fr}</span>
+              <p className="text-slate-600 text-sm leading-relaxed">{acc}</p>
+            </div>
+          ))}
+        </div>
+      </Acordeon>
+      <Acordeon titulo="Educación al paciente y familia para NP domiciliaria">
+        <p className="text-slate-600 text-base leading-relaxed mb-3">La enfermería lidera el proceso educativo antes del alta. El paciente y cuidador deben demostrar competencia práctica antes de ir a casa.</p>
+        <div className="space-y-2">
+          {['Preparación del área y materiales (demostración práctica devuelta).',
+            'Verificación visual de la bolsa — qué es normal y qué no.',
+            'Conexión y desconexión con técnica aséptica.',
+            'Programación y manejo básico de la bomba de infusión.',
+            'Reconocimiento de señales de alarma y protocolo de acción.',
+            'Cuidado del apósito y cuándo llamar al equipo.',
+            'Gestión de residuos biopeligrosos en el hogar.',
+            'Número de emergencia del equipo y del hospital.'].map((t, i) => (
+            <div key={i} className="flex items-start gap-2 text-slate-600 text-sm"><CheckCircle size={13} className="text-pink-500 flex-shrink-0 mt-0.5" />{t}</div>
+          ))}
+        </div>
+        <div className="bg-pink-50 border border-pink-200 rounded-xl p-3 mt-2">
+          <p className="text-pink-700 text-sm font-bold">Regla de oro en educación al paciente:</p>
+          <p className="text-pink-600 text-sm mt-0.5">"Diga uno, muestre uno, haga uno." El paciente o cuidador debe realizar el procedimiento supervisado antes del alta.</p>
+        </div>
+      </Acordeon>
+    </div>
+  )
+}
+
+// ─── Flujo CCSS (compartido) ──────────────────────────────────────────────────
+
+function FlujoCCSS({ carrera }) {
+  const enfasis = {
+    farmacia: { pasos: [1, 2, 3, 4, 5], nota: 'El farmacéutico es el validador experto del sistema: interpreta los cálculos del EDUS, verifica la compatibilidad fisicoquímica y garantiza la calidad del preparado estéril.' },
+    medicina: { pasos: [1, 5, 6], nota: 'El médico inicia el proceso prescribiendo en el EDUS con los datos clínicos del paciente. También monitorea la respuesta y decide cuándo transicionar o suspender la NP.' },
+    nutricion: { pasos: [1, 5, 6], nota: 'El nutricionista define los requerimientos energéticos y proteicos, ajusta la prescripción según evolución metabólica y lidera la transición a alimentación enteral u oral.' },
+    enfermeria: { pasos: [5, 6], nota: 'Enfermería administra la NP, monitorea al paciente, detecta complicaciones en tiempo real y educa al paciente y cuidador para el alta domiciliaria.' },
+  }[carrera] || { pasos: [1,2,3,4,5,6], nota: '' }
+
   const pasos = [
-    {
-      num: 1, titulo: 'Prescripción médica en EDUS',
-      desc: 'El médico ingresa al módulo de NP en el EDUS y completa: datos del paciente, macronutrientes (g/kg/día), electrolitos, vitaminas y vía de acceso. El sistema aplica las guías institucionales (ASPEN/ESPEN/CCSS) y genera un cálculo inicial.',
-      icon: '👨‍⚕️',
-    },
-    {
-      num: 2, titulo: 'Validación farmacéutica',
-      desc: 'El farmacéutico de la Unidad de Nutrición Parenteral (UNP) revisa la prescripción en su bandeja del EDUS. Verifica: dosis de macronutrientes, osmolalidad, producto Ca×P, compatibilidad fisicoquímica. Puede modificar y deja constancia digital.',
-      icon: '💊',
-    },
-    {
-      num: 3, titulo: 'Generación de hoja de preparación',
-      desc: 'Una vez validada, el EDUS genera automáticamente: fórmula maestra con volúmenes exactos por insumo, etiquetas con código de barras para cada bolsa (nombre, composición, fecha de caducidad, velocidad de infusión) y orden para el técnico en farmacia.',
-      icon: '📋',
-    },
-    {
-      num: 4, titulo: 'Preparación (cabina de flujo laminar)',
-      desc: 'En hospitales de alta complejidad, las etiquetas se escanean y los datos se envían a compounders automáticos (Baxter ExactaMix, B. Braun APEX) que dosifican cada ingrediente con precisión. En centros más pequeños, la preparación es manual con doble control.',
-      icon: '🧪',
-    },
-    {
-      num: 5, titulo: 'Control de calidad y liberación',
-      desc: 'El farmacéutico realiza la verificación final: inspección visual, gravimetría (pesaje) y revisión del código de barras. El lote de cada insumo queda registrado y asociado al paciente en el EDUS para trazabilidad total.',
-      icon: '✅',
-    },
-    {
-      num: 6, titulo: 'Dispensación y cadena de frío',
-      desc: 'La bolsa se almacena a 2–8 °C hasta su entrega. Para NP domiciliaria, el paciente retira las bolsas de la farmacia hospitalaria y las transporta en frío. La caducidad es de 5–7 días en refrigeración.',
-      icon: '❄️',
-    },
+    { num: 1, icon: '👨‍⚕️', titulo: 'Prescripción médica en EDUS', desc: 'El médico ingresa al módulo de NP en el EDUS. El sistema aplica guías ASPEN/ESPEN/CCSS y genera un cálculo inicial. El médico personaliza según el paciente.' },
+    { num: 2, icon: '💊', titulo: 'Validación farmacéutica', desc: 'El farmacéutico revisa la prescripción: dosis, osmolalidad, producto Ca×P, compatibilidad fisicoquímica. Puede modificar y deja constancia digital de la intervención.' },
+    { num: 3, icon: '📋', titulo: 'Generación de hoja de preparación', desc: 'El EDUS genera la fórmula maestra con volúmenes exactos, etiquetas con código de barras y la orden para el técnico en farmacia.' },
+    { num: 4, icon: '🧪', titulo: 'Preparación estéril', desc: 'En cabina de flujo laminar (ISO 5). Con compounder automático en hospitales de alta complejidad. El farmacéutico supervisa y verifica el producto terminado.' },
+    { num: 5, icon: '✅', titulo: 'Liberación y control de calidad', desc: 'Inspección visual, gravimetría y verificación de código de barras. Cada lote registrado en el EDUS vinculado al paciente para trazabilidad total.' },
+    { num: 6, icon: '💉', titulo: 'Administración y seguimiento', desc: 'Enfermería administra con técnica aséptica, monitorea al paciente y registra el proceso. Nutrición y medicina ajustan la prescripción según evolución.' },
   ]
 
   return (
     <div className="space-y-4">
-      <div className="bg-teal-50 border border-teal-200 rounded-2xl p-4">
-        <p className="text-teal-800 text-base leading-relaxed">
-          Desde 2020–2021 la CCSS implementó el módulo de NP en el EDUS, primero en hospitales nacionales y luego en toda la red. Esto reemplazó las hojas de cálculo manuales y estandarizó el proceso.
-        </p>
-      </div>
-
-      <div className="space-y-3">
-        {pasos.map((paso) => (
-          <div key={paso.num} className="bg-white border border-slate-200 rounded-2xl p-5 flex items-start gap-4">
-            <div className="bg-teal-50 border border-teal-200 rounded-xl w-12 h-12 flex items-center justify-center text-xl flex-shrink-0">
-              {paso.icon}
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">Paso {paso.num}</span>
-                <p className="font-bold text-slate-800 text-base">{paso.titulo}</p>
-              </div>
-              <p className="text-slate-600 text-sm leading-relaxed">{paso.desc}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5">
-        <p className="font-bold text-slate-700 text-base mb-3">El rol del farmacéutico en la CCSS</p>
-        <p className="text-slate-600 text-sm leading-relaxed mb-3">
-          El farmacéutico ya no hace los cálculos manualmente — el EDUS lo hace. Su rol es el de <strong>validador experto</strong>: interpreta los resultados, ajusta la terapia a la fisiología del paciente, garantiza la calidad del preparado estéril y documenta cada intervención.
-        </p>
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          {['Verificación clínica', 'Compatibilidad fisicoquímica', 'Control de osmolalidad', 'Supervisión de preparación', 'Trazabilidad de insumos', 'Seguimiento domiciliario'].map((item, i) => (
-            <div key={i} className="flex items-center gap-2 text-slate-600">
-              <CheckCircle size={14} className="text-teal-500 flex-shrink-0" />
-              {item}
-            </div>
-          ))}
+      {enfasis.nota && (
+        <div className="bg-teal-50 border border-teal-200 rounded-2xl p-4">
+          <p className="text-teal-800 text-base leading-relaxed">{enfasis.nota}</p>
         </div>
-      </div>
+      )}
+      {pasos.map((paso) => (
+        <div key={paso.num} className={`bg-white border rounded-2xl p-5 flex items-start gap-4 transition-all ${
+          enfasis.pasos.includes(paso.num) ? 'border-teal-300 ring-1 ring-teal-100' : 'border-slate-200 opacity-70'
+        }`}>
+          <div className="bg-teal-50 border border-teal-200 rounded-xl w-12 h-12 flex items-center justify-center text-xl flex-shrink-0">{paso.icon}</div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${enfasis.pasos.includes(paso.num) ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-500'}`}>Paso {paso.num}</span>
+              {enfasis.pasos.includes(paso.num) && <span className="text-xs font-bold text-teal-600">Tu rol activo</span>}
+              <p className="font-bold text-slate-800 text-sm">{paso.titulo}</p>
+            </div>
+            <p className="text-slate-500 text-sm leading-relaxed">{paso.desc}</p>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
 
-// ─── Page ────────────────────────────────────────────────────────────────────
+// ─── Definición de carreras ───────────────────────────────────────────────────
 
-const tabs = [
-  { id: 'fundamentos', label: 'Fundamentos', icon: BookOpen },
-  { id: 'calculadora', label: 'Calculadora', icon: Calculator },
-  { id: 'estabilidad', label: 'Estabilidad', icon: FlaskConical },
-  { id: 'flujo', label: 'Flujo CCSS', icon: GitBranch },
-]
+const carreras = {
+  farmacia: {
+    label: 'Farmacia', emoji: '💊',
+    descripcion: 'Cálculo, validación, estabilidad y preparación estéril',
+    color: { bg: 'bg-violet-50', border: 'border-violet-300', iconBg: 'bg-violet-600', texto: 'text-violet-800', activo: 'bg-violet-600' },
+    tabs: [
+      { id: 'calculos', label: 'Cálculos', icon: Calculator, contenido: () => <FarmaciaCalculadora /> },
+      { id: 'estabilidad', label: 'Estabilidad', icon: FlaskConical, contenido: () => <FarmaciaEstabilidad /> },
+      { id: 'biotecnologia', label: 'Biotecnología', icon: FlaskConical, contenido: () => <BiotecnologiaNP /> },
+      { id: 'flujo', label: 'Flujo CCSS', icon: GitBranch, contenido: () => <FlujoCCSS carrera="farmacia" /> },
+    ],
+  },
+  medicina: {
+    label: 'Medicina', emoji: '🩺',
+    descripcion: 'Indicaciones, prescripción, monitoreo y complicaciones',
+    color: { bg: 'bg-blue-50', border: 'border-blue-300', iconBg: 'bg-blue-600', texto: 'text-blue-800', activo: 'bg-blue-600' },
+    tabs: [
+      { id: 'indicaciones', label: 'Indicaciones', icon: Stethoscope, contenido: () => <MedicinaIndicaciones /> },
+      { id: 'biotecnologia', label: 'Biotecnología', icon: FlaskConical, contenido: () => <BiotecnologiaNP /> },
+      { id: 'flujo', label: 'Flujo CCSS', icon: GitBranch, contenido: () => <FlujoCCSS carrera="medicina" /> },
+    ],
+  },
+  nutricion: {
+    label: 'Nutrición', emoji: '🥗',
+    descripcion: 'Evaluación, requerimientos, transición y seguimiento',
+    color: { bg: 'bg-emerald-50', border: 'border-emerald-300', iconBg: 'bg-emerald-600', texto: 'text-emerald-800', activo: 'bg-emerald-600' },
+    tabs: [
+      { id: 'evaluacion', label: 'Evaluación', icon: BookOpen, contenido: () => <NutricionEvaluacion /> },
+      { id: 'calculos', label: 'Requerimientos', icon: Calculator, contenido: () => <FarmaciaCalculadora /> },
+      { id: 'biotecnologia', label: 'Biotecnología', icon: FlaskConical, contenido: () => <BiotecnologiaNP /> },
+      { id: 'flujo', label: 'Flujo CCSS', icon: GitBranch, contenido: () => <FlujoCCSS carrera="nutricion" /> },
+    ],
+  },
+  enfermeria: {
+    label: 'Enfermería', emoji: '💉',
+    descripcion: 'Administración, cuidados del catéter y educación al paciente',
+    color: { bg: 'bg-pink-50', border: 'border-pink-300', iconBg: 'bg-pink-500', texto: 'text-pink-800', activo: 'bg-pink-500' },
+    tabs: [
+      { id: 'administracion', label: 'Administración', icon: CheckCircle, contenido: () => <EnfermeriaContenido /> },
+      { id: 'biotecnologia', label: 'Biotecnología', icon: FlaskConical, contenido: () => <BiotecnologiaNP /> },
+      { id: 'flujo', label: 'Flujo CCSS', icon: GitBranch, contenido: () => <FlujoCCSS carrera="enfermeria" /> },
+    ],
+  },
+}
+
+// ─── Página principal ─────────────────────────────────────────────────────────
 
 export default function Estudiante() {
-  const [activeTab, setActiveTab] = useState('fundamentos')
+  const [carreraId, setCarreraId] = useState(null)
+  const [activeTab, setActiveTab] = useState(null)
+
+  const carrera = carreraId ? carreras[carreraId] : null
+
+  const seleccionar = (id) => {
+    setCarreraId(id)
+    setActiveTab(carreras[id].tabs[0].id)
+  }
+
+  const volver = () => { setCarreraId(null); setActiveTab(null) }
+
+  const tabActual = carrera?.tabs.find(t => t.id === activeTab)
 
   return (
     <div className="min-h-screen bg-slate-50">
       <NavBar />
       <div className="max-w-3xl mx-auto px-4 py-6">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="inline-flex items-center gap-2 bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-semibold mb-3">
-            NutriVida Biotech · Módulo Educativo
-          </div>
-          <h1 className="text-3xl font-bold text-slate-900 leading-tight">Nutrición Parenteral</h1>
-          <p className="text-slate-500 mt-1 text-base">
-            Fundamentos, cálculos paso a paso y flujo clínico para estudiantes de Farmacia, Medicina y Nutrición.
-          </p>
-        </div>
 
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5">
-          <p className="text-amber-800 text-sm leading-relaxed">
-            <span className="font-bold">Herramienta educativa — </span>
-            Los cálculos son orientativos. Toda prescripción de NP debe ser realizada y validada por profesionales de salud calificados.
-          </p>
-        </div>
+        {/* ── Selector de carrera ─────────────────────────────────────── */}
+        {!carreraId && (
+          <div>
+            <div className="mb-6">
+              <div className="inline-flex items-center gap-2 bg-violet-100 text-violet-700 px-3 py-1 rounded-full text-xs font-semibold mb-3">
+                NutriVida Biotech · Módulo Educativo
+              </div>
+              <h1 className="text-3xl font-bold text-slate-900 leading-tight">Para estudiantes de salud</h1>
+              <p className="text-slate-500 mt-1 text-base leading-relaxed">
+                Contenido clínico relevante para tu carrera, con base en guías ESPEN 2023, ASPEN 2022 y protocolos CCSS.
+              </p>
+            </div>
 
-        {/* Tabs */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="flex border-b border-slate-200 overflow-x-auto">
-            {tabs.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id)}
-                className={`flex items-center gap-2 px-5 py-4 text-sm font-semibold transition-colors flex-shrink-0 ${
-                  activeTab === id
-                    ? 'bg-violet-50 text-violet-700 border-b-2 border-violet-600'
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <Icon size={17} />
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="p-5">
-            {activeTab === 'fundamentos' && <Fundamentos />}
-            {activeTab === 'calculadora' && <CalculadoraEducativa />}
-            {activeTab === 'estabilidad' && <Estabilidad />}
-            {activeTab === 'flujo' && <FlujoCCSS />}
-          </div>
-        </div>
+            <LemaEquipo />
 
-        <p className="text-center text-xs text-slate-400 mt-4">
-          Basado en ESPEN 2023 · ASPEN 2022 · Protocolos CCSS Costa Rica
-        </p>
+            <p className="text-slate-600 font-semibold text-base mb-4">¿Cuál es tu carrera?</p>
+            <div className="grid grid-cols-2 gap-4">
+              {Object.entries(carreras).map(([id, c]) => (
+                <button
+                  key={id}
+                  onClick={() => seleccionar(id)}
+                  className={`text-left rounded-2xl p-5 border-2 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 active:scale-95 ${c.color.bg} ${c.color.border}`}
+                >
+                  <span className="text-4xl mb-3 block">{c.emoji}</span>
+                  <p className={`font-bold text-lg leading-tight mb-1 ${c.color.texto}`}>{c.label}</p>
+                  <p className="text-slate-500 text-sm leading-snug">{c.descripcion}</p>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6 bg-white border border-slate-200 rounded-2xl p-5">
+              <p className="font-bold text-slate-700 text-base mb-3">Contenido compartido por todas las carreras</p>
+              <div className="space-y-2">
+                {[
+                  '🧬 Biotecnología de los componentes NP — disponible en todas las carreras',
+                  '⚙️ Flujo clínico completo EDUS-CCSS — con énfasis en el rol de cada profesión',
+                  '📐 Calculadora educativa paso a paso — con fórmulas completas y VIG',
+                ].map((t, i) => (
+                  <div key={i} className="flex items-start gap-2 text-slate-600 text-sm">
+                    <span className="text-teal-500 font-bold mt-0.5">→</span>{t}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-center text-xs text-slate-400 mt-4">
+              Herramienta educativa — no sustituye la formación clínica supervisada
+            </p>
+          </div>
+        )}
+
+        {/* ── Vista de carrera ─────────────────────────────────────────── */}
+        {carreraId && carrera && (
+          <div>
+            <button onClick={volver} className="flex items-center gap-2 text-teal-600 font-semibold text-base mb-5 hover:text-teal-800 transition-colors py-2">
+              <ChevronLeft size={20} />
+              Cambiar carrera
+            </button>
+
+            <LemaEquipo />
+
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              {/* Career header */}
+              <div className={`${carrera.color.bg} border-b ${carrera.color.border} px-5 py-4 flex items-center gap-3`}>
+                <span className="text-3xl">{carrera.emoji}</span>
+                <div>
+                  <h2 className={`font-bold text-xl ${carrera.color.texto}`}>{carrera.label}</h2>
+                  <p className="text-slate-500 text-sm">{carrera.descripcion}</p>
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div className="flex border-b border-slate-200 overflow-x-auto">
+                {carrera.tabs.map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => setActiveTab(id)}
+                    className={`flex items-center gap-2 px-4 py-3.5 text-sm font-semibold transition-colors flex-shrink-0 ${
+                      activeTab === id
+                        ? `${carrera.color.bg} ${carrera.color.texto} border-b-2 ${carrera.color.border}`
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    <Icon size={16} />
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Content */}
+              <div className="p-5">
+                {tabActual && tabActual.contenido()}
+              </div>
+            </div>
+
+            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+              <p className="text-amber-700 text-sm leading-relaxed">
+                <span className="font-bold">Herramienta educativa — </span>
+                Los cálculos son orientativos. Toda prescripción de NP debe ser realizada y validada por profesionales calificados con base en la evaluación clínica individual del paciente.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -18,13 +18,6 @@ export default function Profesional() {
       <NavBar />
 
       <div className="max-w-5xl mx-auto px-4 py-6">
-        <div className="mb-6 rounded-3xl border border-teal-200 bg-teal-50 p-5 text-sm text-teal-800 shadow-sm">
-          <p className="font-semibold mb-2">Prototipo de impacto humano para la CCSS</p>
-          <p>
-            Esta herramienta está diseñada para apoyar la seguridad clínica en nutrición parenteral. Todos los cálculos se presentan como estimaciones y deben ser validados por un médico, farmacéutico o nutricionista antes de tomar decisiones de preparación o administración.
-          </p>
-        </div>
-
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
