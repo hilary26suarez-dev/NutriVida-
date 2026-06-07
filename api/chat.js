@@ -57,9 +57,13 @@ const DEFAULT_ALLOWED_ORIGINS = [
 ]
 
 const OPENROUTER_API_URL = process.env.OPENROUTER_API_URL || 'https://openrouter.ai/api/v1/chat/completions'
-const ALLOWED_ORIGINS    = process.env.ALLOWED_ORIGINS
+
+// Extra origins from env var are ADDED to the defaults, not a replacement
+const extraOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(v => v.trim()).filter(Boolean)
-  : DEFAULT_ALLOWED_ORIGINS
+  : []
+const ALLOWED_ORIGINS = [...new Set([...DEFAULT_ALLOWED_ORIGINS, ...extraOrigins])]
+
 const ALLOWED_ROLES = new Set(['user', 'assistant'])
 
 function getClientIp(headers = {}) {
@@ -95,7 +99,10 @@ function normalizeOrigin(value) {
 }
 
 function isOriginAllowed(origin) {
-  return ALLOWED_ORIGINS.includes(origin)
+  if (ALLOWED_ORIGINS.includes(origin)) return true
+  // Accept any Vercel preview deployment of this project
+  if (/^https:\/\/nutri-vida[a-z0-9-]*\.vercel\.app$/.test(origin)) return true
+  return false
 }
 
 function sanitizeMessages(messages) {
@@ -148,7 +155,7 @@ export default async function handler(req, res) {
   }
 
   if (!corsOrigin) {
-    console.warn('Blocked request from unauthorized origin:', origin)
+    console.warn('Blocked origin:', JSON.stringify(origin), '| Allowed:', ALLOWED_ORIGINS.join(', '))
     res.status(403).json({ message: 'Origen no autorizado. Esta función solo puede usarse desde el dominio oficial de NutriVida Biotech.' })
     return
   }
