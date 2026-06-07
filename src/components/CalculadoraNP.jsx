@@ -1,4 +1,4 @@
-import { Activity, AlertCircle, AlertTriangle, Baby, CheckCircle, Clock, Dna, Info, Printer, RotateCcw, Syringe } from 'lucide-react'
+import { Activity, AlertCircle, AlertTriangle, Baby, CheckCircle, Clock, Dna, Download, Info, Printer, RotateCcw, Syringe } from 'lucide-react'
 import { useState } from 'react'
 
 const CONDICIONES = [
@@ -210,6 +210,150 @@ export default function CalculadoraNP() {
     }))
     setResultado(null)
     setErrores([])
+  }
+
+  const exportarFHIR = () => {
+    if (!resultado) return
+    const now = new Date().toISOString()
+    const id  = `nutrivida-${Date.now()}`
+
+    const fhir = {
+      resourceType: 'NutritionOrder',
+      id,
+      meta: {
+        versionId: '1',
+        lastUpdated: now,
+        profile: ['http://hl7.org/fhir/StructureDefinition/NutritionOrder'],
+        source: 'NutriVida-Biotech-v2',
+        tag: [{
+          system: 'http://terminology.hl7.org/CodeSystem/v3-ActReason',
+          code: 'HTEST',
+          display: 'Estimación educativa — requiere validación clínica',
+        }],
+      },
+      status: 'proposed',
+      intent: 'proposal',
+      dateTime: now,
+      enteralFormula: {
+        baseFormulaType: {
+          coding: [{
+            system: 'http://snomed.info/sct',
+            code: '229912004',
+            display: 'Nutrición Parenteral Total (NPT)',
+          }],
+        },
+        routeofAdministration: {
+          coding: [{
+            system: 'http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration',
+            code: 'IV',
+            display: resultado.viaRecomendada,
+          }],
+        },
+        administration: [{
+          rate: {
+            rateQuantity: {
+              value: parseFloat(resultado.tasaInfusion),
+              unit: 'mL/h',
+              system: 'http://unitsofmeasure.org',
+              code: 'mL/h',
+            },
+          },
+        }],
+        administrationInstruction: `${resultado.volTotal} mL en ${resultado.horasInfusion}h a ${resultado.tasaInfusion} mL/h. ${resultado.horasInfusion < 24 ? 'NP cíclica.' : 'NP continua.'}`,
+      },
+      extension: [
+        {
+          url: 'https://nutrividabio.netlify.app/fhir/StructureDefinition/np-macronutrientes',
+          extension: [
+            { url: 'energiaTotal',  valueQuantity: { value: resultado.ten,                     unit: 'kcal/d' } },
+            ...(resultado.bee !== null ? [{ url: 'gastoBasal', valueQuantity: { value: resultado.bee, unit: 'kcal/d' } }] : []),
+            { url: 'proteina',      valueQuantity: { value: resultado.protG,                    unit: 'g/d' } },
+            { url: 'proteinaKg',    valueQuantity: { value: parseFloat(resultado.protGKg),      unit: 'g/kg/d' } },
+            { url: 'fuenteProteina',valueString:    resultado.protFuente },
+            { url: 'dextrosa',      valueQuantity: { value: resultado.dextrosaG,                unit: 'g/d' } },
+            { url: 'lipidos',       valueQuantity: { value: resultado.lipidoG,                  unit: 'g/d' } },
+            { url: 'nitrogeno',     valueQuantity: { value: parseFloat(resultado.nitrogeno),    unit: 'g/d' } },
+            { url: 'relacionNPCN',  valueQuantity: { value: resultado.npcN,                    unit: '1' } },
+            { url: 'estadoNPCN',    valueString:    resultado.npcNEstado },
+          ],
+        },
+        {
+          url: 'https://nutrividabio.netlify.app/fhir/StructureDefinition/np-volumen',
+          extension: [
+            { url: 'volumenTotal',        valueQuantity: { value: resultado.volTotal,                              unit: 'mL' } },
+            { url: 'volumenDextrosa50pct',valueQuantity: { value: resultado.volDex,                                unit: 'mL' } },
+            { url: 'volumenAA10pct',      valueQuantity: { value: resultado.volAA,                                 unit: 'mL' } },
+            ...(form.conLipidos ? [{ url: 'volumenLipidos20pct', valueQuantity: { value: resultado.volLipido,      unit: 'mL' } }] : []),
+            { url: 'volumenComponentes',  valueQuantity: { value: resultado.volumenComponentes,                    unit: 'mL' } },
+            { url: 'volumenRemanente',    valueQuantity: { value: resultado.volTotal - resultado.volumenComponentes, unit: 'mL' } },
+            { url: 'viabilidadFisica',    valueString: resultado.volumenExcedido ? 'inviable' : resultado.volumenJusto ? 'ajustado' : 'ok' },
+          ],
+        },
+        {
+          url: 'https://nutrividabio.netlify.app/fhir/StructureDefinition/np-osmolaridad',
+          extension: [
+            { url: 'osmolaridad',    valueQuantity: { value: resultado.osmolaridad, unit: 'mOsm/L' } },
+            { url: 'zonaVascular',   valueString:    resultado.viaZone },
+            { url: 'viaRecomendada', valueString:    resultado.viaRecomendada },
+          ],
+        },
+        ...(resultado.balanceN ? [{
+          url: 'https://nutrividabio.netlify.app/fhir/StructureDefinition/np-balance-nitrogenado',
+          extension: [
+            { url: 'balanceN',    valueDecimal:  parseFloat(resultado.balanceN.nBalance) },
+            { url: 'estado',      valueString:   resultado.balanceN.estado },
+            { url: 'nLoss',       valueQuantity: { value: parseFloat(resultado.balanceN.nLoss), unit: 'g/d' } },
+            { url: 'protNeutral', valueQuantity: { value: resultado.balanceN.protNeutral, unit: 'g/d' } },
+            { url: 'protNeutralKg', valueQuantity: { value: parseFloat(resultado.balanceN.protNeutralKg), unit: 'g/kg/d' } },
+          ],
+        }] : []),
+        ...(resultado.estabilidad ? [{
+          url: 'https://nutrividabio.netlify.app/fhir/StructureDefinition/np-estabilidad-caPO4',
+          extension: [
+            { url: 'semaforo',      valueString:   resultado.estabilidad.nivel },
+            { url: 'caConc',        valueQuantity: { value: parseFloat(resultado.estabilidad.caConc),  unit: 'mEq/L'  } },
+            { url: 'po4Conc',       valueQuantity: { value: parseFloat(resultado.estabilidad.po4Conc), unit: 'mmol/L' } },
+            { url: 'productoCaPO4', valueInteger:  resultado.estabilidad.producto },
+          ],
+        }] : []),
+        ...(resultado.insulina !== null ? [{
+          url: 'https://nutrividabio.netlify.app/fhir/StructureDefinition/np-insulina-inicial',
+          valueQuantity: { value: resultado.insulina, unit: '[iU]', system: 'http://unitsofmeasure.org', code: '[iU]' },
+        }] : []),
+        ...(resultado.oligoelementos ? [{
+          url: 'https://nutrividabio.netlify.app/fhir/StructureDefinition/np-oligoelementos-pediatricos',
+          extension: [
+            { url: 'multiOligo', valueQuantity: { value: parseFloat(resultado.oligoelementos.multiOligo), unit: 'mL/d' } },
+            { url: 'selenio',    valueQuantity: { value: parseFloat(resultado.oligoelementos.selenio),    unit: 'mL/d' } },
+          ],
+        }] : []),
+      ],
+      note: [
+        {
+          time: now,
+          text: 'Generado por NutriVida Biotech v2.0 — Estimación educativa basada en ESPEN/ASPEN 2019. NO constituye prescripción médica. Requiere validación del equipo de soporte nutricional antes de preparar o administrar cualquier mezcla parenteral.',
+        },
+        {
+          text: `Método energético: ${resultado.bee !== null ? 'Harris-Benedict' : 'Objetivo kcal/kg directo'}. Fuente proteína: ${resultado.protFuente}. Relación NPC:N = ${resultado.npcN}:1.`,
+        },
+        ...(resultado.volumenExcedido ? [{
+          text: `ADVERTENCIA DE VIABILIDAD: Componentes puros (${resultado.volumenComponentes} mL) exceden el volumen de la bolsa (${resultado.volTotal} mL). Revisar con farmacia clínica antes de preparar.`,
+        }] : []),
+        ...(resultado.estabilidad?.nivel === 'rojo' ? [{
+          text: `ALERTA Ca-PO4: Semáforo ROJO — Riesgo ALTO de precipitación. Revisar con farmacéutico antes de preparar.`,
+        }] : []),
+      ],
+    }
+
+    const blob = new Blob([JSON.stringify(fhir, null, 2)], { type: 'application/json' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `np-fhir-${id}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -477,10 +621,17 @@ export default function CalculadoraNP() {
           <RotateCcw size={17} />
         </button>
         {resultado && (
-          <button onClick={() => window.print()}
-            className="flex items-center gap-1.5 text-xs text-slate-500 border border-slate-200 px-3 py-2 rounded-xl hover:text-slate-700">
-            <Printer size={13} /> Imprimir
-          </button>
+          <>
+            <button onClick={() => window.print()}
+              className="flex items-center gap-1.5 text-xs text-slate-500 border border-slate-200 px-3 py-2 rounded-xl hover:text-slate-700 transition-colors">
+              <Printer size={13} /> Imprimir
+            </button>
+            <button onClick={exportarFHIR}
+              title="Exportar como NutritionOrder FHIR R4 — compatible con sistemas de interoperabilidad clínica"
+              className="flex items-center gap-1.5 text-xs text-teal-600 border border-teal-200 px-3 py-2 rounded-xl hover:bg-teal-50 transition-colors font-medium">
+              <Download size={13} /> FHIR R4
+            </button>
+          </>
         )}
       </div>
 
