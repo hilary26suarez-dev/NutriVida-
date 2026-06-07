@@ -2,7 +2,6 @@ import { useState } from 'react'
 import NavBar from '../components/NavBar'
 import LogisticaDomiciliaria from '../components/LogisticaDomiciliaria'
 import AsistenteIA from '../components/AsistenteIA'
-import SafetyNotice from '../components/SafetyNotice'
 import { Droplets, MessageCircle, AlertTriangle, Phone } from 'lucide-react'
 
 const tabs = [
@@ -21,15 +20,13 @@ export default function Paciente() {
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Greeting */}
         <div className="text-center mb-6">
-          <p className="text-teal-500 text-base font-medium mb-1">Bienvenido/a a su espacio</p>
-          <h1 className="text-3xl font-bold text-teal-900">Aquí está en buenas manos</h1>
-          <p className="text-slate-500 mt-2 text-base leading-relaxed">
-            Todo lo que necesita para su nutrición parenteral en casa, en un solo lugar.
+          <div className="inline-flex items-center gap-2 bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-xs font-semibold mb-3">
+            NutriVida Biotech · NP Domiciliaria
+          </div>
+          <h1 className="text-3xl font-bold text-teal-900">Su espacio de apoyo</h1>
+          <p className="text-slate-500 mt-2 text-sm leading-relaxed max-w-sm mx-auto">
+            Información, acompañamiento y herramientas para su nutrición parenteral en casa.
           </p>
-        </div>
-
-        <div className="mb-4">
-          <SafetyNotice />
         </div>
 
         {/* Tabs */}
