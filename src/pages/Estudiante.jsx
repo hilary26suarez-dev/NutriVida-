@@ -1,11 +1,59 @@
 import { useState } from 'react'
 import NavBar from '../components/NavBar'
-import BiotecnologiaNP from '../components/BiotecnologiaNP'
 import {
-  BookOpen, Calculator, ChevronDown, ChevronLeft, ChevronUp,
-  CheckCircle, AlertTriangle, FlaskConical, GitBranch, Info,
-  Users, Heart, Stethoscope, Pill,
+  BookOpen, Calculator, ChevronDown, ChevronLeft, ChevronRight, ChevronUp,
+  CheckCircle, AlertTriangle, ExternalLink, FlaskConical, GitBranch, Info,
+  Users, Heart, Microscope, Stethoscope, Pill,
 } from 'lucide-react'
+
+const ATLAS_URL = 'https://abinp.vercel.app'
+
+function PortalAtlas() {
+  return (
+    <div className="space-y-5">
+      <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-2xl p-7 text-white text-center">
+        <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Microscope size={32} />
+        </div>
+        <h2 className="text-2xl font-bold mb-2">Atlas Bioinformático Interactivo de NP</h2>
+        <p className="text-violet-200 text-base leading-relaxed max-w-sm mx-auto mb-6">
+          Visualización 3D de proteínas y enzimas clave que median la respuesta metabólica del paciente ante la NP. Bioinformática estructural al servicio de la clínica.
+        </p>
+        <a
+          href={ATLAS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 bg-white text-violet-700 font-bold px-6 py-3 rounded-xl hover:bg-violet-50 transition-colors text-base"
+        >
+          Abrir el Atlas <ExternalLink size={18} />
+        </a>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          { emoji: '🧬', titulo: 'Lipoproteína Lipasa', desc: 'Metabolismo de lípidos en NP' },
+          { emoji: '🔵', titulo: 'Glucocinasa', desc: 'Sensor de glucosa, hiperglucemia' },
+          { emoji: '⚡', titulo: 'Na⁺/K⁺-ATPasa', desc: 'Síndrome de realimentación' },
+          { emoji: '🟡', titulo: 'Albúmina sérica', desc: 'Transporte y estado nutricional' },
+          { emoji: '💉', titulo: 'Insulina', desc: 'Regulación metabólica en NP' },
+        ].map((p, i) => (
+          <div key={i} className={`bg-slate-50 border border-slate-200 rounded-xl p-4 ${i === 4 ? 'col-span-2' : ''}`}>
+            <span className="text-2xl mb-2 block">{p.emoji}</span>
+            <p className="font-bold text-slate-700 text-sm">{p.titulo}</p>
+            <p className="text-slate-400 text-xs mt-0.5">{p.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-violet-50 border border-violet-200 rounded-2xl p-4 flex items-start gap-3">
+        <Info size={18} className="text-violet-500 flex-shrink-0 mt-0.5" />
+        <p className="text-violet-700 text-sm leading-relaxed">
+          El Atlas es una plataforma independiente con visualizaciones 3D cargadas directamente desde el RCSB Protein Data Bank. Requiere conexión a internet y abre en una nueva pestaña.
+        </p>
+      </div>
+    </div>
+  )
+}
 
 // ─── Lema ────────────────────────────────────────────────────────────────────
 
@@ -514,7 +562,7 @@ const carreras = {
     tabs: [
       { id: 'calculos', label: 'Cálculos', icon: Calculator, contenido: () => <FarmaciaCalculadora /> },
       { id: 'estabilidad', label: 'Estabilidad', icon: FlaskConical, contenido: () => <FarmaciaEstabilidad /> },
-      { id: 'biotecnologia', label: 'Biotecnología', icon: FlaskConical, contenido: () => <BiotecnologiaNP /> },
+      { id: 'biotecnologia', label: 'Atlas 3D', icon: Microscope, contenido: () => <PortalAtlas /> },
       { id: 'flujo', label: 'Flujo CCSS', icon: GitBranch, contenido: () => <FlujoCCSS carrera="farmacia" /> },
     ],
   },
@@ -524,7 +572,7 @@ const carreras = {
     color: { bg: 'bg-blue-50', border: 'border-blue-300', iconBg: 'bg-blue-600', texto: 'text-blue-800', activo: 'bg-blue-600' },
     tabs: [
       { id: 'indicaciones', label: 'Indicaciones', icon: Stethoscope, contenido: () => <MedicinaIndicaciones /> },
-      { id: 'biotecnologia', label: 'Biotecnología', icon: FlaskConical, contenido: () => <BiotecnologiaNP /> },
+      { id: 'biotecnologia', label: 'Atlas 3D', icon: Microscope, contenido: () => <PortalAtlas /> },
       { id: 'flujo', label: 'Flujo CCSS', icon: GitBranch, contenido: () => <FlujoCCSS carrera="medicina" /> },
     ],
   },
@@ -535,7 +583,7 @@ const carreras = {
     tabs: [
       { id: 'evaluacion', label: 'Evaluación', icon: BookOpen, contenido: () => <NutricionEvaluacion /> },
       { id: 'calculos', label: 'Requerimientos', icon: Calculator, contenido: () => <FarmaciaCalculadora /> },
-      { id: 'biotecnologia', label: 'Biotecnología', icon: FlaskConical, contenido: () => <BiotecnologiaNP /> },
+      { id: 'biotecnologia', label: 'Atlas 3D', icon: Microscope, contenido: () => <PortalAtlas /> },
       { id: 'flujo', label: 'Flujo CCSS', icon: GitBranch, contenido: () => <FlujoCCSS carrera="nutricion" /> },
     ],
   },
@@ -545,7 +593,7 @@ const carreras = {
     color: { bg: 'bg-pink-50', border: 'border-pink-300', iconBg: 'bg-pink-500', texto: 'text-pink-800', activo: 'bg-pink-500' },
     tabs: [
       { id: 'administracion', label: 'Administración', icon: CheckCircle, contenido: () => <EnfermeriaContenido /> },
-      { id: 'biotecnologia', label: 'Biotecnología', icon: FlaskConical, contenido: () => <BiotecnologiaNP /> },
+      { id: 'biotecnologia', label: 'Atlas 3D', icon: Microscope, contenido: () => <PortalAtlas /> },
       { id: 'flujo', label: 'Flujo CCSS', icon: GitBranch, contenido: () => <FlujoCCSS carrera="enfermeria" /> },
     ],
   },

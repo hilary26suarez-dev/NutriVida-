@@ -1,4 +1,4 @@
-import { ChevronRight, Dna, FlaskConical, Heart, ShieldCheck, Star, Stethoscope, Users } from 'lucide-react'
+import { ChevronRight, Dna, FlaskConical, GraduationCap, Heart, ShieldCheck, Star, Stethoscope, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export default function Landing() {
@@ -40,8 +40,8 @@ export default function Landing() {
           Diseñada con biotecnología. Hecha con corazón.
         </p>
 
-        {/* Two main paths */}
-        <div className="grid md:grid-cols-2 gap-5 max-w-3xl mx-auto">
+        {/* Three main paths */}
+        <div className="grid md:grid-cols-3 gap-5 max-w-4xl mx-auto">
           <Link
             to="/profesional"
             className="group bg-white border-2 border-teal-200 hover:border-teal-500 rounded-2xl p-7 text-left transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
@@ -51,10 +51,10 @@ export default function Landing() {
             </div>
             <h2 className="text-xl font-bold text-teal-900 mb-2">Soy profesional de salud</h2>
             <p className="text-slate-500 text-sm leading-relaxed mb-4">
-              Calculadora de NP con semáforo de estabilidad, base de datos de compatibilidades farmacológicas y herramientas de seguimiento.
+              Calculadora NP, estabilidad fisicoquímica y compatibilidades farmacológicas.
             </p>
             <div className="flex items-center gap-1 text-teal-600 font-semibold text-sm">
-              Entrar al módulo profesional <ChevronRight size={16} />
+              Módulo profesional <ChevronRight size={16} />
             </div>
           </Link>
 
@@ -67,10 +67,26 @@ export default function Landing() {
             </div>
             <h2 className="text-xl font-bold text-teal-900 mb-2">Soy paciente o cuidador</h2>
             <p className="text-slate-500 text-sm leading-relaxed mb-4">
-              Acompañamiento diario, recordatorios inteligentes, asistente IA y guías para la logística de tu NP en casa.
+              Acompañamiento diario, asistente IA y guías para tu NP en casa.
             </p>
             <div className="flex items-center gap-1 text-emerald-600 font-semibold text-sm">
-              Entrar al espacio del paciente <ChevronRight size={16} />
+              Espacio del paciente <ChevronRight size={16} />
+            </div>
+          </Link>
+
+          <Link
+            to="/estudiante"
+            className="group bg-white border-2 border-violet-200 hover:border-violet-500 rounded-2xl p-7 text-left transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
+          >
+            <div className="bg-violet-600 text-white w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-violet-700 transition-colors">
+              <GraduationCap size={24} />
+            </div>
+            <h2 className="text-xl font-bold text-teal-900 mb-2">Soy estudiante de salud</h2>
+            <p className="text-slate-500 text-sm leading-relaxed mb-4">
+              Farmacia, Medicina, Nutrición y Enfermería — contenido clínico relevante para tu carrera.
+            </p>
+            <div className="flex items-center gap-1 text-violet-600 font-semibold text-sm">
+              Módulo educativo <ChevronRight size={16} />
             </div>
           </Link>
         </div>
