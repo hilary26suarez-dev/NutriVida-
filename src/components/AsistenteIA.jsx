@@ -68,7 +68,7 @@ export default function AsistenteIA() {
         .slice(-3)
         .map(({ role, content }) => ({ role, content: sanitizeInput(content) }))
 
-      const res = await fetch('/.netlify/functions/chat', {
+      const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: historial }),
