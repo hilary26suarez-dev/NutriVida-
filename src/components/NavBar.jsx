@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Dna, Home, Stethoscope, Heart } from 'lucide-react'
+import { Dna, GraduationCap, Heart, Home, Stethoscope } from 'lucide-react'
 
 export default function NavBar() {
   const location = useLocation()
@@ -52,6 +52,18 @@ export default function NavBar() {
           >
             <Heart size={16} />
             <span className="hidden sm:inline">Paciente</span>
+          </Link>
+
+          <Link
+            to="/estudiante"
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname === '/estudiante'
+                ? 'bg-violet-600 text-white'
+                : 'text-slate-500 hover:text-violet-700 hover:bg-violet-50'
+            }`}
+          >
+            <GraduationCap size={16} />
+            <span className="hidden sm:inline">Estudiante</span>
           </Link>
         </div>
       </div>
