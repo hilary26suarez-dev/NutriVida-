@@ -1,5 +1,6 @@
 import { Bot, Dna, Loader, RefreshCw, Send, ShieldAlert, User } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import TriageNP from './TriageNP'
 
 const SUGERENCIAS = [
   '¿Qué hay dentro de mi bolsa de NP?',
@@ -17,6 +18,9 @@ const MENSAJE_BIENVENIDA = {
 
 const MAX_INPUT_LENGTH = 800
 
+// Keywords that trigger the offline triage tree instead of the AI chat
+const PALABRAS_TRIAGE = /fiebre|escalofr[ií][oó]|cat[eé]ter.*rojo|rojo.*cat[eé]ter|dolor.{0,25}pecho|pecho.{0,25}dolor|dificultad.{0,25}respirar|respirar.{0,25}dificultad|no puedo respirar|enrojecimiento|secreci[oó]n|hinchaz[oó]n|bolsa.*anormal|anormal.*bolsa|part[ií]culas.*bolsa|mareo\s+intenso|confusi[oó]n repentina|p[eé]rdida.*fuerza|emergencia|urgente|me siento mal.*cat[eé]ter|cat[eé]ter.*me siento mal/i
+
 function sanitizeInput(text) {
   return String(text || '')
     .replace(/\s+/g, ' ')
@@ -26,11 +30,11 @@ function sanitizeInput(text) {
 
 export default function AsistenteIA() {
   const [mensajes, setMensajes] = useState([MENSAJE_BIENVENIDA])
-  const [input, setInput] = useState('')
+  const [input, setInput]       = useState('')
   const [cargando, setCargando] = useState(false)
-  const [error, setError] = useState(null)
+  const [error, setError]       = useState(null)
   const bottomRef = useRef(null)
-  const inputRef = useRef(null)
+  const inputRef  = useRef(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -40,15 +44,27 @@ export default function AsistenteIA() {
     const msg = sanitizeInput(texto || input)
     if (!msg || cargando) return
 
+    setInput('')
+    setError(null)
+
+    // — Modo triaje: síntomas detectados → árbol offline, sin llamada a API —
+    if (PALABRAS_TRIAGE.test(msg)) {
+      setMensajes(prev => [
+        ...prev,
+        { role: 'user',   content: msg },
+        { role: 'triage', content: null },
+      ])
+      return
+    }
+
+    // — Modo educativo: pregunta general → OpenRouter —
     const nuevos = [...mensajes, { role: 'user', content: msg }]
     setMensajes(nuevos)
-    setInput('')
     setCargando(true)
-    setError(null)
 
     try {
       const historial = nuevos
-        .filter(m => m.role !== 'assistant' || m.content !== MENSAJE_BIENVENIDA.content)
+        .filter(m => m.role === 'user' || (m.role === 'assistant' && m.content !== MENSAJE_BIENVENIDA.content))
         .slice(-3)
         .map(({ role, content }) => ({ role, content: sanitizeInput(content) }))
 
@@ -85,10 +101,10 @@ export default function AsistenteIA() {
 
   const renderTexto = (texto) => {
     if (!texto || typeof texto !== 'string') return null
-    return texto.split('\n').map((linea, i) => (
+    return texto.split('\n').map((linea, i, arr) => (
       <span key={i}>
         {linea}
-        {i < lineas.length - 1 && <br />}
+        {i < arr.length - 1 && <br />}
       </span>
     ))
   }
@@ -125,28 +141,45 @@ export default function AsistenteIA() {
 
       {/* Mensajes */}
       <div className="flex-1 overflow-y-auto space-y-3 pr-1 pb-2">
-        {mensajes.map((m, i) => (
-          <div
-            key={i}
-            className={`flex gap-2 chat-bubble-enter ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
-          >
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-              m.role === 'user' ? 'bg-teal-100' : 'bg-teal-600'
-            }`}>
-              {m.role === 'user'
-                ? <User size={16} className="text-teal-700" />
-                : <Bot size={16} className="text-white" />
-              }
+        {mensajes.map((m, i) => {
+          // — Render del árbol de triaje —
+          if (m.role === 'triage') {
+            return (
+              <div key={i} className="flex gap-2 flex-row chat-bubble-enter">
+                <div className="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center flex-shrink-0">
+                  <Bot size={16} className="text-white" />
+                </div>
+                <div className="flex-1 max-w-xs lg:max-w-sm">
+                  <TriageNP onFinalizar={() => inputRef.current?.focus()} />
+                </div>
+              </div>
+            )
+          }
+
+          // — Render de burbuja normal (user / assistant) —
+          return (
+            <div
+              key={i}
+              className={`flex gap-2 chat-bubble-enter ${m.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+            >
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                m.role === 'user' ? 'bg-teal-100' : 'bg-teal-600'
+              }`}>
+                {m.role === 'user'
+                  ? <User size={16} className="text-teal-700" />
+                  : <Bot size={16} className="text-white" />
+                }
+              </div>
+              <div className={`max-w-xs lg:max-w-sm rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                m.role === 'user'
+                  ? 'bg-teal-600 text-white rounded-tr-sm'
+                  : 'bg-slate-50 text-slate-700 border border-slate-100 rounded-tl-sm'
+              }`}>
+                {renderTexto(m.content)}
+              </div>
             </div>
-            <div className={`max-w-xs lg:max-w-sm rounded-2xl px-4 py-3 text-sm leading-relaxed ${
-              m.role === 'user'
-                ? 'bg-teal-600 text-white rounded-tr-sm'
-                : 'bg-slate-50 text-slate-700 border border-slate-100 rounded-tl-sm'
-            }`}>
-              {renderTexto(m.content)}
-            </div>
-          </div>
-        ))}
+          )
+        })}
 
         {cargando && (
           <div className="flex gap-2">
@@ -215,4 +248,3 @@ export default function AsistenteIA() {
     </div>
   )
 }
-
