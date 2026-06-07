@@ -216,6 +216,8 @@ export const handler = async (event) => {
         headers: {
           Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
           'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://nutrividabio.netlify.app',
+          'X-Title': 'NutriVida Biotech',
         },
         body: JSON.stringify({
           model,
@@ -231,18 +233,17 @@ export const handler = async (event) => {
     }
 
     let response = null
-    let lastErrorText = ''
 
     for (const model of MODELS) {
       response = await callOpenRouter(model)
       if (response.ok) break
-      lastErrorText = await response.text().catch(() => `Status ${response.status}`)
-      console.warn(`Model ${model} failed (${response.status}):`, lastErrorText)
+      const errText = await response.text().catch(() => `Status ${response.status}`)
+      console.warn(`Model ${model} failed (${response.status}):`, errText)
       response = null
     }
 
     if (!response?.ok) {
-      throw new Error('Modelo no disponible')
+      throw new Error('All models unavailable')
     }
 
     const data = await response.json()
@@ -258,3 +259,6 @@ export const handler = async (event) => {
     }, corsOrigin)
   }
 }
+
+
+

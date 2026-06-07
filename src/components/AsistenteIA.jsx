@@ -85,8 +85,7 @@ export default function AsistenteIA() {
 
   const renderTexto = (texto) => {
     if (!texto || typeof texto !== 'string') return null
-    const lineas = texto.split('\n')
-    return lineas.map((linea, i) => (
+    return texto.split('\n').map((linea, i) => (
       <span key={i}>
         {linea}
         {i < lineas.length - 1 && <br />}
@@ -216,3 +215,4 @@ export default function AsistenteIA() {
     </div>
   )
 }
+
