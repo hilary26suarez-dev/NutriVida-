@@ -85,6 +85,7 @@ export default function CalculadoraNP() {
     ca: '', po4: '', mg: '',
   })
   const [resultado, setResultado] = useState(null)
+  const [errores, setErrores] = useState([])
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
   const condActual = CONDICIONES.find(c => c.id === form.condicion)
@@ -95,19 +96,33 @@ export default function CalculadoraNP() {
     const peso  = parseFloat(form.peso)
     const vol   = parseFloat(form.volumen)
     const horas = parseFloat(form.horasInfusion) || 24
-    if (!peso || !vol) return
+
+    const faltantes = []
+    if (!peso) faltantes.push('Peso real (kg)')
+    if (!vol)  faltantes.push('Volumen total de la mezcla (mL)')
+
+    if (form.modoCalculo === 'kcal_kg') {
+      if (!parseFloat(form.kcalKg)) faltantes.push('Objetivo calórico (kcal/kg/día)')
+    } else {
+      if (!parseFloat(form.talla)) faltantes.push('Talla (cm)')
+      if (!parseFloat(form.edad))  faltantes.push('Edad (años)')
+    }
+
+    if (faltantes.length > 0) {
+      setErrores(faltantes)
+      return
+    }
+    setErrores([])
 
     let ten, bee
 
     if (form.modoCalculo === 'kcal_kg') {
       const kcalKg = parseFloat(form.kcalKg)
-      if (!kcalKg) return
       bee = null
       ten = kcalKg * peso
     } else {
       const talla = parseFloat(form.talla)
       const edad  = parseFloat(form.edad)
-      if (!talla || !edad) return
       bee = calcBEE(peso, talla, edad, form.sexo)
       ten = bee * condActual.factor
     }
@@ -185,6 +200,7 @@ export default function CalculadoraNP() {
       proteinaGKg: '', kcalKg: '', uun24h: '', diabetico: false, pediatrico: false,
     }))
     setResultado(null)
+    setErrores([])
   }
 
   return (
@@ -458,6 +474,19 @@ export default function CalculadoraNP() {
           </button>
         )}
       </div>
+
+      {/* Validación — campos faltantes */}
+      {errores.length > 0 && (
+        <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-800">
+          <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold mb-1">Complete los siguientes campos para calcular:</p>
+            <ul className="list-disc list-inside space-y-0.5 text-xs">
+              {errores.map((e, i) => <li key={i}>{e}</li>)}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* Resultados */}
       {resultado && (
