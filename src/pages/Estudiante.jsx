@@ -16,9 +16,10 @@ function PortalAtlas() {
           <Microscope size={32} />
         </div>
         <h2 className="text-2xl font-bold mb-2">Atlas Bioinformático Interactivo de NP</h2>
-        <p className="text-violet-200 text-base leading-relaxed max-w-sm mx-auto mb-6">
-          Visualización 3D de proteínas y enzimas clave que median la respuesta metabólica del paciente ante la NP. Bioinformática estructural al servicio de la clínica.
+        <p className="text-violet-200 text-base leading-relaxed max-w-sm mx-auto mb-2">
+          Más de 30 proteínas y enzimas clave con visualización 3D interactiva — desde receptores de insulina hasta transportadores de aminoácidos. Bioinformática estructural al servicio de la clínica.
         </p>
+        <p className="text-violet-300 text-xs mb-6">Estructuras cargadas directamente desde el RCSB Protein Data Bank</p>
         <a
           href={ATLAS_URL}
           target="_blank"
@@ -29,26 +30,29 @@ function PortalAtlas() {
         </a>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        {[
-          { emoji: '🧬', titulo: 'Lipoproteína Lipasa', desc: 'Metabolismo de lípidos en NP' },
-          { emoji: '🔵', titulo: 'Glucocinasa', desc: 'Sensor de glucosa, hiperglucemia' },
-          { emoji: '⚡', titulo: 'Na⁺/K⁺-ATPasa', desc: 'Síndrome de realimentación' },
-          { emoji: '🟡', titulo: 'Albúmina sérica', desc: 'Transporte y estado nutricional' },
-          { emoji: '💉', titulo: 'Insulina', desc: 'Regulación metabólica en NP' },
-        ].map((p, i) => (
-          <div key={i} className={`bg-slate-50 border border-slate-200 rounded-xl p-4 ${i === 4 ? 'col-span-2' : ''}`}>
-            <span className="text-2xl mb-2 block">{p.emoji}</span>
-            <p className="font-bold text-slate-700 text-sm">{p.titulo}</p>
-            <p className="text-slate-400 text-xs mt-0.5">{p.desc}</p>
-          </div>
-        ))}
+      <div className="mb-1">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Muestra representativa — 5 de 30+</p>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { emoji: '🧬', titulo: 'Lipoproteína Lipasa', desc: 'Metabolismo de lípidos en NP' },
+            { emoji: '🔵', titulo: 'Glucocinasa', desc: 'Sensor de glucosa, hiperglucemia' },
+            { emoji: '⚡', titulo: 'Na⁺/K⁺-ATPasa', desc: 'Síndrome de realimentación' },
+            { emoji: '🟡', titulo: 'Albúmina sérica', desc: 'Transporte y estado nutricional' },
+            { emoji: '💉', titulo: 'Insulina', desc: 'Regulación metabólica en NP' },
+          ].map((p, i) => (
+            <div key={i} className={`bg-slate-50 border border-slate-200 rounded-xl p-4 ${i === 4 ? 'col-span-2' : ''}`}>
+              <span className="text-2xl mb-2 block">{p.emoji}</span>
+              <p className="font-bold text-slate-700 text-sm">{p.titulo}</p>
+              <p className="text-slate-400 text-xs mt-0.5">{p.desc}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="bg-violet-50 border border-violet-200 rounded-2xl p-4 flex items-start gap-3">
         <Info size={18} className="text-violet-500 flex-shrink-0 mt-0.5" />
         <p className="text-violet-700 text-sm leading-relaxed">
-          El Atlas es una plataforma independiente con visualizaciones 3D cargadas directamente desde el RCSB Protein Data Bank. Requiere conexión a internet y abre en una nueva pestaña.
+          El Atlas es una plataforma independiente con más de 30 proteínas documentadas. Cada entrada incluye visualización 3D interactiva, relevancia clínica en NP y contexto bioquímico. Requiere conexión a internet y abre en una nueva pestaña.
         </p>
       </div>
     </div>
