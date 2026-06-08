@@ -167,9 +167,9 @@ function Recursos() {
           color: 'teal',
         },
         {
-          nombre: 'Psicología CCSS',
-          desc: 'Todo asegurado tiene derecho a atención psicológica a través de su Ébais o Área de Salud. Solicítela sin costo.',
-          contacto: 'Consulte en su Ébais',
+          nombre: 'Psicología hospitalaria',
+          desc: 'Consulte en su centro de salud la disponibilidad de atención psicológica. Solicítela a través de su médico tratante.',
+          contacto: 'Consulte en su centro de salud',
           tipo: 'info',
           icon: Heart,
           color: 'violet',

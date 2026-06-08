@@ -262,7 +262,7 @@ function Urgencias() {
         </div>
         <div className="space-y-2">
           <div className="flex justify-between items-center bg-white rounded-xl p-3">
-            <span className="text-slate-700 font-medium">Emergencias CCSS</span>
+            <span className="text-slate-700 font-medium">Emergencias</span>
             <a href="tel:911" className="bg-red-500 text-white font-bold px-4 py-1.5 rounded-lg text-sm hover:bg-red-600 transition-colors">
               911
             </a>

@@ -506,7 +506,7 @@ export default function CalculadoraNP() {
         <div className="flex items-start gap-2">
           <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold">Herramienta de estimación educativa — Propuesta de apoyo clínico para la CCSS.</p>
+            <p className="font-semibold">Herramienta de estimación educativa — Para uso hospitalario y de apoyo clínico.</p>
             <p className="mt-1">
               Los cálculos son estimativos y <strong>deben ser validados por médico, farmacéutico o nutricionista especializado</strong> antes de preparar o administrar cualquier mezcla parenteral.
             </p>
@@ -751,7 +751,7 @@ export default function CalculadoraNP() {
               <input type="checkbox" id="pediatrico" checked={form.pediatrico} onChange={e => set('pediatrico', e.target.checked)}
                 className="w-4 h-4 accent-pink-600 rounded" />
               <label htmlFor="pediatrico" className="text-sm text-slate-700 cursor-pointer">
-                Pediátrico / neonato — calcular oligoelementos CCSS
+                Pediátrico / neonato — calcular oligoelementos hospitalarios
               </label>
             </div>
           </div>
@@ -1011,7 +1011,7 @@ export default function CalculadoraNP() {
             <div className="flex items-start gap-3 p-4 bg-pink-50 border border-pink-200 rounded-xl text-sm">
               <Baby size={18} className="text-pink-500 flex-shrink-0 mt-0.5" />
               <div className="w-full">
-                <p className="font-bold text-pink-800 mb-2">Oligoelementos Pediátricos — Dosis CCSS/HNN</p>
+                <p className="font-bold text-pink-800 mb-2">Oligoelementos Pediátricos — Dosis hospitalarias de referencia</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="bg-white/70 rounded-lg p-2">
                     <p className="text-slate-500">Cu, Mn, Cr, Zn (multi-oligo)</p>

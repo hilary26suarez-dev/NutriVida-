@@ -7,7 +7,7 @@ const SUGERENCIAS = [
   '¿Qué hago si hay enrojecimiento en el catéter?',
   '¿Cómo cuido el catéter en casa?',
   '¿Por qué debo sacar la bolsa del frío antes de usarla?',
-  '¿Cuáles son mis derechos como paciente en la CCSS?',
+  '¿Cuáles son mis derechos como paciente hospitalizado?',
   '¿De dónde vienen los aminoácidos de mi nutrición?',
 ]
 

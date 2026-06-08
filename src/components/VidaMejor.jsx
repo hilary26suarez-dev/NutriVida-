@@ -69,7 +69,7 @@ const secciones = [
     subtitulo: 'Planificar bien permite viajar con tranquilidad',
     color: { bg: 'bg-amber-50', border: 'border-amber-200', titulo: 'text-amber-800' },
     consejos: [
-      'Coordine el suministro de bolsas de NP en el destino con al menos 4–6 semanas de anticipación a través de la CCSS o su farmacia hospitalaria.',
+      'Coordine el suministro de bolsas de NP en el destino con al menos 4–6 semanas de anticipación a través de su farmacia hospitalaria o proveedor autorizado.',
       'Lleve siempre una carta médica en español e inglés con su diagnóstico, tratamiento y contactos del equipo de salud.',
       'Transporte material de infusión (tubuladuras, alcohol, guantes, gasas) en su equipaje de mano o de bodega en empaques bien etiquetados.',
       'Identifique el hospital de referencia más cercano en su destino antes de salir.',

@@ -63,7 +63,7 @@ export default function Profesional() {
         {/* Disclaimer */}
         <p className="text-center text-xs text-slate-400 mt-4">
           Esta herramienta es un apoyo clínico. El profesional es responsable de la validación y prescripción final.
-          Basada en lineamientos CCSS · ESPEN · ASPEN.
+          Basada en lineamientos ESPEN · ASPEN · hospitalarios.
         </p>
       </div>
     </div>

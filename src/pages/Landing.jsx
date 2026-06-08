@@ -123,7 +123,7 @@ export default function Landing() {
               </div>
               <h3 className="font-bold text-teal-900 mb-2">Asistente IA Especializado</h3>
               <p className="text-slate-500 text-sm leading-relaxed">
-                NutriAsistente conoce el contexto de la CCSS, los derechos del paciente y habla en un lenguaje claro y empático.
+                NutriAsistente conoce el contexto hospitalario, los derechos del paciente y habla en un lenguaje claro y empático.
               </p>
             </div>
           </div>

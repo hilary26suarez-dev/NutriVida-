@@ -235,11 +235,11 @@ function FarmaciaEstabilidad() {
       <Acordeon titulo="Producto Ca × P — precipitación letal" icono={AlertTriangle}>
         <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <p className="font-mono text-red-700 text-base font-bold">Ca (mEq/L) × P (mmol/L) &lt; 200</p>
-          <p className="text-red-600 text-sm mt-1">Límite institucional CCSS y mayoría de centros: &lt; 150 para margen de seguridad.</p>
+          <p className="text-red-600 text-sm mt-1">Límite institucional recomendado en la mayoría de centros: &lt; 150 para margen de seguridad.</p>
         </div>
         {['Los aminoácidos quelatan el calcio y aumentan la solubilidad del Ca-P.',
           'pH ácido (5–6 en bolsas sin bicarbonato) favorece la solubilidad del fosfato.',
-          'El EDUS calcula y alerta automáticamente cuando se supera el límite.',
+          'El sistema hospitalario calcula y alerta automáticamente cuando se supera el límite.',
           'Agregar el calcio al final, con agitación, y separado del fosfato en el proceso.'].map((t, i) => (
           <div key={i} className="flex items-start gap-2 text-slate-600 text-sm">
             <CheckCircle size={14} className="text-teal-500 flex-shrink-0 mt-0.5" />{t}
@@ -260,7 +260,7 @@ function FarmaciaEstabilidad() {
         ))}
       </Acordeon>
       <Acordeon titulo="Preparación estéril — área blanca">
-        <p className="text-slate-600 text-base leading-relaxed">La NP se prepara en cabinas de flujo laminar (ISO 5 / clase A) ubicadas en zona limpia (ISO 7 / clase B). El técnico en farmacia sigue el orden de adición de componentes para evitar incompatibilidades. En hospitales con compounder automático (Baxter ExactaMix, B. Braun APEX), las instrucciones del EDUS se envían directamente al equipo.</p>
+        <p className="text-slate-600 text-base leading-relaxed">La NP se prepara en cabinas de flujo laminar (ISO 5 / clase A) ubicadas en zona limpia (ISO 7 / clase B). El técnico en farmacia sigue el orden de adición de componentes para evitar incompatibilidades. En hospitales con compounder automático (Baxter ExactaMix, B. Braun APEX), las instrucciones del sistema se envían directamente al equipo.</p>
         <div className="grid grid-cols-3 gap-2 text-center text-xs">
           {['ISO 5 — flujo laminar', 'Orden controlado Ca/P', 'Gravimetría de verificación'].map((p, i) => (
             <div key={i} className="bg-violet-50 border border-violet-100 rounded-xl py-3 px-2">
@@ -273,8 +273,8 @@ function FarmaciaEstabilidad() {
   )
 }
 
-function FarmaciaFlujoCCSS() {
-  return <FlujoCCSS carrera="farmacia" />
+function FarmaciaFlujoHospitalario() {
+  return <FlujoHospitalario carrera="farmacia" />
 }
 
 // ─── MEDICINA ─────────────────────────────────────────────────────────────────
@@ -360,7 +360,7 @@ function NutricionEvaluacion() {
   return (
     <div className="space-y-4">
       <Acordeon titulo="Tamizaje nutricional" icono={BookOpen} defaultOpen>
-        <p className="text-slate-600 text-base leading-relaxed mb-3">El tamizaje identifica el riesgo nutricional antes de iniciar NP. En la CCSS se usan principalmente NRS-2002 (adultos hospitalizados) y MUST (comunitario/ambulatorio).</p>
+        <p className="text-slate-600 text-base leading-relaxed mb-3">El tamizaje identifica el riesgo nutricional antes de iniciar NP. En el ámbito hospitalario se usan principalmente NRS-2002 (adultos hospitalizados) y MUST (comunitario/ambulatorio).</p>
         <div className="space-y-3">
           {[
             { herr: 'NRS-2002', cuando: 'Adultos hospitalizados', puntaje: '≥ 3 = riesgo nutricional. Indicar intervención.', dim: 'Estado nutricional + severidad de enfermedad + edad > 70' },
@@ -507,22 +507,22 @@ function EnfermeriaContenido() {
   )
 }
 
-// ─── Flujo CCSS (compartido) ──────────────────────────────────────────────────
+// ─── Flujo Hospitalario (compartido) ─────────────────────────────────────────
 
-function FlujoCCSS({ carrera }) {
+function FlujoHospitalario({ carrera }) {
   const enfasis = {
-    farmacia: { pasos: [1, 2, 3, 4, 5], nota: 'El farmacéutico es el validador experto del sistema: interpreta los cálculos del EDUS, verifica la compatibilidad fisicoquímica y garantiza la calidad del preparado estéril.' },
-    medicina: { pasos: [1, 5, 6], nota: 'El médico inicia el proceso prescribiendo en el EDUS con los datos clínicos del paciente. También monitorea la respuesta y decide cuándo transicionar o suspender la NP.' },
+    farmacia: { pasos: [1, 2, 3, 4, 5], nota: 'El farmacéutico es el validador experto del sistema: interpreta los cálculos del sistema hospitalario, verifica la compatibilidad fisicoquímica y garantiza la calidad del preparado estéril.' },
+    medicina: { pasos: [1, 5, 6], nota: 'El médico inicia el proceso prescribiendo en el sistema hospitalario con los datos clínicos del paciente. También monitorea la respuesta y decide cuándo transicionar o suspender la NP.' },
     nutricion: { pasos: [1, 5, 6], nota: 'El nutricionista define los requerimientos energéticos y proteicos, ajusta la prescripción según evolución metabólica y lidera la transición a alimentación enteral u oral.' },
     enfermeria: { pasos: [5, 6], nota: 'Enfermería administra la NP, monitorea al paciente, detecta complicaciones en tiempo real y educa al paciente y cuidador para el alta domiciliaria.' },
   }[carrera] || { pasos: [1,2,3,4,5,6], nota: '' }
 
   const pasos = [
-    { num: 1, icon: '👨‍⚕️', titulo: 'Prescripción médica en EDUS', desc: 'El médico ingresa al módulo de NP en el EDUS. El sistema aplica guías ASPEN/ESPEN/CCSS y genera un cálculo inicial. El médico personaliza según el paciente.' },
+    { num: 1, icon: '👨‍⚕️', titulo: 'Prescripción médica', desc: 'El médico ingresa al módulo de NP del sistema hospitalario. El sistema aplica guías ASPEN/ESPEN y genera un cálculo inicial. El médico personaliza según el paciente.' },
     { num: 2, icon: '💊', titulo: 'Validación farmacéutica', desc: 'El farmacéutico revisa la prescripción: dosis, osmolalidad, producto Ca×P, compatibilidad fisicoquímica. Puede modificar y deja constancia digital de la intervención.' },
-    { num: 3, icon: '📋', titulo: 'Generación de hoja de preparación', desc: 'El EDUS genera la fórmula maestra con volúmenes exactos, etiquetas con código de barras y la orden para el técnico en farmacia.' },
+    { num: 3, icon: '📋', titulo: 'Generación de hoja de preparación', desc: 'El sistema hospitalario genera la fórmula maestra con volúmenes exactos, etiquetas con código de barras y la orden para el técnico en farmacia.' },
     { num: 4, icon: '🧪', titulo: 'Preparación estéril', desc: 'En cabina de flujo laminar (ISO 5). Con compounder automático en hospitales de alta complejidad. El farmacéutico supervisa y verifica el producto terminado.' },
-    { num: 5, icon: '✅', titulo: 'Liberación y control de calidad', desc: 'Inspección visual, gravimetría y verificación de código de barras. Cada lote registrado en el EDUS vinculado al paciente para trazabilidad total.' },
+    { num: 5, icon: '✅', titulo: 'Liberación y control de calidad', desc: 'Inspección visual, gravimetría y verificación de código de barras. Cada lote registrado en el sistema hospitalario vinculado al paciente para trazabilidad total.' },
     { num: 6, icon: '💉', titulo: 'Administración y seguimiento', desc: 'Enfermería administra con técnica aséptica, monitorea al paciente y registra el proceso. Nutrición y medicina ajustan la prescripción según evolución.' },
   ]
 
@@ -563,7 +563,7 @@ const carreras = {
       { id: 'calculos', label: 'Cálculos', icon: Calculator, contenido: () => <FarmaciaCalculadora /> },
       { id: 'estabilidad', label: 'Estabilidad', icon: FlaskConical, contenido: () => <FarmaciaEstabilidad /> },
       { id: 'biotecnologia', label: 'Atlas 3D', icon: Microscope, contenido: () => <PortalAtlas /> },
-      { id: 'flujo', label: 'Flujo CCSS', icon: GitBranch, contenido: () => <FlujoCCSS carrera="farmacia" /> },
+      { id: 'flujo', label: 'Flujo Hospitalario', icon: GitBranch, contenido: () => <FlujoHospitalario carrera="farmacia" /> },
     ],
   },
   medicina: {
@@ -573,7 +573,7 @@ const carreras = {
     tabs: [
       { id: 'indicaciones', label: 'Indicaciones', icon: Stethoscope, contenido: () => <MedicinaIndicaciones /> },
       { id: 'biotecnologia', label: 'Atlas 3D', icon: Microscope, contenido: () => <PortalAtlas /> },
-      { id: 'flujo', label: 'Flujo CCSS', icon: GitBranch, contenido: () => <FlujoCCSS carrera="medicina" /> },
+      { id: 'flujo', label: 'Flujo Hospitalario', icon: GitBranch, contenido: () => <FlujoHospitalario carrera="medicina" /> },
     ],
   },
   nutricion: {
@@ -584,7 +584,7 @@ const carreras = {
       { id: 'evaluacion', label: 'Evaluación', icon: BookOpen, contenido: () => <NutricionEvaluacion /> },
       { id: 'calculos', label: 'Requerimientos', icon: Calculator, contenido: () => <FarmaciaCalculadora /> },
       { id: 'biotecnologia', label: 'Atlas 3D', icon: Microscope, contenido: () => <PortalAtlas /> },
-      { id: 'flujo', label: 'Flujo CCSS', icon: GitBranch, contenido: () => <FlujoCCSS carrera="nutricion" /> },
+      { id: 'flujo', label: 'Flujo Hospitalario', icon: GitBranch, contenido: () => <FlujoHospitalario carrera="nutricion" /> },
     ],
   },
   enfermeria: {
@@ -594,7 +594,7 @@ const carreras = {
     tabs: [
       { id: 'administracion', label: 'Administración', icon: CheckCircle, contenido: () => <EnfermeriaContenido /> },
       { id: 'biotecnologia', label: 'Atlas 3D', icon: Microscope, contenido: () => <PortalAtlas /> },
-      { id: 'flujo', label: 'Flujo CCSS', icon: GitBranch, contenido: () => <FlujoCCSS carrera="enfermeria" /> },
+      { id: 'flujo', label: 'Flujo Hospitalario', icon: GitBranch, contenido: () => <FlujoHospitalario carrera="enfermeria" /> },
     ],
   },
 }
@@ -630,7 +630,7 @@ export default function Estudiante() {
               </div>
               <h1 className="text-3xl font-bold text-slate-900 leading-tight">Para estudiantes de salud</h1>
               <p className="text-slate-500 mt-1 text-base leading-relaxed">
-                Contenido clínico relevante para tu carrera, con base en guías ESPEN 2023, ASPEN 2022 y protocolos CCSS.
+                Contenido clínico relevante para tu carrera, con base en guías ESPEN 2023, ASPEN 2022 y protocolos hospitalarios.
               </p>
             </div>
 
@@ -656,7 +656,7 @@ export default function Estudiante() {
               <div className="space-y-2">
                 {[
                   '🧬 Biotecnología de los componentes NP — disponible en todas las carreras',
-                  '⚙️ Flujo clínico completo EDUS-CCSS — con énfasis en el rol de cada profesión',
+                  '⚙️ Flujo clínico hospitalario completo — con énfasis en el rol de cada profesión',
                   '📐 Calculadora educativa paso a paso — con fórmulas completas y VIG',
                 ].map((t, i) => (
                   <div key={i} className="flex items-start gap-2 text-slate-600 text-sm">

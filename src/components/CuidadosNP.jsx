@@ -110,7 +110,7 @@ export default function CuidadosNP() {
       </div>
 
       <p className="text-center text-slate-400 text-sm pb-2">
-        Basado en guías ESPEN 2023 y protocolos CCSS de NP domiciliaria.
+        Basado en guías ESPEN 2023 y protocolos hospitalarios de NP domiciliaria.
       </p>
     </div>
   )

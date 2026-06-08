@@ -300,7 +300,7 @@ export default function InspectorInfecciones() {
           {nivel !== 'rojo' && (
             <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 flex items-center justify-between">
               <div>
-                <p className="font-bold text-slate-700 text-base">Emergencias CCSS</p>
+                <p className="font-bold text-slate-700 text-base">Emergencias</p>
                 <p className="text-slate-400 text-sm">Disponible las 24 horas</p>
               </div>
               <a href="tel:911" className="bg-red-500 hover:bg-red-600 text-white font-bold px-6 py-3 rounded-xl text-lg transition-colors">
