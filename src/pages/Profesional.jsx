@@ -1,13 +1,15 @@
-import { Calculator, FlaskConical, Pill } from 'lucide-react'
+import { Calculator, FlaskConical, Pill, Users } from 'lucide-react'
 import { useState } from 'react'
 import CalculadoraNP from '../components/CalculadoraNP'
 import Compatibilidad from '../components/Compatibilidad'
+import ModoBatch from '../components/ModoBatch'
 import NavBar from '../components/NavBar'
 import SafetyNotice from '../components/SafetyNotice'
 
 const tabs = [
-  { id: 'calculadora', label: 'Calculadora NP', icon: Calculator },
-  { id: 'compatibilidad', label: 'Compatibilidades', icon: Pill },
+  { id: 'calculadora',   label: 'Calculadora NP',   icon: Calculator },
+  { id: 'batch',         label: 'Modo Farmacéutico', icon: Users      },
+  { id: 'compatibilidad', label: 'Compatibilidades', icon: Pill       },
 ]
 
 export default function Profesional() {
@@ -55,7 +57,8 @@ export default function Profesional() {
           </div>
 
           <div className="p-5 md:p-6">
-            {activeTab === 'calculadora' && <CalculadoraNP />}
+            {activeTab === 'calculadora'    && <CalculadoraNP />}
+            {activeTab === 'batch'          && <ModoBatch />}
             {activeTab === 'compatibilidad' && <Compatibilidad />}
           </div>
         </div>

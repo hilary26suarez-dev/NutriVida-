@@ -1,4 +1,4 @@
-import { Activity, AlertCircle, AlertTriangle, Baby, BookOpen, CheckCircle, ChevronDown, ChevronUp, Clock, Dna, Download, Info, Printer, RotateCcw, Syringe } from 'lucide-react'
+import { Activity, AlertCircle, AlertTriangle, Baby, BookOpen, CheckCircle, ChevronDown, ChevronUp, Clock, Dna, Download, Info, Printer, RotateCcw, Scale, Syringe } from 'lucide-react'
 import { useState } from 'react'
 
 const CONDICIONES = [
@@ -11,10 +11,170 @@ const CONDICIONES = [
 ]
 
 const LIPIDOS = [
-  { id: 'soja',       label: 'Soja (Intralipid®)',                   omega3: false },
-  { id: 'oliva_soja', label: 'Oliva/Soja (ClinOleic®)',              omega3: false },
-  { id: 'mixto',      label: 'Mixto SMOF (soja/MCT/oliva/pez)',      omega3: true  },
-  { id: 'microalgas', label: 'Omega-3 / Microalgas (Omegaven®)',     omega3: true  },
+  { id: 'soja',       label: 'Soja (Intralipid®)',               omega3: false },
+  { id: 'oliva_soja', label: 'Oliva/Soja (ClinOleic®)',          omega3: false },
+  { id: 'mixto',      label: 'Mixto SMOF (soja/MCT/oliva/pez)', omega3: true  },
+  { id: 'microalgas', label: 'Omega-3 / Microalgas (Omegaven®)', omega3: true  },
+]
+
+// Perfiles patológicos clínicos (KDOQI 2020, ESPEN Renal 2024, ESPEN Liver 2022, ESPEN Cancer 2021)
+const PERFILES_PATOLOGICOS = [
+  {
+    id: 'estandar',
+    label: 'Estándar / General',
+    grupo: null,
+    kcalRange: null,
+    proteina: null,
+    tipoPesoSugerido: 'actual',
+    fuente: null,
+    nota: null,
+    restricciones: [],
+  },
+  {
+    id: 'renal_prediálisis',
+    label: 'Renal — Pre-diálisis (TFG <25 mL/min)',
+    grupo: 'renal',
+    kcalRange: [30, 35],
+    proteina: [0.60, 0.75],
+    tipoPesoSugerido: 'seco',
+    fuente: 'NKF-KDOQI 2020 · ESPEN Renal 2024',
+    nota: 'Único escenario que justifica restricción proteica. Objetivo: retrasar inicio de diálisis. Si hay catabolismo significativo, subir a 0.75 g/kg/día.',
+    restricciones: ['Fósforo: 10–15 mg/kg/día', 'Potasio: según ionograma del día', 'Líquidos: según diuresis residual'],
+  },
+  {
+    id: 'renal_hd',
+    label: 'Renal — Hemodiálisis crónica',
+    grupo: 'renal',
+    kcalRange: [30, 35],
+    proteina: [1.2, 1.2],
+    tipoPesoSugerido: 'seco',
+    fuente: 'NKF-KDOQI 2020',
+    nota: 'Usar peso seco post-diálisis. El filtro elimina AA libres (pérdida iatrogénica); el aporte debe compensarla.',
+    restricciones: ['Fósforo: 10–15 mg/kg/día', 'Potasio: validar ionograma previo al cálculo'],
+  },
+  {
+    id: 'renal_dp',
+    label: 'Renal — Diálisis peritoneal',
+    grupo: 'renal',
+    kcalRange: [30, 35],
+    proteina: [1.2, 1.3],
+    tipoPesoSugerido: 'seco',
+    fuente: 'NKF-KDOQI 2020 · ESPEN Renal 2024',
+    nota: 'Pérdida proteica peritoneal continua. Contar calorías del dializante glucosado en el balance calórico total.',
+    restricciones: ['Fósforo: 10–15 mg/kg/día', 'Contabilizar glucosa del líquido de diálisis'],
+  },
+  {
+    id: 'renal_trrc',
+    label: 'Renal — TRRC (terapia continua UCI)',
+    grupo: 'renal',
+    kcalRange: [25, 35],
+    proteina: [1.5, 2.5],
+    tipoPesoSugerido: 'actual',
+    fuente: 'ESPEN ICU 2021 · ESPEN Renal 2024',
+    nota: 'Hemofiltración elimina 10–15 g AA/día. Hipercatabolismo del paciente crítico requiere entrega masiva de nitrógeno.',
+    restricciones: ['Fósforo: monitoreo c/24h', 'Potasio: ionograma c/8h', 'Vigilar hipofosfatemia de realimentación'],
+  },
+  {
+    id: 'hepatico_compensado',
+    label: 'Hepático — Cirrosis compensada',
+    grupo: 'hepatico',
+    kcalRange: [30, 35],
+    proteina: [1.2, 1.5],
+    tipoPesoSugerido: 'seco',
+    fuente: 'ESPEN Liver Disease 2022',
+    nota: 'Usar peso sin ascitis. Evitar ayuno >3h (ayuno acelerado cirrótico). Lípidos preferidos en esteatorrea: MCT/LCT.',
+    restricciones: ['Sodio: restricción si ascitis', 'Zinc, vitaminas liposolubles: frecuentemente depletadas', 'Evitar sobrecarga de glucosa (IR frecuente)'],
+  },
+  {
+    id: 'hepatico_descompensado',
+    label: 'Hepático — Cirrosis descompensada / encefalopatía',
+    grupo: 'hepatico',
+    kcalRange: [35, 40],
+    proteina: [1.2, 1.5],
+    tipoPesoSugerido: 'seco',
+    fuente: 'ESPEN Liver Disease 2022',
+    nota: 'NO restringir proteínas en encefalopatía — el músculo sano detoxifica NH₃. Si hay intolerancia comprobada: AACR (leucina, isoleucina, valina), NO reducir dosis.',
+    restricciones: ['Sodio: restricción estricta', 'AACR si intolerancia a proteína mixta', 'Reponer vitaminas liposolubles'],
+  },
+  {
+    id: 'oncologico',
+    label: 'Oncológico / Caquexia tumoral',
+    grupo: 'oncologico',
+    kcalRange: [20, 25],
+    proteina: [1.0, 1.5],
+    tipoPesoSugerido: 'actual',
+    fuente: 'ESPEN Cancer 2021 · ASPEN Oncology Guidelines',
+    nota: 'No sobrealimentar — solo agrava insulinorresistencia tumoral. Objetivo: ralentizar atrofia muscular, no revertir peso. Omega-3 (EPA) puede atenuar inflamación catabólica.',
+    restricciones: ['Lípidos: 30–50% de cal no proteicas', 'Preferir Omega-3 (EPA) si disponible', 'Monitoreo de hiperglucemia frecuente'],
+    tigMax: null,
+  },
+  // ── Perfiles Neonatal / Pediátrico ─────────────────────────────────────────
+  // Fuentes: Manual CCSS Farmacias Soporte Nutricional 2018 (Anexo 4-5, HNN); ASPEN Pediatric PN Guidelines
+  {
+    id: 'neonato_prematuro',
+    label: 'Neonatal — Prematuro extremo',
+    grupo: 'pediatrico',
+    kcalRange: [110, 150],
+    proteina: [3.5, 4.0],
+    tipoPesoSugerido: 'actual',
+    fuente: 'Manual CCSS HNN 2018 · ASPEN Pediatric Guidelines',
+    nota: 'Al nacer cesa la infusión placentaria de nutrientes. Sin AA desde las primeras horas se produce catabolismo severo que afecta irreversiblemente el neurodesarrollo.',
+    restricciones: ['TIG inicio: 4–6 mg/kg/min → máx 12–14 mg/kg/min', 'Exceder TIG 14 → lipogénesis hepática + retención CO₂ → falla en extubación', 'Calcio y fósforo: curva de solubilidad crítica en prematuros'],
+    tigInicio: [4, 6],
+    tigMax: 14,
+  },
+  {
+    id: 'neonato_termino',
+    label: 'Neonatal — Neonato a término (0–1 año)',
+    grupo: 'pediatrico',
+    kcalRange: [90, 100],
+    proteina: [2.5, 3.5],
+    tipoPesoSugerido: 'actual',
+    fuente: 'Manual CCSS HNN 2018 · ASPEN Pediatric Guidelines',
+    nota: 'Iniciar AA en las primeras 24h. Aporte calórico no proteico suficiente es obligatorio para evitar que los AA se usen como energía.',
+    restricciones: ['TIG inicio: 6–8 mg/kg/min → máx 12–14 mg/kg/min', 'Glucosa >14 mg/kg/min → esteatosis hepática fulminante', 'Oligoelementos: Cu, Mn, Zn, Se (0.2 mL/kg/día multi-oligo)'],
+    tigInicio: [6, 8],
+    tigMax: 14,
+  },
+  {
+    id: 'pediatrico_infante',
+    label: 'Pediátrico — Infante (1–7 años)',
+    grupo: 'pediatrico',
+    kcalRange: [75, 90],
+    proteina: [1.5, 2.0],
+    tipoPesoSugerido: 'actual',
+    fuente: 'Manual CCSS HNN 2018 · ASPEN Pediatric Guidelines',
+    nota: 'Ajustar progresivamente según tolerancia. Lípidos: 30–40% de calorías no proteicas. Monitoreo glucémico estricto.',
+    restricciones: ['TIG máximo: 12 mg/kg/min', 'Monitoreo de triglicéridos c/3 días si infusión lipídica >1 g/kg/día'],
+    tigInicio: [6, 8],
+    tigMax: 12,
+  },
+  {
+    id: 'pediatrico_escolar',
+    label: 'Pediátrico — Escolar (7–12 años)',
+    grupo: 'pediatrico',
+    kcalRange: [60, 75],
+    proteina: [1.5, 2.0],
+    tipoPesoSugerido: 'actual',
+    fuente: 'Manual CCSS HNN 2018 · ASPEN Pediatric Guidelines',
+    nota: 'Requerimientos decrecientes con la edad. TIG similar al adulto. Vigilar sobrecarga calórica en NP prolongada.',
+    restricciones: ['TIG máximo: 7–10 mg/kg/min', 'Vigilar síndrome de realimentación si desnutrición previa severa'],
+    tigInicio: [5, 7],
+    tigMax: 10,
+  },
+  {
+    id: 'pediatrico_adolescente',
+    label: 'Pediátrico — Adolescente (12–18 años)',
+    grupo: 'pediatrico',
+    kcalRange: [35, 50],
+    proteina: [1.0, 1.5],
+    tipoPesoSugerido: 'actual',
+    fuente: 'Manual CCSS HNN 2018 · ASPEN Pediatric Guidelines',
+    nota: 'Aproximación gradual al metabolismo adulto. Usar peso actual; si hay obesidad, calcular peso ajustado igual que en adultos.',
+    restricciones: ['TIG máximo: 7 mg/kg/min (igual al adulto)', 'Vigilar hiperglucemia y dislipidemia'],
+    tigInicio: [4, 6],
+    tigMax: 7,
+  },
 ]
 
 const BASE_CONOCIMIENTO = {
@@ -39,9 +199,8 @@ const BASE_CONOCIMIENTO = {
     cambios: [
       'Catabolismo proteico acelerado: hasta 20% sobre basal',
       'Gluconeogénesis hepática sostenida — hiperglucemia resistente al aporte calórico exógeno',
-      'Hipertrigliceridemia por lipólisis mediada por TNF-α y IL-6',
+      'Hipertrigliceridemia por lipólisis mediada por TNF-α e IL-6',
       'Déficit de zinc, selenio y vitaminas antioxidantes (A, C, E) por consumo aumentado',
-      'Relación caloría-nitrógeno óptima: 100–150 kcal/g N para minimizar catabolismo neto',
     ],
     fundamento: 'ASPEN/SCCM 2016 recomiendan 1.5–1.8 g proteína/kg/día en SIRS moderado. La relación NPC:N de 100–150:1 minimiza la utilización de aminoácidos como sustrato energético.',
     referencias: [
@@ -56,52 +215,49 @@ const BASE_CONOCIMIENTO = {
       'Pérdida muscular de 0.5–1 kg/día si el aporte proteico es insuficiente',
       'Hiperglucemia de estrés — objetivo glucémico UCI: 140–180 mg/dL (ASPEN 2016)',
       'Síntesis hepática prioritaria de fibrinógeno, PCR, alfa-2 macroglobulina',
-      'Hipertrigliceridemia si el aporte lipídico excede la capacidad oxidativa (> 1.5 g/kg/día)',
       'Hipocalemia e hipofosfatemia por captación celular aumentada durante la síntesis proteica',
     ],
-    fundamento: 'ESPEN 2021: iniciar NP dentro de 24–48h si la vía enteral es imposible. Aporte proteico 1.5–2.0 g/kg/día. En IMC > 30 ajustar al peso ideal. Evitar sobrealimentación calórica la primera semana (riesgo de síndrome de realimentación).',
+    fundamento: 'ESPEN 2021: iniciar NP dentro de 24–48h si la vía enteral es imposible. Aporte proteico 1.5–2.0 g/kg/día. En IMC >30 ajustar al peso ideal. Evitar sobrealimentación calórica la primera semana.',
     referencias: [
       'ESPEN Guidelines on Clinical Nutrition in Surgery. Clin Nutr. 2017;36(3):623-650.',
       'ESPEN ICU Guidelines — actualización 2021. Clin Nutr. 2021;40(10):5271-5319.',
-      'ASPEN Perioperative Nutrition Support Guidelines (2013).',
     ],
   },
   sepsis: {
     titulo: 'Sepsis y trauma severo — estado hipercatabólico',
-    mecanismo: 'La sepsis induce "metabolic reprogramming" en macrófagos M1: la glucólisis aeróbica (efecto Warburg inmune) consume glucosa y glutamina a velocidad 10× basal. La proteólisis muscular puede superar 300 g de tejido/día. La respuesta CARS posterior al SIRS produce inmunoparálisis y mayor vulnerabilidad a infecciones secundarias.',
+    mecanismo: 'La sepsis induce "metabolic reprogramming" en macrófagos M1: la glucólisis aeróbica (efecto Warburg inmune) consume glucosa y glutamina a velocidad 10× basal. La proteólisis muscular puede superar 300 g de tejido/día.',
     cambios: [
       'Depleción de glutamina plasmática (< 420 μmol/L = marcador de mal pronóstico)',
       'Gluconeogénesis hepática sostenida incluso con aportes exógenos de glucosa',
       'Disfunción mitocondrial — reducida capacidad oxidativa celular',
-      'Hipoalbuminemia dilucional y por redistribución (no marcador nutricional en fase aguda)',
       'Insulinorresistencia severa — frecuente necesidad de insulina en infusión continua',
-      'Deficiencia de selenio, zinc y vitamina C por consumo antioxidante elevado',
     ],
-    fundamento: 'ASPEN/SCCM 2016: en sepsis iniciar NP hipocalórica (< 20 kcal/kg/día) la primera semana. La sobrealimentación eleva el CO₂ y empeora el pronóstico ventilatorio. Meta proteica: 1.5–2.0 g/kg/día tolerando balance calórico negativo durante la fase aguda.',
+    fundamento: 'ASPEN/SCCM 2016: en sepsis iniciar NP hipocalórica (<20 kcal/kg/día) la primera semana. La sobrealimentación eleva el CO₂ y empeora el pronóstico ventilatorio. Meta proteica: 1.5–2.0 g/kg/día.',
     referencias: [
       'ASPEN/SCCM Guidelines for Adult ICU Nutrition (2016). JPEN. 2016;40(2):159-211.',
       'ESPEN Intensive Care Guidelines. Clin Nutr. 2019;38(1):48-79.',
-      'Singer et al. — Surviving Sepsis Campaign: Nutrition Recommendations (2018). Crit Care Med. 2018;46(12).',
     ],
   },
   quemaduras: {
     titulo: 'Quemaduras extensas — hipermetabolismo extremo',
-    mecanismo: 'El paciente quemado presenta el mayor estado hipercatabólico conocido en medicina clínica. La destrucción de la barrera cutánea genera pérdida proteica directa por exudado (30–50 g/m² SCQ/día). Las catecolaminas permanecen elevadas durante semanas, produciendo un GEB que puede duplicar el valor basal sin responder a la nutrición convencional.',
+    mecanismo: 'El paciente quemado presenta el mayor estado hipercatabólico conocido. La destrucción de la barrera cutánea genera pérdida proteica directa por exudado (30–50 g/m² SCQ/día). Las catecolaminas permanecen elevadas semanas.',
     cambios: [
       'GEB 1.5–2.0× sobre basal sostenido semanas (no solo días)',
       'Pérdida proteica directa por herida: 30–50 g/m² de SCQ quemada/día',
       'Hipercatabolismo muscular: pérdida de 15–25% de masa muscular en 3 semanas',
-      'Insulinorresistencia severa — prácticamente universal en quemaduras > 30% SCT',
-      'Hipocalemia, hipofosfatemia y déficit de vitaminas liposolubles por pérdidas en exudado',
-      'Inmunosupresión severa — alto riesgo de sepsis secundaria por Pseudomonas y Candida',
+      'Insulinorresistencia severa — prácticamente universal en quemaduras >30% SCT',
     ],
-    fundamento: 'ASPEN 2013: iniciar NE/NP dentro de 6 horas del quemado severo. Meta proteica: 1.5–2.5 g/kg/día (3.0 g/kg en niños). En quemaduras > 50% SCT, el factor ×1.5 sobre Harris-Benedict subestima; preferir calorimetría indirecta o fórmula de Curreri: 25 kcal/kg + 40 kcal × % SCQ.',
+    fundamento: 'ASPEN 2013: iniciar NE/NP dentro de 6 horas del quemado severo. Meta proteica: 1.5–2.5 g/kg/día. En quemaduras >50% SCT, el factor ×1.5 subestima; preferir calorimetría indirecta o fórmula de Curreri.',
     referencias: [
       'ASPEN Burn Support Nutrition Guidelines (2013). JPEN. 2013;37(3):305-316.',
-      'Williams & Barbul — Nutrition in Burn Patients. Surg Clin North Am. 2004;84(3):681-703.',
       'ESPEN Guidelines on Clinical Nutrition in Surgery (2017).',
     ],
   },
+}
+
+function calcPesoIdeal(talla, sexo) {
+  if (!talla) return null
+  return Math.round(sexo === 'M' ? talla - 100 : talla - 105)
 }
 
 function BaseConocimientoPanel({ datos }) {
@@ -126,31 +282,26 @@ function BaseConocimientoPanel({ datos }) {
             <p className="text-[11px] font-bold text-indigo-700 uppercase tracking-wide mb-1">Mecanismo fisiológico</p>
             <p className="text-xs text-indigo-900 leading-relaxed">{datos.mecanismo}</p>
           </div>
-
           <div>
             <p className="text-[11px] font-bold text-indigo-700 uppercase tracking-wide mb-1">Cambios metabólicos esperados</p>
             <ul className="space-y-1">
               {datos.cambios.map((c, i) => (
                 <li key={i} className="flex items-start gap-1.5 text-xs text-indigo-900">
-                  <span className="text-indigo-400 mt-0.5 flex-shrink-0">▸</span>
-                  {c}
+                  <span className="text-indigo-400 mt-0.5 flex-shrink-0">▸</span>{c}
                 </li>
               ))}
             </ul>
           </div>
-
           <div className="bg-white rounded-lg p-3 border border-indigo-100">
             <p className="text-[11px] font-bold text-indigo-700 uppercase tracking-wide mb-1">Fundamento científico</p>
             <p className="text-xs text-slate-700 leading-relaxed">{datos.fundamento}</p>
           </div>
-
           <div>
             <p className="text-[11px] font-bold text-indigo-700 uppercase tracking-wide mb-1">Referencias</p>
             {datos.referencias.map((r, i) => (
               <p key={i} className="text-[11px] text-slate-500 italic leading-snug">{r}</p>
             ))}
           </div>
-
           <p className="text-[10px] text-indigo-400 text-center pt-1 border-t border-indigo-100">
             Contenido educativo — no sustituye valoración clínica individualizada
           </p>
@@ -160,12 +311,12 @@ function BaseConocimientoPanel({ datos }) {
   )
 }
 
-const SEMAFORO_BG   = { rojo: 'bg-red-50 border-red-200',     amarillo: 'bg-amber-50 border-amber-200',  verde: 'bg-emerald-50 border-emerald-200' }
-const SEMAFORO_TEXT = { rojo: 'text-red-700',                  amarillo: 'text-amber-700',                verde: 'text-emerald-700' }
+const SEMAFORO_BG   = { rojo: 'bg-red-50 border-red-200',    amarillo: 'bg-amber-50 border-amber-200',   verde: 'bg-emerald-50 border-emerald-200' }
+const SEMAFORO_TEXT = { rojo: 'text-red-700',                 amarillo: 'text-amber-700',                 verde: 'text-emerald-700' }
 
 function SemaforoIcon({ nivel }) {
-  if (nivel === 'rojo')    return <AlertTriangle size={22} className="text-red-600" />
-  if (nivel === 'amarillo') return <AlertCircle  size={22} className="text-amber-500" />
+  if (nivel === 'rojo')     return <AlertTriangle size={22} className="text-red-600" />
+  if (nivel === 'amarillo') return <AlertCircle   size={22} className="text-amber-500" />
   return <CheckCircle size={22} className="text-emerald-500" />
 }
 
@@ -176,9 +327,9 @@ function calcBEE(peso, talla, edad, sexo) {
 
 function calcEstabilidad(caTotal, po4Total, mgTotal, volumen, conLipidos) {
   if (!caTotal || !po4Total || !volumen) return null
-  const caConc   = (caTotal  / volumen) * 1000
-  const po4Conc  = (po4Total / volumen) * 1000
-  const mgConc   = (mgTotal  / volumen) * 1000
+  const caConc  = (caTotal  / volumen) * 1000
+  const po4Conc = (po4Total / volumen) * 1000
+  const mgConc  = (mgTotal  / volumen) * 1000
   const producto  = caConc * po4Conc
   const divalentes = caConc + mgConc
 
@@ -205,6 +356,28 @@ function calcEstabilidad(caTotal, po4Total, mgTotal, volumen, conLipidos) {
   return { nivel, caConc: caConc.toFixed(1), po4Conc: po4Conc.toFixed(1), mgConc: mgConc.toFixed(1), producto: Math.round(producto), mensajes }
 }
 
+// 5-level osmolarity classification (Pereira Da Silva / SENPE / ASPEN)
+function getViaZone(osm) {
+  if (osm > 1800) return { zone: 'critica', color: 'red',     label: 'CVC OBLIGATORIO — alerta fisicoquímica crítica', desc: 'Riesgo de inestabilidad fisicoquímica y precipitación de sales. Revisar dilución volumétrica urgente.' }
+  if (osm > 900)  return { zone: 'alta',    color: 'red',     label: 'Venosa central exclusiva (CVC / PICC)',           desc: 'Osmolaridad >900 mOsm/L: riesgo grave de tromboflebitis en venas periféricas. CVC obligatorio (ESPEN/ASPEN).' }
+  if (osm > 800)  return { zone: 'riesgo',  color: 'orange',  label: 'Transición a central — periférica contraindicada', desc: 'Zona de alto riesgo. Límite absoluto tolerado periféricamente. Alta incidencia de esclerosis vascular si se mantiene.' }
+  if (osm > 600)  return { zone: 'media',   color: 'amber',   label: 'Periférica con cautela (≤ 5 días)',                desc: 'Tolerable en venas de buen calibre. Requiere rotación de sitios de punción. Máximo 5 días periférico (SENPE).' }
+  return             { zone: 'baja',    color: 'emerald', label: 'Periférica segura',                                desc: 'Solución isotónica o ligeramente hipertónica. Riesgo mínimo de daño endotelial periférico.' }
+}
+
+const VIA_ZONE_STYLES = {
+  red:     'bg-red-50 border-red-200 text-red-700',
+  orange:  'bg-orange-50 border-orange-200 text-orange-700',
+  amber:   'bg-amber-50 border-amber-200 text-amber-700',
+  emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+}
+const VIA_ICON_COLOR = {
+  red:     'text-red-500',
+  orange:  'text-orange-500',
+  amber:   'text-amber-500',
+  emerald: 'text-emerald-500',
+}
+
 const CHECKLIST_ENFERMERIA = [
   'Verificar aspecto de la bolsa antes de conectar: color uniforme, sin capas separadas ni partículas flotantes.',
   'Conectar con técnica aséptica estricta. Proteger la bolsa de la luz directa durante la infusión.',
@@ -225,15 +398,40 @@ export default function CalculadoraNP() {
     uun24h: '', corrFactor: '2', diabetico: false,
     horasInfusion: '24', pediatrico: false,
     conLipidos: true, lipido: 'mixto', volumen: '',
-    ca: '', po4: '', mg: '',
+    // Electrolitos (mEq totales en la bolsa)
+    na: '', k: '', ca: '', po4: '', mg: '',
+    // Perfil patológico y tipo de peso
+    perfilPatologico: 'estandar',
+    tipoPeso: 'actual',
+    pesoSeco: '',
   })
   const [resultado, setResultado] = useState(null)
   const [errores, setErrores] = useState([])
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
-  const condActual = CONDICIONES.find(c => c.id === form.condicion)
-  const kcalMin = form.ambulatorio ? 30 : condActual?.kcalRange[0] ?? 20
-  const kcalMax = form.ambulatorio ? 35 : condActual?.kcalRange[1] ?? 25
+
+  const condActual   = CONDICIONES.find(c => c.id === form.condicion)
+  const perfilActual = PERFILES_PATOLOGICOS.find(p => p.id === form.perfilPatologico)
+
+  // Derived anthropometric values for display
+  const pesoActualN = parseFloat(form.peso) || 0
+  const tallaN      = parseFloat(form.talla) || 0
+  const pesoIdealCalc  = tallaN ? calcPesoIdeal(tallaN, form.sexo) : null
+  const imcCalc        = (tallaN && pesoActualN) ? (pesoActualN / ((tallaN / 100) ** 2)).toFixed(1) : null
+  const pesoAjustadoCalc = (pesoIdealCalc && pesoActualN > pesoIdealCalc)
+    ? Math.round(pesoIdealCalc + 0.25 * (pesoActualN - pesoIdealCalc))
+    : null
+  const esObeso = imcCalc && parseFloat(imcCalc) >= 30
+
+  // Energy range: profile overrides condition when active
+  const kcalMin = form.ambulatorio ? 30
+    : (perfilActual?.kcalRange?.[0] ?? condActual?.kcalRange[0] ?? 20)
+  const kcalMax = form.ambulatorio ? 35
+    : (perfilActual?.kcalRange?.[1] ?? condActual?.kcalRange[1] ?? 25)
+
+  // Protein range: profile overrides condition when active
+  const protMin = perfilActual?.proteina?.[0] ?? condActual?.proteina[0] ?? 1.0
+  const protMax = perfilActual?.proteina?.[1] ?? condActual?.proteina[1] ?? 1.5
 
   const calcular = () => {
     const peso  = parseFloat(form.peso)
@@ -243,49 +441,69 @@ export default function CalculadoraNP() {
     const faltantes = []
     if (!peso) faltantes.push('Peso real (kg)')
     if (!vol)  faltantes.push('Volumen total de la mezcla (mL)')
-
     if (form.modoCalculo === 'kcal_kg') {
       if (!parseFloat(form.kcalKg)) faltantes.push('Objetivo calórico (kcal/kg/día)')
     } else {
       if (!parseFloat(form.talla)) faltantes.push('Talla (cm)')
       if (!parseFloat(form.edad))  faltantes.push('Edad (años)')
     }
-
-    if (faltantes.length > 0) {
-      setErrores(faltantes)
-      return
-    }
+    if (faltantes.length > 0) { setErrores(faltantes); return }
     setErrores([])
 
-    let ten, bee
+    // ── Peso de cálculo ──────────────────────────────────────────────────────
+    let pesoCal = peso
+    let pesoCalDesc = 'Peso actual'
+    if (form.tipoPeso === 'seco' && parseFloat(form.pesoSeco)) {
+      pesoCal = parseFloat(form.pesoSeco)
+      pesoCalDesc = 'Peso seco'
+    } else if (form.tipoPeso === 'ajustado' && pesoIdealCalc && peso > pesoIdealCalc) {
+      pesoCal = pesoIdealCalc + 0.25 * (peso - pesoIdealCalc)
+      pesoCalDesc = `Peso ajustado (obeso)`
+    }
 
+    // ── Energía ──────────────────────────────────────────────────────────────
+    let ten, bee
     if (form.modoCalculo === 'kcal_kg') {
-      const kcalKg = parseFloat(form.kcalKg)
       bee = null
-      ten = kcalKg * peso
+      ten = parseFloat(form.kcalKg) * pesoCal
     } else {
       const talla = parseFloat(form.talla)
       const edad  = parseFloat(form.edad)
-      bee = calcBEE(peso, talla, edad, form.sexo)
+      bee = calcBEE(pesoCal, talla, edad, form.sexo)
       ten = bee * condActual.factor
     }
 
-    // Protein: UUN-based (lab) takes priority over formula estimate
-    const corrFactor    = parseFloat(form.corrFactor) || 2
-    const uun           = parseFloat(form.uun24h)
-    const protFormula   = (parseFloat(form.proteinaGKg) || ((condActual.proteina[0] + condActual.proteina[1]) / 2)) * peso
-    const protFromUUN   = uun > 0 ? (uun + corrFactor) * 6.25 : null
-    const protG         = protFromUUN ?? protFormula
+    // ── Proteína ─────────────────────────────────────────────────────────────
+    const corrFactor  = parseFloat(form.corrFactor) || 2
+    const uun         = parseFloat(form.uun24h)
+    const protFormula = (parseFloat(form.proteinaGKg) || ((protMin + protMax) / 2)) * pesoCal
+    const protFromUUN = uun > 0 ? (uun + corrFactor) * 6.25 : null
+    const protG       = protFromUUN ?? protFormula
 
-    const kcalProt     = protG * 4
-    const npc          = ten - kcalProt
-    const dextrosaG    = Math.max(0, (npc * 0.65) / 3.4)
-    const lipidoG      = form.conLipidos ? Math.max(0, (npc * 0.35) / 10) : 0
-    const nitrogeno    = protG / 6.25
-    const npcN         = npc / (nitrogeno || 1)
-    const osmolaridad  = Math.round((dextrosaG / vol * 1000 * 5) + (protG / vol * 1000 * 10) + 300)
+    // ── Macronutrientes ───────────────────────────────────────────────────────
+    const kcalProt  = protG * 4
+    const npc       = ten - kcalProt
+    const dextrosaG = Math.max(0, (npc * 0.65) / 3.4)
+    const lipidoG   = form.conLipidos ? Math.max(0, (npc * 0.35) / 10) : 0
+    const nitrogeno = protG / 6.25
+    const npcN      = npc / (nitrogeno || 1)
 
-    // Stability
+    // ── Osmolaridad — Ecuación Pereira Da Silva et al. 2015 ──────────────────
+    // Formula: (g glucosa/L × 5.55) + (g AA/L × 8.0) + (lípidos × 0) + (mEq electrolitos/L × 2)
+    // Lípidos no contribuyen: son isotónicos (~300 mOsm intrínseco), fase dispersa micelar
+    const glucosaG_L  = dextrosaG / vol * 1000
+    const aaG_L       = protG    / vol * 1000
+    const naTotal     = parseFloat(form.na)  || 0
+    const kTotal      = parseFloat(form.k)   || 0
+    const caTotal_e   = parseFloat(form.ca)  || 0
+    const mgTotal_e   = parseFloat(form.mg)  || 0
+    const po4Total_e  = parseFloat(form.po4) || 0
+    const totalMEq_L  = (naTotal + kTotal + caTotal_e + mgTotal_e + po4Total_e) / vol * 1000
+    const osmolaridad = Math.round(glucosaG_L * 5.55 + aaG_L * 8.0 + totalMEq_L * 2)
+
+    const viaInfo = getViaZone(osmolaridad)
+
+    // ── Estabilidad Ca-PO4 ───────────────────────────────────────────────────
     const caTotal  = parseFloat(form.ca)  || 0
     const po4Total = parseFloat(form.po4) || 0
     const mgTotal  = parseFloat(form.mg)  || 0
@@ -293,8 +511,9 @@ export default function CalculadoraNP() {
       ? calcEstabilidad(caTotal, po4Total, mgTotal, vol, form.conLipidos)
       : null
 
-    // Nitrogen balance result (explicit display)
-    let balanceN = null
+    // ── Balance nitrogenado ──────────────────────────────────────────────────
+    let balanceN    = null
+    let bistrianData = null
     if (uun > 0) {
       const nIntake  = nitrogeno
       const nLoss    = uun + corrFactor
@@ -304,16 +523,45 @@ export default function CalculadoraNP() {
         estado:        nBalance > 1 ? 'anabolico' : nBalance < -1 ? 'catabolico' : 'neutro',
         protFormula:   Math.round(protFormula),
         protNeutral:   Math.round((uun + corrFactor) * 6.25),
-        protNeutralKg: ((uun + corrFactor) * 6.25 / peso).toFixed(2),
+        protNeutralKg: ((uun + corrFactor) * 6.25 / pesoCal).toFixed(2),
         nLoss:         nLoss.toFixed(1),
+      }
+
+      // Índice de Estrés de Bistrian: NUU_obs − (0.5 × N_ingerido + 3)
+      const nUUBasal = 0.5 * nIntake + 3
+      const indice   = uun - nUUBasal
+      bistrianData = {
+        indice:      indice.toFixed(1),
+        nUUBasal:    nUUBasal.toFixed(1),
+        nivel:       indice > 8 ? 'grave' : indice > 5 ? 'moderado' : indice > 0 ? 'leve' : 'minimo',
+        descripcion: indice > 8
+          ? 'Estrés grave — sepsis fulminante, gran quemado, SDMO'
+          : indice > 5
+          ? 'Estrés moderado — infección sistémica, trauma extenso'
+          : indice > 0
+          ? 'Estrés leve — respuesta a trauma quirúrgico menor'
+          : 'Sin estrés metabólico significativo',
+        color: indice > 8 ? 'red' : indice > 5 ? 'orange' : 'amber',
       }
     }
 
-    // Osmolarity zone
-    const viaZone        = osmolaridad > 900 ? 'alta' : osmolaridad > 700 ? 'media' : 'baja'
-    const viaRecomendada = osmolaridad > 900 ? 'Central — CVC obligatorio' : osmolaridad > 700 ? 'Preferir vía central' : 'Periférica o Central'
+    // ── TIG — Tasa de Infusión de Glucosa (solo perfiles pediátricos) ────────
+    // TIG (mg/kg/min) = g glucosa/día × 1000 / (pesoCal × 1440)
+    let tigData = null
+    if (perfilActual?.tigMax) {
+      const tig = (dextrosaG * 1000) / (pesoCal * 1440)
+      tigData = {
+        tig: tig.toFixed(2),
+        tigMax: perfilActual.tigMax,
+        tigInicio: perfilActual.tigInicio,
+        seguro: tig <= perfilActual.tigMax,
+        nivel: tig > perfilActual.tigMax ? 'critico'
+          : tig > perfilActual.tigMax * 0.85 ? 'limite' : 'seguro',
+      }
+    }
 
-    const volAA     = Math.round(protG / 0.1)
+    // ── Volúmenes comerciales ─────────────────────────────────────────────────
+    const volAA     = Math.round(protG    / 0.1)
     const volDex    = Math.round(dextrosaG / 0.5)
     const volLipido = form.conLipidos ? Math.round(lipidoG / 0.2) : 0
     const volumenComponentes = volAA + volDex + volLipido
@@ -322,34 +570,44 @@ export default function CalculadoraNP() {
     setResultado({
       bee: bee ? Math.round(bee) : null,
       ten: Math.round(ten),
-      protG: Math.round(protG), protGKg: (protG / peso).toFixed(2),
+      protG: Math.round(protG), protGKg: (protG / pesoCal).toFixed(2),
       protFuente: protFromUUN ? 'UUN (laboratorio)' : 'Ecuación metabólica',
       dextrosaG: Math.round(dextrosaG), lipidoG: Math.round(lipidoG),
       nitrogeno: nitrogeno.toFixed(1), npcN: Math.round(npcN),
       volAA, volDex, volLipido,
       volumenComponentes,
-      porcentajeOcupado: Math.round(porcentajeOcupado),
-      volumenExcedido:   volumenComponentes > vol,
-      volumenJusto:      porcentajeOcupado > 90 && volumenComponentes <= vol,
-      volSugerido:       Math.ceil((volumenComponentes + 150) / 100) * 100,
-      osmolaridad, viaZone, viaRecomendada,
-      npcNEstado: npcN < 80 ? 'bajo' : npcN > 150 ? 'alto' : 'optimo',
+      porcentajeOcupado:  Math.round(porcentajeOcupado),
+      volumenExcedido:    volumenComponentes > vol,
+      volumenJusto:       porcentajeOcupado > 90 && volumenComponentes <= vol,
+      volSugerido:        Math.ceil((volumenComponentes + 150) / 100) * 100,
+      osmolaridad, viaInfo,
+      npcNEstado:  npcN < 80 ? 'bajo' : npcN > 150 ? 'alto' : 'optimo',
       estabilidad,
-      lipido:         LIPIDOS.find(l => l.id === form.lipido),
+      lipido:      LIPIDOS.find(l => l.id === form.lipido),
       balanceN,
-      insulina:       form.diabetico ? Math.round(dextrosaG / 10) : null,
-      oligoelementos: form.pediatrico ? { multiOligo: (peso * 0.2).toFixed(2), selenio: (peso * 0.1).toFixed(2) } : null,
-      tasaInfusion:   (vol / horas).toFixed(1),
-      horasInfusion:  horas,
-      volTotal:       vol,
+      bistrianData,
+      insulina:        form.diabetico ? Math.round(dextrosaG / 10) : null,
+      oligoelementos:  form.pediatrico ? { multiOligo: (pesoCal * 0.2).toFixed(2), selenio: (pesoCal * 0.1).toFixed(2) } : null,
+      tasaInfusion:    (vol / horas).toFixed(1),
+      horasInfusion:   horas,
+      volTotal:        vol,
+      // Peso info
+      pesoCal:         Math.round(pesoCal),
+      pesoCalDesc,
+      perfilLabel:     perfilActual?.label ?? 'Estándar',
+      perfilRestricciones: perfilActual?.restricciones ?? [],
+      tigData,
     })
   }
 
   const resetForm = () => {
     setForm(p => ({
       ...p,
-      peso: '', talla: '', edad: '', volumen: '', ca: '', po4: '', mg: '',
-      proteinaGKg: '', kcalKg: '', uun24h: '', diabetico: false, pediatrico: false,
+      peso: '', talla: '', edad: '', volumen: '',
+      na: '', k: '', ca: '', po4: '', mg: '',
+      proteinaGKg: '', kcalKg: '', uun24h: '',
+      pesoSeco: '',
+      diabetico: false, pediatrico: false,
     }))
     setResultado(null)
     setErrores([])
@@ -359,7 +617,6 @@ export default function CalculadoraNP() {
     if (!resultado) return
     const now = new Date().toISOString()
     const id  = `nutrivida-${Date.now()}`
-
     const fhir = {
       resourceType: 'NutritionOrder',
       id,
@@ -367,87 +624,63 @@ export default function CalculadoraNP() {
         versionId: '1',
         lastUpdated: now,
         profile: ['http://hl7.org/fhir/StructureDefinition/NutritionOrder'],
-        source: 'NutriVida-Biotech-v2',
-        tag: [{
-          system: 'http://terminology.hl7.org/CodeSystem/v3-ActReason',
-          code: 'HTEST',
-          display: 'Estimación educativa — requiere validación clínica',
-        }],
+        source: 'NutriVida-Biotech-v2.1',
+        tag: [{ system: 'http://terminology.hl7.org/CodeSystem/v3-ActReason', code: 'HTEST', display: 'Estimación educativa — requiere validación clínica' }],
       },
       status: 'proposed',
       intent: 'proposal',
       dateTime: now,
       enteralFormula: {
-        baseFormulaType: {
-          coding: [{
-            system: 'http://snomed.info/sct',
-            code: '229912004',
-            display: 'Nutrición Parenteral Total (NPT)',
-          }],
-        },
-        routeofAdministration: {
-          coding: [{
-            system: 'http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration',
-            code: 'IV',
-            display: resultado.viaRecomendada,
-          }],
-        },
-        administration: [{
-          rate: {
-            rateQuantity: {
-              value: parseFloat(resultado.tasaInfusion),
-              unit: 'mL/h',
-              system: 'http://unitsofmeasure.org',
-              code: 'mL/h',
-            },
-          },
-        }],
-        administrationInstruction: `${resultado.volTotal} mL en ${resultado.horasInfusion}h a ${resultado.tasaInfusion} mL/h. ${resultado.horasInfusion < 24 ? 'NP cíclica.' : 'NP continua.'}`,
+        baseFormulaType: { coding: [{ system: 'http://snomed.info/sct', code: '229912004', display: 'Nutrición Parenteral Total (NPT)' }] },
+        routeofAdministration: { coding: [{ system: 'http://terminology.hl7.org/CodeSystem/v3-RouteOfAdministration', code: 'IV', display: resultado.viaInfo.label }] },
+        administration: [{ rate: { rateQuantity: { value: parseFloat(resultado.tasaInfusion), unit: 'mL/h', system: 'http://unitsofmeasure.org', code: 'mL/h' } } }],
+        administrationInstruction: `${resultado.volTotal} mL en ${resultado.horasInfusion}h a ${resultado.tasaInfusion} mL/h.`,
       },
       extension: [
         {
           url: 'https://nutrividabio.netlify.app/fhir/StructureDefinition/np-macronutrientes',
           extension: [
-            { url: 'energiaTotal',  valueQuantity: { value: resultado.ten,                     unit: 'kcal/d' } },
+            { url: 'energiaTotal', valueQuantity: { value: resultado.ten, unit: 'kcal/d' } },
             ...(resultado.bee !== null ? [{ url: 'gastoBasal', valueQuantity: { value: resultado.bee, unit: 'kcal/d' } }] : []),
-            { url: 'proteina',      valueQuantity: { value: resultado.protG,                    unit: 'g/d' } },
-            { url: 'proteinaKg',    valueQuantity: { value: parseFloat(resultado.protGKg),      unit: 'g/kg/d' } },
-            { url: 'fuenteProteina',valueString:    resultado.protFuente },
-            { url: 'dextrosa',      valueQuantity: { value: resultado.dextrosaG,                unit: 'g/d' } },
-            { url: 'lipidos',       valueQuantity: { value: resultado.lipidoG,                  unit: 'g/d' } },
-            { url: 'nitrogeno',     valueQuantity: { value: parseFloat(resultado.nitrogeno),    unit: 'g/d' } },
-            { url: 'relacionNPCN',  valueQuantity: { value: resultado.npcN,                    unit: '1' } },
-            { url: 'estadoNPCN',    valueString:    resultado.npcNEstado },
+            { url: 'proteina',     valueQuantity: { value: resultado.protG, unit: 'g/d' } },
+            { url: 'proteinaKg',   valueQuantity: { value: parseFloat(resultado.protGKg), unit: 'g/kg/d' } },
+            { url: 'fuenteProteina', valueString: resultado.protFuente },
+            { url: 'dextrosa',     valueQuantity: { value: resultado.dextrosaG, unit: 'g/d' } },
+            { url: 'lipidos',      valueQuantity: { value: resultado.lipidoG, unit: 'g/d' } },
+            { url: 'nitrogeno',    valueQuantity: { value: parseFloat(resultado.nitrogeno), unit: 'g/d' } },
+            { url: 'relacionNPCN', valueQuantity: { value: resultado.npcN, unit: '1' } },
+            { url: 'estadoNPCN',   valueString: resultado.npcNEstado },
           ],
         },
         {
-          url: 'https://nutrividabio.netlify.app/fhir/StructureDefinition/np-volumen',
+          url: 'https://nutrividabio.netlify.app/fhir/StructureDefinition/np-osmolaridad-pereiraDaSilva',
           extension: [
-            { url: 'volumenTotal',        valueQuantity: { value: resultado.volTotal,                              unit: 'mL' } },
-            { url: 'volumenDextrosa50pct',valueQuantity: { value: resultado.volDex,                                unit: 'mL' } },
-            { url: 'volumenAA10pct',      valueQuantity: { value: resultado.volAA,                                 unit: 'mL' } },
-            ...(form.conLipidos ? [{ url: 'volumenLipidos20pct', valueQuantity: { value: resultado.volLipido,      unit: 'mL' } }] : []),
-            { url: 'volumenComponentes',  valueQuantity: { value: resultado.volumenComponentes,                    unit: 'mL' } },
-            { url: 'volumenRemanente',    valueQuantity: { value: resultado.volTotal - resultado.volumenComponentes, unit: 'mL' } },
-            { url: 'viabilidadFisica',    valueString: resultado.volumenExcedido ? 'inviable' : resultado.volumenJusto ? 'ajustado' : 'ok' },
+            { url: 'osmolaridad',  valueQuantity: { value: resultado.osmolaridad, unit: 'mOsm/L' } },
+            { url: 'zonaVascular', valueString: resultado.viaInfo.zone },
+            { url: 'viaRecomendada', valueString: resultado.viaInfo.label },
+            { url: 'metodo',       valueString: 'Pereira Da Silva et al. Nutr Hosp 2015' },
           ],
         },
         {
-          url: 'https://nutrividabio.netlify.app/fhir/StructureDefinition/np-osmolaridad',
+          url: 'https://nutrividabio.netlify.app/fhir/StructureDefinition/np-perfil-patologico',
           extension: [
-            { url: 'osmolaridad',    valueQuantity: { value: resultado.osmolaridad, unit: 'mOsm/L' } },
-            { url: 'zonaVascular',   valueString:    resultado.viaZone },
-            { url: 'viaRecomendada', valueString:    resultado.viaRecomendada },
+            { url: 'perfil', valueString: resultado.perfilLabel },
+            { url: 'pesoCal', valueQuantity: { value: resultado.pesoCal, unit: 'kg' } },
+            { url: 'tipoPeso', valueString: resultado.pesoCalDesc },
           ],
         },
         ...(resultado.balanceN ? [{
           url: 'https://nutrividabio.netlify.app/fhir/StructureDefinition/np-balance-nitrogenado',
           extension: [
-            { url: 'balanceN',    valueDecimal:  parseFloat(resultado.balanceN.nBalance) },
-            { url: 'estado',      valueString:   resultado.balanceN.estado },
-            { url: 'nLoss',       valueQuantity: { value: parseFloat(resultado.balanceN.nLoss), unit: 'g/d' } },
-            { url: 'protNeutral', valueQuantity: { value: resultado.balanceN.protNeutral, unit: 'g/d' } },
+            { url: 'balanceN',      valueDecimal: parseFloat(resultado.balanceN.nBalance) },
+            { url: 'estado',        valueString:  resultado.balanceN.estado },
+            { url: 'nLoss',         valueQuantity: { value: parseFloat(resultado.balanceN.nLoss), unit: 'g/d' } },
+            { url: 'protNeutral',   valueQuantity: { value: resultado.balanceN.protNeutral, unit: 'g/d' } },
             { url: 'protNeutralKg', valueQuantity: { value: parseFloat(resultado.balanceN.protNeutralKg), unit: 'g/kg/d' } },
+            ...(resultado.bistrianData ? [
+              { url: 'bistrianIndice', valueDecimal: parseFloat(resultado.bistrianData.indice) },
+              { url: 'bistrianNivel',  valueString:  resultado.bistrianData.nivel },
+            ] : []),
           ],
         }] : []),
         ...(resultado.estabilidad ? [{
@@ -472,19 +705,8 @@ export default function CalculadoraNP() {
         }] : []),
       ],
       note: [
-        {
-          time: now,
-          text: 'Generado por NutriVida Biotech v2.0 — Estimación educativa basada en ESPEN/ASPEN 2019. NO constituye prescripción médica. Requiere validación del equipo de soporte nutricional antes de preparar o administrar cualquier mezcla parenteral.',
-        },
-        {
-          text: `Método energético: ${resultado.bee !== null ? 'Harris-Benedict' : 'Objetivo kcal/kg directo'}. Fuente proteína: ${resultado.protFuente}. Relación NPC:N = ${resultado.npcN}:1.`,
-        },
-        ...(resultado.volumenExcedido ? [{
-          text: `ADVERTENCIA DE VIABILIDAD: Componentes puros (${resultado.volumenComponentes} mL) exceden el volumen de la bolsa (${resultado.volTotal} mL). Revisar con farmacia clínica antes de preparar.`,
-        }] : []),
-        ...(resultado.estabilidad?.nivel === 'rojo' ? [{
-          text: `ALERTA Ca-PO4: Semáforo ROJO — Riesgo ALTO de precipitación. Revisar con farmacéutico antes de preparar.`,
-        }] : []),
+        { time: now, text: 'Generado por NutriVida Biotech v2.1 — Estimación educativa basada en ESPEN/ASPEN. NO constituye prescripción médica. Requiere validación del equipo de soporte nutricional.' },
+        { text: `Osmolaridad calculada por ecuación Pereira Da Silva et al. (Nutr Hosp 2015). Perfil: ${resultado.perfilLabel}. Peso de cálculo: ${resultado.pesoCal} kg (${resultado.pesoCalDesc}).` },
       ],
     }
 
@@ -499,52 +721,99 @@ export default function CalculadoraNP() {
     URL.revokeObjectURL(url)
   }
 
+  const inputCls = 'w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-100'
+  const inputSmCls = 'w-full border border-slate-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-teal-400 bg-white'
+
   return (
     <div className="space-y-6">
       {/* Disclaimer */}
-      <div className="flex flex-col gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900">
-        <div className="flex items-start gap-2">
-          <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold">Herramienta de estimación educativa — Para uso hospitalario y de apoyo clínico.</p>
-            <p className="mt-1">
-              Los cálculos son estimativos y <strong>deben ser validados por médico, farmacéutico o nutricionista especializado</strong> antes de preparar o administrar cualquier mezcla parenteral.
-            </p>
-          </div>
+      <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900">
+        <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" />
+        <div>
+          <p className="font-semibold">Herramienta de estimación clínica — Apoyo al equipo de soporte nutricional.</p>
+          <p className="mt-1">Cálculos basados en ESPEN/ASPEN/KDOQI. <strong>Deben ser validados por médico, farmacéutico o nutricionista</strong> antes de preparar o administrar cualquier mezcla parenteral.</p>
         </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Sección 1 — Paciente y energía */}
+
+        {/* ── SECCIÓN 1: Paciente y Energía ──────────────────────────────── */}
         <div className="space-y-4">
           <h3 className="font-bold text-teal-800 flex items-center gap-2">
             <span className="bg-teal-100 text-teal-600 text-xs font-bold px-2 py-0.5 rounded-md">1</span>
             Paciente y Energía
           </h3>
 
+          {/* Perfil patológico clínico */}
+          <div>
+            <label className="block text-sm font-medium text-slate-600 mb-1">
+              Perfil clínico especializado
+              <span className="ml-2 text-[10px] bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-semibold">KDOQI · ESPEN · ASPEN</span>
+            </label>
+            <select value={form.perfilPatologico} onChange={e => set('perfilPatologico', e.target.value)}
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-teal-400 bg-white">
+              <optgroup label="General">
+                <option value="estandar">Estándar / General</option>
+              </optgroup>
+              <optgroup label="Insuficiencia Renal">
+                <option value="renal_prediálisis">Renal — Pre-diálisis (TFG &lt;25 mL/min)</option>
+                <option value="renal_hd">Renal — Hemodiálisis crónica</option>
+                <option value="renal_dp">Renal — Diálisis peritoneal</option>
+                <option value="renal_trrc">Renal — TRRC (terapia continua UCI)</option>
+              </optgroup>
+              <optgroup label="Insuficiencia Hepática">
+                <option value="hepatico_compensado">Hepático — Cirrosis compensada</option>
+                <option value="hepatico_descompensado">Hepático — Cirrosis descompensada / encefalopatía</option>
+              </optgroup>
+              <optgroup label="Oncología">
+                <option value="oncologico">Oncológico / Caquexia tumoral</option>
+              </optgroup>
+              <optgroup label="Neonatal / Pediátrico">
+                <option value="neonato_prematuro">Neonatal — Prematuro extremo</option>
+                <option value="neonato_termino">Neonatal — Neonato a término (0–1 año)</option>
+                <option value="pediatrico_infante">Pediátrico — Infante (1–7 años)</option>
+                <option value="pediatrico_escolar">Pediátrico — Escolar (7–12 años)</option>
+                <option value="pediatrico_adolescente">Pediátrico — Adolescente (12–18 años)</option>
+              </optgroup>
+            </select>
+
+            {perfilActual?.nota && (
+              <div className="mt-2 bg-blue-50 border border-blue-100 rounded-lg p-2.5 text-xs text-blue-800">
+                <p className="font-semibold text-blue-700 mb-0.5">{perfilActual.fuente}</p>
+                <p>{perfilActual.nota}</p>
+                {perfilActual.restricciones.length > 0 && (
+                  <ul className="mt-1.5 space-y-0.5">
+                    {perfilActual.restricciones.map((r, i) => (
+                      <li key={i} className="flex items-start gap-1">
+                        <span className="text-blue-400 flex-shrink-0">▸</span>{r}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Datos antropométricos */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">Peso real (kg)</label>
               <input type="number" value={form.peso} onChange={e => set('peso', e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-100"
-                placeholder="70" min="1" max="300" />
+                className={inputCls} placeholder="70" min="1" max="300" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">
                 Talla (cm) {form.modoCalculo === 'kcal_kg' && <span className="text-slate-400 font-normal">(opcional)</span>}
               </label>
               <input type="number" value={form.talla} onChange={e => set('talla', e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-100"
-                placeholder="165" min="50" max="250" />
+                className={inputCls} placeholder="165" min="50" max="250" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">
                 Edad (años) {form.modoCalculo === 'kcal_kg' && <span className="text-slate-400 font-normal">(opcional)</span>}
               </label>
               <input type="number" value={form.edad} onChange={e => set('edad', e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-100"
-                placeholder="45" min="0" max="120" />
+                className={inputCls} placeholder="45" min="0" max="120" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">Sexo</label>
@@ -554,6 +823,72 @@ export default function CalculadoraNP() {
                 <option value="M">Masculino</option>
               </select>
             </div>
+          </div>
+
+          {/* IMC y peso derivado (dinámico) */}
+          {(imcCalc || pesoIdealCalc) && (
+            <div className={`rounded-xl border p-3 text-xs space-y-1 ${esObeso ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+              <div className="flex items-center gap-1.5 font-semibold text-slate-700">
+                <Scale size={13} className={esObeso ? 'text-amber-600' : 'text-teal-600'} />
+                Valores derivados
+              </div>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                {imcCalc && (
+                  <div className="bg-white rounded-lg p-2 text-center">
+                    <p className="text-slate-400">IMC</p>
+                    <p className={`font-bold ${esObeso ? 'text-amber-700' : 'text-slate-800'}`}>{imcCalc}</p>
+                    <p className="text-slate-400 text-[10px]">{parseFloat(imcCalc) < 18.5 ? 'Bajo peso' : parseFloat(imcCalc) < 25 ? 'Normal' : parseFloat(imcCalc) < 30 ? 'Sobrepeso' : 'Obesidad'}</p>
+                  </div>
+                )}
+                {pesoIdealCalc && (
+                  <div className="bg-white rounded-lg p-2 text-center">
+                    <p className="text-slate-400">Peso ideal</p>
+                    <p className="font-bold text-slate-800">{pesoIdealCalc} kg</p>
+                    <p className="text-slate-400 text-[10px]">Broca</p>
+                  </div>
+                )}
+                {pesoAjustadoCalc && (
+                  <div className="bg-white rounded-lg p-2 text-center">
+                    <p className="text-slate-400">Peso ajustado</p>
+                    <p className="font-bold text-amber-700">{pesoAjustadoCalc} kg</p>
+                    <p className="text-slate-400 text-[10px]">PI + 0.25×(PA–PI)</p>
+                  </div>
+                )}
+              </div>
+              {esObeso && <p className="text-amber-700 font-medium">IMC ≥ 30 — se recomienda usar peso ajustado para el cálculo (ver Tipo de peso).</p>}
+            </div>
+          )}
+
+          {/* Tipo de peso de cálculo */}
+          <div>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Tipo de peso para el cálculo</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { id: 'actual',   title: 'Actual',    sub: 'Peso real del paciente' },
+                { id: 'seco',     title: 'Seco',      sub: 'Renal/hepático con edema' },
+                { id: 'ajustado', title: 'Ajustado',  sub: esObeso ? `${pesoAjustadoCalc ?? '—'} kg (IMC ≥30)` : 'Solo si IMC ≥30' },
+              ].map(t => (
+                <button key={t.id} onClick={() => set('tipoPeso', t.id)}
+                  disabled={t.id === 'ajustado' && !esObeso}
+                  className={`p-2 rounded-xl border text-left transition-colors ${
+                    form.tipoPeso === t.id
+                      ? 'bg-teal-600 text-white border-teal-600'
+                      : t.id === 'ajustado' && !esObeso
+                      ? 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-teal-300'
+                  }`}>
+                  <p className="font-semibold text-xs">{t.title}</p>
+                  <p className={`text-[10px] mt-0.5 ${form.tipoPeso === t.id ? 'text-teal-100' : 'text-slate-400'}`}>{t.sub}</p>
+                </button>
+              ))}
+            </div>
+            {form.tipoPeso === 'seco' && (
+              <div className="mt-2">
+                <label className="block text-xs text-slate-500 mb-1">Peso seco / euvolémico (kg)</label>
+                <input type="number" value={form.pesoSeco} onChange={e => set('pesoSeco', e.target.value)}
+                  className={inputSmCls} placeholder="ej. peso post-diálisis" min="1" max="300" />
+              </div>
+            )}
           </div>
 
           {/* Ambulatorio */}
@@ -570,8 +905,8 @@ export default function CalculadoraNP() {
             <label className="block text-sm font-medium text-slate-600 mb-2">Método de cálculo energético</label>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { id: 'harris_benedict', title: 'Harris-Benedict',   sub: 'Preciso — requiere talla y edad' },
-                { id: 'kcal_kg',         title: 'Objetivo kcal/kg',  sub: `ESPEN: ${kcalMin}–${kcalMax} kcal/kg/día` },
+                { id: 'harris_benedict', title: 'Harris-Benedict',  sub: 'Preciso — requiere talla y edad' },
+                { id: 'kcal_kg',         title: 'Objetivo kcal/kg', sub: `${kcalMin}–${kcalMax} kcal/kg/día` },
               ].map(m => (
                 <button key={m.id} onClick={() => set('modoCalculo', m.id)}
                   className={`p-2.5 rounded-xl border text-left transition-colors ${
@@ -590,11 +925,10 @@ export default function CalculadoraNP() {
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">Objetivo calórico (kcal/kg/día)</label>
               <input type="number" value={form.kcalKg} onChange={e => set('kcalKg', e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-100"
-                placeholder={`${kcalMin}–${kcalMax} según condición`} step="1" min="10" max="50" />
+                className={inputCls} placeholder={`${kcalMin}–${kcalMax} según perfil`} step="1" min="10" max="50" />
               <p className="text-xs text-teal-600 mt-1 flex items-center gap-1">
                 <Info size={12} />
-                Encamado 20–25 · Ambulatorio 30–35 · Pediátrico hasta 120 kcal/kg/día
+                {perfilActual?.id !== 'estandar' ? `Perfil ${perfilActual?.label}: ${kcalMin}–${kcalMax} kcal/kg/día` : 'Encamado 20–25 · Ambulatorio 30–35 · Pediátrico hasta 120'}
               </p>
             </div>
           )}
@@ -608,26 +942,22 @@ export default function CalculadoraNP() {
                 <option key={c.id} value={c.id}>{c.label} (×{c.factor})</option>
               ))}
             </select>
-            {condActual && (
-              <p className="text-xs text-teal-600 mt-1 flex items-center gap-1">
-                <Info size={12} />
-                Proteína sugerida: {condActual.proteina[0]}–{condActual.proteina[1]} g/kg/día
-              </p>
-            )}
+            <p className="text-xs text-teal-600 mt-1 flex items-center gap-1">
+              <Info size={12} />
+              Proteína: {protMin}–{protMax} g/kg/día
+              {perfilActual?.id !== 'estandar' && <span className="text-blue-600 ml-1">(perfil {perfilActual?.label})</span>}
+            </p>
           </div>
 
-          {/* Base de conocimiento biotecnológica */}
           {BASE_CONOCIMIENTO[form.condicion] && (
             <BaseConocimientoPanel datos={BASE_CONOCIMIENTO[form.condicion]} />
           )}
 
-          {/* Proteína */}
+          {/* Proteína manual */}
           <div>
             <label className="block text-sm font-medium text-slate-600 mb-1">Proteína (g/kg/día) — opcional</label>
             <input type="number" value={form.proteinaGKg} onChange={e => set('proteinaGKg', e.target.value)}
-              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-100"
-              placeholder={`${condActual?.proteina[0]}–${condActual?.proteina[1]} (vacío = promedio)`}
-              step="0.1" min="0.5" max="3.5" />
+              className={inputCls} placeholder={`${protMin}–${protMax} (vacío = promedio)`} step="0.1" min="0.5" max="3.5" />
           </div>
 
           {/* Balance nitrogenado — UUN */}
@@ -640,13 +970,12 @@ export default function CalculadoraNP() {
               <div>
                 <label className="block text-xs text-slate-500 mb-1">NUU 24h (g)</label>
                 <input type="number" value={form.uun24h} onChange={e => set('uun24h', e.target.value)}
-                  className="w-full border border-slate-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-teal-400 bg-white"
-                  placeholder="ej. 8–12 g" step="0.1" min="0" />
+                  className={inputSmCls} placeholder="ej. 8–12 g" step="0.1" min="0" />
               </div>
               <div>
                 <label className="block text-xs text-slate-500 mb-1">Factor corrección (g N)</label>
                 <select value={form.corrFactor} onChange={e => set('corrFactor', e.target.value)}
-                  className="w-full border border-slate-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-teal-400 bg-white">
+                  className={inputSmCls}>
                   <option value="2">2 g — pérdidas normales</option>
                   <option value="4">4 g — catabolismo moderado</option>
                   <option value="6">6 g — hipercatabolismo severo</option>
@@ -654,7 +983,7 @@ export default function CalculadoraNP() {
               </div>
             </div>
             <p className="text-xs text-slate-400">
-              Si se ingresa NUU, la proteína de la mezcla se estima por balance nitrogenado. Proteína = (NUU + factor) × 6.25
+              Si se ingresa NUU, la proteína se estima por balance nitrogenado. También activa el Índice de Estrés de Bistrian.
             </p>
           </div>
 
@@ -663,24 +992,22 @@ export default function CalculadoraNP() {
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">Volumen total (mL)</label>
               <input type="number" value={form.volumen} onChange={e => set('volumen', e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-100"
-                placeholder="2000" min="500" max="5000" />
+                className={inputCls} placeholder="2000" min="500" max="5000" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-600 mb-1">Horas infusión/día</label>
               <input type="number" value={form.horasInfusion} onChange={e => set('horasInfusion', e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-100"
-                placeholder="24" min="8" max="24" />
-              <p className="text-xs text-slate-400 mt-1">24h continua · 12–16h cíclica domiciliaria</p>
+                className={inputCls} placeholder="24" min="8" max="24" />
+              <p className="text-xs text-slate-400 mt-1">24h continua · 12–16h cíclica</p>
             </div>
           </div>
         </div>
 
-        {/* Sección 2 — Lípidos, estabilidad y opciones */}
+        {/* ── SECCIÓN 2: Lípidos, Electrolitos y Opciones ────────────────── */}
         <div className="space-y-4">
           <h3 className="font-bold text-teal-800 flex items-center gap-2">
             <span className="bg-teal-100 text-teal-600 text-xs font-bold px-2 py-0.5 rounded-md">2</span>
-            Lípidos, Estabilidad y Opciones
+            Lípidos, Electrolitos y Opciones
           </h3>
 
           <div className="flex items-center gap-3 p-3 bg-teal-50 rounded-xl border border-teal-100">
@@ -708,33 +1035,33 @@ export default function CalculadoraNP() {
             </div>
           )}
 
-          {/* Electrolitos para estabilidad */}
+          {/* Electrolitos — osmolaridad + estabilidad */}
           <div>
-            <p className="text-sm font-medium text-slate-600 mb-2 flex items-center gap-1">
-              <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-md">Semáforo</span>
-              Electrolitos — análisis de estabilidad fisicoquímica
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="block text-xs text-slate-500 mb-1">Ca²⁺ (mEq total)</label>
-                <input type="number" value={form.ca} onChange={e => set('ca', e.target.value)}
-                  className="w-full border border-slate-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-amber-400"
-                  placeholder="10" min="0" />
-              </div>
-              <div>
-                <label className="block text-xs text-slate-500 mb-1">PO₄³⁻ (mmol total)</label>
-                <input type="number" value={form.po4} onChange={e => set('po4', e.target.value)}
-                  className="w-full border border-slate-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-amber-400"
-                  placeholder="20" min="0" />
-              </div>
-              <div>
-                <label className="block text-xs text-slate-500 mb-1">Mg²⁺ (mEq total)</label>
-                <input type="number" value={form.mg} onChange={e => set('mg', e.target.value)}
-                  className="w-full border border-slate-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:border-amber-400"
-                  placeholder="8" min="0" />
-              </div>
+            <div className="flex items-center gap-2 mb-2">
+              <p className="text-sm font-medium text-slate-600">Electrolitos — osmolaridad y estabilidad</p>
+              <span className="text-[10px] bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full font-semibold">Pereira Da Silva</span>
             </div>
-            <p className="text-xs text-slate-400 mt-1">Ingrese cantidades totales en la mezcla para activar el semáforo Ca-PO₄.</p>
+            <p className="text-xs text-slate-400 mb-2">Na⁺ y K⁺ para cálculo de osmolaridad. Ca²⁺, PO₄³⁻ y Mg²⁺ también activan el semáforo de estabilidad. Todos en mEq totales en la bolsa.</p>
+
+            <div className="grid grid-cols-5 gap-2">
+              {[
+                { key: 'na',  label: 'Na⁺',   placeholder: '70' },
+                { key: 'k',   label: 'K⁺',    placeholder: '40' },
+                { key: 'ca',  label: 'Ca²⁺',  placeholder: '10' },
+                { key: 'mg',  label: 'Mg²⁺',  placeholder: '8'  },
+                { key: 'po4', label: 'PO₄³⁻', placeholder: '20' },
+              ].map(e => (
+                <div key={e.key}>
+                  <label className="block text-[10px] text-slate-500 mb-1 font-medium">{e.label} mEq</label>
+                  <input type="number" value={form[e.key]} onChange={ev => set(e.key, ev.target.value)}
+                    className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-violet-400 bg-white"
+                    placeholder={e.placeholder} min="0" />
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-violet-600 mt-1.5 flex items-center gap-1">
+              <Info size={10} /> Osmolaridad: glucosa×5.55 + AA×8.0 + Σelectrolitos×2 (lípidos=0, son isotónicos)
+            </p>
           </div>
 
           {/* Opciones adicionales */}
@@ -755,10 +1082,33 @@ export default function CalculadoraNP() {
               </label>
             </div>
           </div>
+
+          {/* Tabla de umbrales de osmolaridad */}
+          <div className="border border-violet-100 rounded-xl overflow-hidden bg-violet-50">
+            <div className="px-3 py-2 bg-violet-100 flex items-center gap-2">
+              <Info size={13} className="text-violet-600" />
+              <span className="text-xs font-bold text-violet-700">Umbrales de osmolaridad — Vía de acceso</span>
+            </div>
+            <div className="p-2 space-y-1 text-[10px]">
+              {[
+                { rango: '< 600',       color: 'text-emerald-700 bg-emerald-50', via: 'Periférica segura' },
+                { rango: '600–800',     color: 'text-amber-700 bg-amber-50',     via: 'Periférica c/ cautela (≤5 días)' },
+                { rango: '800–900',     color: 'text-orange-700 bg-orange-50',   via: 'Central — periférica contraindicada' },
+                { rango: '900–1800',    color: 'text-red-700 bg-red-50',         via: 'Venosa central exclusiva' },
+                { rango: '> 1800',      color: 'text-red-900 bg-red-100 font-bold', via: 'ALERTA fisicoquímica crítica' },
+              ].map((t, i) => (
+                <div key={i} className={`flex items-center justify-between rounded-lg px-2 py-1 ${t.color}`}>
+                  <span className="font-mono font-semibold">{t.rango} mOsm/L</span>
+                  <span>{t.via}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[9px] text-violet-500 px-3 pb-2">Fuente: Pereira Da Silva et al. Nutr Hosp 2015; SENPE; ASPEN Clinical Practice</p>
+          </div>
         </div>
       </div>
 
-      {/* Botones */}
+      {/* ── Botones ──────────────────────────────────────────────────────── */}
       <div className="flex gap-3">
         <button onClick={calcular}
           className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl transition-colors text-sm">
@@ -775,7 +1125,7 @@ export default function CalculadoraNP() {
               <Printer size={13} /> Imprimir
             </button>
             <button onClick={exportarFHIR}
-              title="Exportar como NutritionOrder FHIR R4 — compatible con sistemas de interoperabilidad clínica"
+              title="Exportar como NutritionOrder FHIR R4"
               className="flex items-center gap-1.5 text-xs text-teal-600 border border-teal-200 px-3 py-2 rounded-xl hover:bg-teal-50 transition-colors font-medium">
               <Download size={13} /> FHIR R4
             </button>
@@ -783,7 +1133,7 @@ export default function CalculadoraNP() {
         )}
       </div>
 
-      {/* Validación — campos faltantes */}
+      {/* Errores de validación */}
       {errores.length > 0 && (
         <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-800">
           <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
@@ -796,18 +1146,23 @@ export default function CalculadoraNP() {
         </div>
       )}
 
-      {/* Resultados */}
+      {/* ── RESULTADOS ─────────────────────────────────────────────────────── */}
       {resultado && (
         <div className="space-y-4 border-t border-teal-100 pt-5">
-          <h3 className="font-bold text-teal-800">Resultado del Cálculo</h3>
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-teal-800">Resultado del Cálculo</h3>
+            <div className="text-xs text-slate-500 bg-slate-100 rounded-lg px-2 py-1">
+              Peso de cálculo: <strong>{resultado.pesoCal} kg</strong> ({resultado.pesoCalDesc}) · Perfil: {resultado.perfilLabel}
+            </div>
+          </div>
 
-          {/* Energía */}
+          {/* Tarjetas principales */}
           <div className="bg-teal-50 rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 gap-3 border border-teal-100">
             {[
               resultado.bee !== null && { label: 'Gasto Basal (Harris-B.)', value: resultado.bee, unit: 'kcal/día' },
-              { label: 'Necesidad Total (TEN)', value: resultado.ten, unit: 'kcal/día', highlight: true },
+              { label: 'Energía Total (TEN)', value: resultado.ten, unit: 'kcal/día', highlight: true },
               { label: `Proteína (${resultado.protFuente})`, value: `${resultado.protG}g`, unit: `${resultado.protGKg} g/kg/día` },
-              { label: 'Osmolaridad estimada', value: resultado.osmolaridad, unit: 'mOsm/L' },
+              { label: 'Osmolaridad (Pereira Da Silva)', value: resultado.osmolaridad, unit: 'mOsm/L' },
             ].filter(Boolean).map((item, i) => (
               <div key={i} className={`bg-white rounded-lg p-3 text-center ${item.highlight ? 'ring-2 ring-teal-300' : ''}`}>
                 <p className="text-xs text-slate-400 mb-1">{item.label}</p>
@@ -817,13 +1172,28 @@ export default function CalculadoraNP() {
             ))}
           </div>
 
+          {/* Restricciones del perfil (si aplica) */}
+          {resultado.perfilRestricciones.length > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+              <p className="text-xs font-bold text-blue-700 mb-1.5">Restricciones del perfil: {resultado.perfilLabel}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
+                {resultado.perfilRestricciones.map((r, i) => (
+                  <div key={i} className="flex items-start gap-1.5 text-xs text-blue-800">
+                    <AlertCircle size={11} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                    {r}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Conversión a soluciones comerciales */}
           <div>
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Conversión a soluciones comerciales</p>
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: 'Dextrosa 50%',   g: resultado.dextrosaG, vol: resultado.volDex },
-                { label: 'Aminoácidos 10%', g: resultado.protG,     vol: resultado.volAA },
+                { label: 'Dextrosa 50%',    g: resultado.dextrosaG, vol: resultado.volDex },
+                { label: 'Aminoácidos 10%', g: resultado.protG,     vol: resultado.volAA  },
                 ...(form.conLipidos ? [{ label: 'Lípidos 20%', g: resultado.lipidoG, vol: resultado.volLipido }] : []),
               ].map((m, i) => (
                 <div key={i} className="bg-white border border-slate-100 rounded-xl p-3 text-center shadow-sm">
@@ -834,19 +1204,16 @@ export default function CalculadoraNP() {
               ))}
             </div>
 
-            {/* Alerta de viabilidad física de la mezcla */}
             {resultado.volumenExcedido ? (
               <div className="mt-3 flex items-start gap-3 bg-red-50 border border-red-300 rounded-xl p-4 text-sm">
                 <AlertTriangle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold text-red-800">Inviabilidad física — la mezcla no cabe en la bolsa</p>
                   <p className="text-xs text-red-700 mt-1">
-                    Los componentes puros suman <strong>{resultado.volumenComponentes} mL</strong> ({resultado.porcentajeOcupado}% de la bolsa),
-                    superando el volumen configurado de <strong>{resultado.volTotal} mL</strong>.
-                    El farmacéutico no puede preparar esta mezcla sin desbordamiento ni alteración de concentraciones.
+                    Componentes puros: <strong>{resultado.volumenComponentes} mL</strong> ({resultado.porcentajeOcupado}%) &gt; bolsa {resultado.volTotal} mL.
                   </p>
-                  <p className="text-xs text-red-800 font-semibold mt-2">
-                    Opciones: aumentar el volumen total a ≥{resultado.volSugerido} mL · o solicitar AA 15% / Dextrosa 70% (reduce el volumen de componentes).
+                  <p className="text-xs text-red-800 font-semibold mt-1">
+                    Opciones: aumentar volumen a ≥{resultado.volSugerido} mL · o solicitar AA 15% / Dextrosa 70%.
                   </p>
                 </div>
               </div>
@@ -856,19 +1223,14 @@ export default function CalculadoraNP() {
                 <div>
                   <p className="font-bold text-amber-800">Espacio remanente limitado ({100 - resultado.porcentajeOcupado}%)</p>
                   <p className="text-xs text-amber-700 mt-1">
-                    Los componentes puros ocupan <strong>{resultado.volumenComponentes} mL</strong> ({resultado.porcentajeOcupado}%) del total.
-                    Quedan solo <strong>{resultado.volTotal - resultado.volumenComponentes} mL</strong> para electrolitos, agua estéril y oligoelementos.
-                    Verificar con farmacia si el espacio es suficiente para los aditivos prescritos.
+                    Componentes: {resultado.volumenComponentes} mL ({resultado.porcentajeOcupado}%). Solo <strong>{resultado.volTotal - resultado.volumenComponentes} mL</strong> para aditivos. Verificar con farmacia.
                   </p>
                 </div>
               </div>
             ) : (
               <div className="mt-3 flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
                 <CheckCircle size={14} className="text-emerald-500 flex-shrink-0" />
-                <span>
-                  Espacio remanente: <strong>{resultado.volTotal - resultado.volumenComponentes} mL</strong> ({100 - resultado.porcentajeOcupado}%) —
-                  disponible para electrolitos y agua estéril.
-                </span>
+                Espacio remanente: <strong className="mx-1">{resultado.volTotal - resultado.volumenComponentes} mL</strong> ({100 - resultado.porcentajeOcupado}%) — disponible para electrolitos y agua estéril.
               </div>
             )}
           </div>
@@ -878,21 +1240,15 @@ export default function CalculadoraNP() {
             <Clock size={18} className="text-slate-500 flex-shrink-0" />
             <div>
               <span className="font-semibold text-slate-700">Tasa de infusión: {resultado.tasaInfusion} mL/h</span>
-              <p className="text-xs text-slate-400">
-                {resultado.volTotal} mL ÷ {resultado.horasInfusion}h
-                {resultado.horasInfusion < 24 ? ' — NP cíclica' : ' — NP continua'}
-              </p>
+              <p className="text-xs text-slate-400">{resultado.volTotal} mL ÷ {resultado.horasInfusion}h{resultado.horasInfusion < 24 ? ' — NP cíclica' : ' — NP continua'}</p>
             </div>
           </div>
 
           {/* NPC:N */}
-          <div className={`flex items-start gap-3 p-3 rounded-xl border text-sm ${
-            resultado.npcNEstado === 'optimo' ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'
-          }`}>
+          <div className={`flex items-start gap-3 p-3 rounded-xl border text-sm ${resultado.npcNEstado === 'optimo' ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}`}>
             {resultado.npcNEstado === 'optimo'
               ? <CheckCircle size={18} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-              : <AlertCircle  size={18} className="text-amber-500  flex-shrink-0 mt-0.5" />
-            }
+              : <AlertCircle  size={18} className="text-amber-500  flex-shrink-0 mt-0.5" />}
             <div>
               <span className="font-semibold">Relación NPC:N = {resultado.npcN}:1</span>
               <span className="text-slate-500 ml-2 text-xs">
@@ -902,40 +1258,30 @@ export default function CalculadoraNP() {
             </div>
           </div>
 
-          {/* Vía de administración — 3 zonas */}
-          <div className={`flex items-start gap-3 p-3 rounded-xl border text-sm ${
-            resultado.viaZone === 'alta'  ? 'bg-red-50 border-red-200' :
-            resultado.viaZone === 'media' ? 'bg-amber-50 border-amber-200' :
-                                            'bg-emerald-50 border-emerald-200'
-          }`}>
-            <Info size={18} className={
-              resultado.viaZone === 'alta'  ? 'text-red-500'   :
-              resultado.viaZone === 'media' ? 'text-amber-500' : 'text-emerald-500'
-            } />
-            <div>
-              <span className="font-semibold">Vía recomendada: {resultado.viaRecomendada}</span>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {resultado.viaZone === 'alta'
-                  ? 'Osmolaridad >900 mOsm/L: CVC obligatorio por riesgo de tromboflebitis grave en vena periférica (ESPEN/ASPEN).'
-                  : resultado.viaZone === 'media'
-                  ? 'Osmolaridad 700–900 mOsm/L: zona de precaución. Periférico posible a corto plazo en vena de gran calibre; preferir vía central.'
-                  : 'Osmolaridad ≤700 mOsm/L: apta para vía periférica, aunque se prefiere central para NP prolongada.'}
-              </p>
+          {/* Vía de administración — 5 zonas Pereira Da Silva */}
+          <div className={`flex items-start gap-3 p-4 rounded-xl border text-sm ${VIA_ZONE_STYLES[resultado.viaInfo.color]}`}>
+            <Info size={18} className={`flex-shrink-0 mt-0.5 ${VIA_ICON_COLOR[resultado.viaInfo.color]}`} />
+            <div className="w-full">
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-semibold">{resultado.viaInfo.label}</span>
+                <span className="text-xs font-mono bg-white/50 rounded px-2 py-0.5">{resultado.osmolaridad} mOsm/L</span>
+              </div>
+              <p className="text-xs opacity-80">{resultado.viaInfo.desc}</p>
+              <p className="text-[10px] opacity-60 mt-1">Fuente: Pereira Da Silva et al. Nutr Hosp 2015; SENPE; ASPEN</p>
             </div>
           </div>
 
-          {/* Balance nitrogenado — resultado explícito */}
+          {/* Balance nitrogenado */}
           {resultado.balanceN && (
             <div className={`flex items-start gap-3 p-4 rounded-xl border text-sm ${
               resultado.balanceN.estado === 'anabolico'  ? 'bg-emerald-50 border-emerald-200' :
               resultado.balanceN.estado === 'catabolico' ? 'bg-red-50 border-red-200'         :
                                                            'bg-blue-50 border-blue-200'
             }`}>
-              <Activity size={18} className={
-                resultado.balanceN.estado === 'anabolico'  ? 'text-emerald-500 flex-shrink-0 mt-0.5' :
-                resultado.balanceN.estado === 'catabolico' ? 'text-red-500 flex-shrink-0 mt-0.5'     :
-                                                             'text-blue-500 flex-shrink-0 mt-0.5'
-              } />
+              <Activity size={18} className={`flex-shrink-0 mt-0.5 ${
+                resultado.balanceN.estado === 'anabolico'  ? 'text-emerald-500' :
+                resultado.balanceN.estado === 'catabolico' ? 'text-red-500'     : 'text-blue-500'
+              }`} />
               <div className="w-full">
                 <div className="flex items-center justify-between mb-1">
                   <span className="font-semibold">Balance Nitrogenado</span>
@@ -944,24 +1290,119 @@ export default function CalculadoraNP() {
                     resultado.balanceN.estado === 'catabolico' ? 'bg-red-200 text-red-800'         :
                                                                  'bg-blue-200 text-blue-800'
                   }`}>
-                    {resultado.balanceN.estado === 'anabolico' ? 'Anabólico' :
-                     resultado.balanceN.estado === 'catabolico' ? 'Catabólico' : 'Neutro'}
+                    {resultado.balanceN.estado === 'anabolico' ? 'Anabólico' : resultado.balanceN.estado === 'catabolico' ? 'Catabólico' : 'Neutro'}
                   </span>
                 </div>
                 <p className="text-slate-700">
-                  Balance N = <strong>{resultado.balanceN.nBalance} g/día</strong>
-                  {' '}— N pérdidas: {resultado.balanceN.nLoss} g (NUU + factor corrección)
+                  BN = <strong>{resultado.balanceN.nBalance} g N/día</strong> — Pérdidas: {resultado.balanceN.nLoss} g (NUU + factor)
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  Proteína para balance neutro: <strong>{resultado.balanceN.protNeutral} g/día</strong> ({resultado.balanceN.protNeutralKg} g/kg/día)
-                  {resultado.balanceN.estado === 'catabolico' && ' — Considerar aumentar aporte proteico en próxima bolsa.'}
+                  Proteína para equilibrio: <strong>{resultado.balanceN.protNeutral} g/día</strong> ({resultado.balanceN.protNeutralKg} g/kg/día)
+                  {resultado.balanceN.estado === 'catabolico' && ' — Para +1 g BN positivo: añadir 6.25 g AA adicionales.'}
                   {resultado.balanceN.estado === 'anabolico' && ' — Estado metabólico favorable.'}
                 </p>
               </div>
             </div>
           )}
 
-          {/* Insulina inicial sugerida */}
+          {/* Índice de Estrés de Bistrian */}
+          {resultado.bistrianData && (
+            <div className={`border rounded-xl p-4 text-sm ${
+              resultado.bistrianData.nivel === 'grave'    ? 'bg-red-50 border-red-200' :
+              resultado.bistrianData.nivel === 'moderado' ? 'bg-orange-50 border-orange-200' :
+              resultado.bistrianData.nivel === 'leve'     ? 'bg-amber-50 border-amber-200' :
+                                                            'bg-slate-50 border-slate-200'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Activity size={16} className={
+                    resultado.bistrianData.nivel === 'grave'    ? 'text-red-500' :
+                    resultado.bistrianData.nivel === 'moderado' ? 'text-orange-500' :
+                    resultado.bistrianData.nivel === 'leve'     ? 'text-amber-500' : 'text-slate-400'
+                  } />
+                  <span className="font-semibold text-slate-800">Índice de Estrés Metabólico (Bistrian)</span>
+                </div>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  resultado.bistrianData.nivel === 'grave'    ? 'bg-red-200 text-red-800' :
+                  resultado.bistrianData.nivel === 'moderado' ? 'bg-orange-200 text-orange-800' :
+                  resultado.bistrianData.nivel === 'leve'     ? 'bg-amber-200 text-amber-800' :
+                                                                'bg-slate-200 text-slate-600'
+                }`}>
+                  {resultado.bistrianData.nivel === 'grave' ? 'ESTRÉS GRAVE' :
+                   resultado.bistrianData.nivel === 'moderado' ? 'Estrés Moderado' :
+                   resultado.bistrianData.nivel === 'leve' ? 'Estrés Leve' : 'Sin estrés'}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-2">
+                <div className="bg-white/60 rounded-lg p-2 text-center">
+                  <p className="text-xs text-slate-400">Índice = NUU − (0.5 × N_ing + 3)</p>
+                  <p className={`font-bold text-lg ${resultado.bistrianData.nivel === 'grave' ? 'text-red-700' : resultado.bistrianData.nivel === 'moderado' ? 'text-orange-700' : 'text-amber-700'}`}>
+                    {resultado.bistrianData.indice}
+                  </p>
+                </div>
+                <div className="bg-white/60 rounded-lg p-2 text-center">
+                  <p className="text-xs text-slate-400">NUU basal esperado</p>
+                  <p className="font-bold text-slate-700">{resultado.bistrianData.nUUBasal} g/día</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-600">{resultado.bistrianData.descripcion}</p>
+              <div className="mt-2 text-[10px] text-slate-400 border-t border-white/50 pt-2">
+                Escala: 0–5 Leve · 5–8 Moderado · &gt;8 Grave · Fuente: Bistrian BR et al.; SEFH Biblioteca Virtual
+              </div>
+            </div>
+          )}
+
+          {/* TIG — Tasa de Infusión de Glucosa (pediátrico/neonatal) */}
+          {resultado.tigData && (
+            <div className={`border rounded-xl p-4 text-sm ${
+              resultado.tigData.nivel === 'critico' ? 'bg-red-50 border-red-300' :
+              resultado.tigData.nivel === 'limite'  ? 'bg-amber-50 border-amber-300' :
+                                                      'bg-emerald-50 border-emerald-200'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <Baby size={16} className={resultado.tigData.nivel === 'critico' ? 'text-red-500' : resultado.tigData.nivel === 'limite' ? 'text-amber-500' : 'text-emerald-500'} />
+                  <span className="font-semibold text-slate-800">Tasa de Infusión de Glucosa (TIG)</span>
+                </div>
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  resultado.tigData.nivel === 'critico' ? 'bg-red-200 text-red-900' :
+                  resultado.tigData.nivel === 'limite'  ? 'bg-amber-200 text-amber-900' :
+                                                          'bg-emerald-200 text-emerald-900'
+                }`}>
+                  {resultado.tigData.nivel === 'critico' ? 'EXCEDE LÍMITE' : resultado.tigData.nivel === 'limite' ? 'Próximo al límite' : 'Segura'}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mb-2">
+                <div className="bg-white/70 rounded-lg p-2 text-center">
+                  <p className="text-xs text-slate-400">TIG calculada</p>
+                  <p className={`font-bold text-xl ${resultado.tigData.nivel === 'critico' ? 'text-red-700' : resultado.tigData.nivel === 'limite' ? 'text-amber-700' : 'text-emerald-700'}`}>
+                    {resultado.tigData.tig}
+                  </p>
+                  <p className="text-xs text-slate-400">mg/kg/min</p>
+                </div>
+                <div className="bg-white/70 rounded-lg p-2 text-center">
+                  <p className="text-xs text-slate-400">Inicio recomendado</p>
+                  <p className="font-bold text-slate-700">{resultado.tigData.tigInicio[0]}–{resultado.tigData.tigInicio[1]}</p>
+                  <p className="text-xs text-slate-400">mg/kg/min</p>
+                </div>
+                <div className="bg-white/70 rounded-lg p-2 text-center">
+                  <p className="text-xs text-slate-400">Límite máximo</p>
+                  <p className={`font-bold ${resultado.tigData.nivel === 'critico' ? 'text-red-700' : 'text-slate-700'}`}>{resultado.tigData.tigMax}</p>
+                  <p className="text-xs text-slate-400">mg/kg/min</p>
+                </div>
+              </div>
+              {resultado.tigData.nivel === 'critico' && (
+                <p className="text-xs text-red-700 font-semibold">
+                  ALERTA: TIG excede el límite. El exceso de glucosa se deriva a lipogénesis hepática → esteatosis fulminante y retención de CO₂ → imposibilita la extubación. Reducir dextrosa o aumentar volumen.
+                </p>
+              )}
+              <p className="text-[10px] text-slate-400 mt-1">
+                TIG = g glucosa/día × 1000 ÷ (peso × 1440 min) · Fuente: Manual CCSS HNN 2018; ASPEN Pediatric PN Guidelines
+              </p>
+            </div>
+          )}
+
+          {/* Insulina */}
           {resultado.insulina !== null && (
             <div className="flex items-start gap-3 p-3 bg-purple-50 border border-purple-200 rounded-xl text-sm">
               <Syringe size={18} className="text-purple-500 flex-shrink-0 mt-0.5" />
@@ -969,20 +1410,17 @@ export default function CalculadoraNP() {
                 <span className="font-semibold text-purple-800">Insulina corriente inicial sugerida</span>
                 <p className="text-purple-700 font-bold text-base mt-0.5">{resultado.insulina} UI</p>
                 <p className="text-xs text-purple-600 mt-0.5">
-                  Dextrosa ({resultado.dextrosaG}g) ÷ 10 = {resultado.insulina} UI — Ajustar según glicemia capilar cada 2h. Requiere validación médica.
+                  Dextrosa ({resultado.dextrosaG}g) ÷ 10 = {resultado.insulina} UI — Ajustar según glicemia capilar c/2h. Requiere validación médica.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Semáforo de estabilidad fisicoquímica */}
+          {/* Semáforo de estabilidad */}
           {resultado.estabilidad && (
             <div className={`border rounded-xl p-4 ${SEMAFORO_BG[resultado.estabilidad.nivel]}`}>
               <div className="flex items-center gap-2 mb-2">
-                <div className={`w-3 h-3 rounded-full semaforo-pulse ${
-                  resultado.estabilidad.nivel === 'rojo' ? 'bg-red-500' :
-                  resultado.estabilidad.nivel === 'amarillo' ? 'bg-amber-400' : 'bg-emerald-500'
-                }`} />
+                <div className={`w-3 h-3 rounded-full ${resultado.estabilidad.nivel === 'rojo' ? 'bg-red-500' : resultado.estabilidad.nivel === 'amarillo' ? 'bg-amber-400' : 'bg-emerald-500'}`} />
                 <SemaforoIcon nivel={resultado.estabilidad.nivel} />
                 <span className={`font-bold text-sm ${SEMAFORO_TEXT[resultado.estabilidad.nivel]}`}>
                   Semáforo de Estabilidad Fisicoquímica
@@ -1011,22 +1449,20 @@ export default function CalculadoraNP() {
             <div className="flex items-start gap-3 p-4 bg-pink-50 border border-pink-200 rounded-xl text-sm">
               <Baby size={18} className="text-pink-500 flex-shrink-0 mt-0.5" />
               <div className="w-full">
-                <p className="font-bold text-pink-800 mb-2">Oligoelementos Pediátricos — Dosis hospitalarias de referencia</p>
+                <p className="font-bold text-pink-800 mb-2">Oligoelementos Pediátricos</p>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="bg-white/70 rounded-lg p-2">
                     <p className="text-slate-500">Cu, Mn, Cr, Zn (multi-oligo)</p>
                     <p className="font-bold text-pink-700 text-base">{resultado.oligoelementos.multiOligo} mL/día</p>
-                    <p className="text-slate-400">{form.peso} kg × 0.2 mL/kg/día</p>
+                    <p className="text-slate-400">{resultado.pesoCal} kg × 0.2 mL/kg/día</p>
                   </div>
                   <div className="bg-white/70 rounded-lg p-2">
                     <p className="text-slate-500">Selenio</p>
                     <p className="font-bold text-pink-700 text-base">{resultado.oligoelementos.selenio} mL/día</p>
-                    <p className="text-slate-400">{form.peso} kg × 0.1 mL/kg/día</p>
+                    <p className="text-slate-400">{resultado.pesoCal} kg × 0.1 mL/kg/día</p>
                   </div>
                 </div>
-                <p className="text-xs text-pink-700 mt-2 font-medium">
-                  Exactitud milimétrica requerida. Verificar con farmacia hospitalaria antes de preparar.
-                </p>
+                <p className="text-xs text-pink-700 mt-2 font-medium">Verificar con farmacia hospitalaria antes de preparar.</p>
               </div>
             </div>
           )}
@@ -1038,7 +1474,7 @@ export default function CalculadoraNP() {
               <div className="text-xs">
                 <p className="font-bold text-sm mb-1">Insight Biotecnológico</p>
                 <p className="text-teal-100">
-                  Los ácidos grasos omega-3 de esta formulación provienen de aceite de pescado o de microalgas marinas cultivadas por fermentación biotecnológica. Reducen fitoesteroles hepatotóxicos asociados a enfermedad hepática en NP de larga duración (IFALD).
+                  Los ácidos grasos omega-3 de esta formulación provienen de aceite de pescado o microalgas marinas (fermentación biotecnológica). Reducen fitoesteroles hepatotóxicos asociados a IFALD en NP de larga duración, y pueden atenuar las vías inflamatorias del catabolismo oncológico (EPA).
                 </p>
               </div>
             </div>
@@ -1060,13 +1496,15 @@ export default function CalculadoraNP() {
         </div>
       )}
 
-      {/* Alcance */}
+      {/* Alcance y referencias */}
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-500 leading-relaxed">
-        <p className="font-bold text-slate-700 mb-1">Alcance y limitaciones del cálculo</p>
+        <p className="font-bold text-slate-700 mb-1">Alcance científico y referencias</p>
         <p>
-          Estimaciones basadas en Harris-Benedict u objetivo kcal/kg (ESPEN/ASPEN 2019), factores de estrés metabólico,
-          relación NPC:N, osmolaridad aproximada y criterios de estabilidad Ca-PO₄ (modelo Trissel simplificado).
-          Umbral vía central: 900 mOsm/L (ESPEN). El balance nitrogenado requiere NUU de orina de 24h validada por laboratorio.
+          Osmolaridad: ecuación Pereira Da Silva et al. (Nutr Hosp 2015) — mejor correlación clínica vs osmometría real.
+          Umbrales vía: SENPE; ASPEN Clinical Practice Manual.
+          Perfiles patológicos: NKF-KDOQI 2020; ESPEN Renal 2024; ESPEN Liver Disease 2022; ESPEN Cancer 2021.
+          Balance nitrogenado e Índice de Bistrian: SEFH Biblioteca Virtual; protocolos NP hospitalaria ESPEN/ASPEN.
+          Peso ajustado en obesidad: PI + 0.25×(PA−PI) — ASPEN 2016.
         </p>
         <p className="mt-2 font-semibold text-red-700">
           RESULTADO PROVISIONAL — requiere revisión y autorización del equipo de soporte nutricional antes de cualquier acción clínica.
