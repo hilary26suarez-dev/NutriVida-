@@ -325,6 +325,34 @@ function calcBEE(peso, talla, edad, sexo) {
   return               655.1 +  9.563 * peso + 1.85  * talla - 4.676 * edad
 }
 
+// mNUTRIC Score sin IL-6 (Heyland 2011; Rahman 2016 validación)
+// Variables: edad, APACHE II, SOFA, nº comorbilidades, días hospital→UCI
+function calcNutricScore({ edad, apache, sofa, comorbilidades, diasHospUCI }) {
+  let score = 0
+  if (edad >= 75) score += 2
+  else if (edad >= 50) score += 1
+  if (apache >= 28) score += 3
+  else if (apache >= 20) score += 2
+  else if (apache >= 15) score += 1
+  if (sofa >= 10) score += 2
+  else if (sofa >= 6) score += 1
+  if (comorbilidades >= 2) score += 1
+  if (diasHospUCI >= 1) score += 1
+  return {
+    score,
+    riesgo: score >= 5 ? 'alto' : 'bajo',
+    label:  score >= 5 ? 'Alto riesgo nutricional — beneficio demostrado de soporte agresivo' : 'Bajo riesgo — soporte estándar',
+    color:  score >= 5 ? 'red' : 'emerald',
+    detalle: [
+      { var: 'Edad',                    pts: edad >= 75 ? 2 : edad >= 50 ? 1 : 0,    ref: `${edad} años` },
+      { var: 'APACHE II',               pts: apache >= 28 ? 3 : apache >= 20 ? 2 : apache >= 15 ? 1 : 0, ref: apache },
+      { var: 'SOFA',                    pts: sofa >= 10 ? 2 : sofa >= 6 ? 1 : 0,     ref: sofa },
+      { var: 'Comorbilidades (nº)',      pts: comorbilidades >= 2 ? 1 : 0,            ref: comorbilidades },
+      { var: 'Días hospital → UCI',      pts: diasHospUCI >= 1 ? 1 : 0,              ref: `${diasHospUCI}d` },
+    ],
+  }
+}
+
 function calcEstabilidad(caTotal, po4Total, mgTotal, volumen, conLipidos) {
   if (!caTotal || !po4Total || !volumen) return null
   const caConc  = (caTotal  / volumen) * 1000
@@ -379,6 +407,23 @@ const VIA_ICON_COLOR = {
   emerald: 'text-emerald-500',
 }
 
+const REFERENCIAS_CLINICAS = [
+  { label: 'Manual CCSS Farmacias SNF 2018',              descripcion: 'Manual de Procedimientos de las Farmacias de Soporte Nutricional Clínico. CCSS / CENDEISSS. Código MP.GM.DDSS.ARSDT.CNSF.201118 Versión 01.',                                          uso: 'Osmolaridad periférica <700 mOsm/L · Na ≤154 · K ≤80 · Mg ≤20 mEq/L · Volumen máx 3000 mL · Glucosa mín 5% en 3-en-1 · Estabilidad mezclas' },
+  { label: 'Manual CCSS HNN 2018',                        descripcion: 'Manual de Procedimientos Farmacia Hospital Nacional de Niños. CCSS. San José, Costa Rica.',                                                                                              uso: 'TIG máx 11-12 mg/kg/min neonatos · Oligoelementos 0.2 mL/kg/día · Glucosa máx 18 g/kg/día pediátrico' },
+  { label: 'Protocolo Soporte Nutricional COVID-19 CCSS', descripcion: 'Protocolo de Atención de Pacientes Hospitalizados Portadores de COVID-19 que Requieren Soporte Nutricional. Código PAC.GM.DDSS-CN 250320. Gerencia Médica CCSS, 2020.',              uso: 'NPS indicada cuando aporte previo <66% del requerimiento · Osmolaridad >800 mOsm → catéter central · Retirar NP cuando enteral cubre ≥66-80%' },
+  { label: 'Pereira Da Silva et al., Nutr Hosp 2015',     descripcion: 'Ecuación de estimación de osmolaridad de mezclas de NP. Mejor correlación clínica vs osmometría real.',                                                                               uso: 'Cálculo de osmolaridad: glucosaG/L × 5.55 + aaG/L × 8.0 + mEq electrolitos/L × 2' },
+  { label: 'Harris-Benedict (1919), revisión Roza 1984',  descripcion: 'Ecuación predictiva del gasto energético basal (GEB/BEE) según peso, talla, edad y sexo.',                                                                                           uso: 'GEB en todos los perfiles adultos cuando se usa método Harris-Benedict' },
+  { label: 'ASPEN Clinical Nutrition Guidelines 2016',     descripcion: 'American Society for Parenteral and Enteral Nutrition. Clinical Nutrition Guidelines. 2016.',                                                                                           uso: 'Peso ajustado obesidad: PI + 0.25×(PA−PI) con IMC ≥30 · TIG adultos ≤5 mg/kg/min en NP 2-en-1' },
+  { label: 'ESPEN Guidelines ICU 2019',                    descripcion: 'Clin Nutr. 2019;38(1):48-79. ESPEN guideline on clinical nutrition in the ICU.',                                                                                                       uso: 'Propofol: 1.1 kcal/mL (vehículo lipídico) · NP suplementaria · Retiro NP cuando enteral ≥66-80%' },
+  { label: 'ESPEN Liver Disease 2020',                     descripcion: 'Clin Nutr. 2020. ESPEN clinical nutrition guideline on clinical nutrition in liver disease.',                                                                                           uso: 'Perfil hepático: proteína 1.2-1.5 g/kg/día · kcal 25-35 · calorías nocturnas' },
+  { label: 'ESPEN Oncology 2021',                          descripcion: 'Clin Nutr. 2021. ESPEN guideline on clinical nutrition in cancer.',                                                                                                                    uso: 'Perfil oncológico: kcal 25-30 · proteína 1.2-2.0 g/kg/día' },
+  { label: 'NKF-KDOQI 2020',                              descripcion: 'National Kidney Foundation — Kidney Disease Outcomes Quality Initiative. Clinical Practice Guidelines for Nutrition in CKD 2020.',                                                       uso: 'Perfil renal: restricción K, P, Na · kcal 25-35 · proteína según modalidad diálisis' },
+  { label: 'Bistrian BR et al., JPEN 1979',               descripcion: 'Bistrian BR, Blackburn GL, Scrimshaw NS. Cellular immunity in semistarved states in hospitalized adults. Am J Clin Nutr.',                                                          uso: 'Índice de Estrés Metabólico: NUU_obs − (0.5 × N_ingerido + 3)' },
+  { label: 'Heyland DK et al., JPEN 2011 (mNUTRIC)',      descripcion: 'Heyland DK et al. Identifying critically ill patients who benefit the most from nutritional therapy. Crit Care Med. 2011. Modificado por Rahman 2016 (sin IL-6).',                 uso: 'mNUTRIC Score: edad · APACHE II · SOFA · comorbilidades · días hospital→UCI. 0-4 bajo riesgo · 5-9 alto riesgo' },
+  { label: 'Holliday-Segar (1957)',                        descripcion: 'Holliday MA, Segar WE. The maintenance need for water in parenteral fluid therapy. Pediatrics. 1957.',                                                                               uso: 'Estimación fluidos pediátricos: 0-10 kg 100 mL/kg; 10-20 kg 1000+50/kg; >20 kg 1500+20/kg' },
+  { label: 'CENDEISSS — búsqueda de actualización',        descripcion: 'Búsqueda activa de actualizaciones del Manual SNF realizada en CENDEISSS, BINASSS y repositorio CCSS (junio 2026). El Manual SNF 2018 permanece como versión vigente única.',       uso: 'Confirmación de vigencia del Manual SNF 2018 como normativa oficial CCSS' },
+]
+
 const CHECKLIST_ENFERMERIA = [
   'Verificar aspecto de la bolsa antes de conectar: color uniforme, sin capas separadas ni partículas flotantes.',
   'Conectar con técnica aséptica estricta. Proteger la bolsa de la luz directa durante la infusión.',
@@ -408,9 +453,14 @@ export default function CalculadoraNP() {
     // NP Parcial / Suplementaria — aportes previos orales/enterales/propofol
     tipNP: 'total',
     aporteOralKcal: '', aporteOralProt: '', propofolML: '',
+    // mNUTRIC Score (Heyland 2011) — UCI adultos
+    nutricEdad: '', nutricApache: '', nutricSofa: '', nutricComorbilidades: '', nutricDiasHospUCI: '',
   })
   const [resultado, setResultado] = useState(null)
-  const [errores, setErrores] = useState([])
+  const [errores, setErrores]     = useState([])
+  const [nutricResult, setNutricResult] = useState(null)
+  const [showNutric, setShowNutric]     = useState(false)
+  const [showRefs, setShowRefs]         = useState(false)
 
   // Identidad profesional — solo en localStorage del dispositivo del usuario, nunca en servidor
   const [profesional, setProfesional] = useState(() => {
@@ -628,11 +678,33 @@ export default function CalculadoraNP() {
     const glucosaBajaCCSSAlerta = form.conLipidos && glucosaConc < 5
     const glucosaAltaCCSSAlerta = (dextrosaG / pesoCal) > 18 && perfilActual?.grupo === 'pediatrico'
 
+    // ── Cobertura NPS — Protocolo COVID-19 CCSS 2020 + ESPEN 2019 ────────────
+    // Umbrales: <66% → NPS indicada; 66-80% → NPS apropiada; >80% → evaluar retiro
+    const coberturaKcalPct  = tenTotal > 0 ? Math.round((aporteKcalPrev / tenTotal) * 100) : 0
+    const coberturaProtPct  = protTotal > 0 ? Math.round((aportePrevProt / protTotal) * 100) : 0
+    const npsIndStatus =
+      coberturaKcalPct >= 80 ? 'retirar'    // CCSS HNN: retiro cuando enteral ≥80%
+      : coberturaKcalPct >= 66 ? 'opcional' // ESPEN 2019: NPS apropiada pero vigilar
+      : 'indicada'                           // CCSS Protocolo COVID-19 2020: NPS indicada <66%
+
+    // ── Concentraciones electrolitos en mEq/L (para display en resultados) ──
+    const volL_r = vol / 1000
+    const concNa  = naTotal  > 0 ? parseFloat((naTotal  / volL_r).toFixed(1)) : 0
+    const concK   = kTotal   > 0 ? parseFloat((kTotal   / volL_r).toFixed(1)) : 0
+    const concCa  = caTotal  > 0 ? parseFloat((caTotal  / volL_r).toFixed(1)) : 0
+    const concMg  = mgTotal  > 0 ? parseFloat((mgTotal  / volL_r).toFixed(1)) : 0
+    const concPo4 = po4Total > 0 ? parseFloat((po4Total / volL_r).toFixed(1)) : 0
+
     setResultado({
       bee: bee ? Math.round(bee) : null,
       ten: Math.round(ten),
       tenTotal: Math.round(tenTotal),
       esParcial, aporteKcalPrev: Math.round(aporteKcalPrev), aportePrevProt: Math.round(aportePrevProt),
+      protTotal: Math.round(protTotal),
+      coberturaKcalPct, coberturaProtPct, npsIndStatus,
+      concElectrolitos: { na: concNa, k: concK, ca: concCa, mg: concMg, po4: concPo4 },
+      aporteOralKcal: parseFloat(form.aporteOralKcal) || 0,
+      propofolKcal: parseFloat(form.propofolML) > 0 ? parseFloat(((parseFloat(form.propofolML)||0)*1.1).toFixed(1)) : 0,
       protG: Math.round(protG), protGKg: (protG / pesoCal).toFixed(2),
       protFuente: protFromUUN ? 'UUN (laboratorio)' : 'Ecuación metabólica',
       dextrosaG: Math.round(dextrosaG), lipidoG: Math.round(lipidoG),
@@ -667,6 +739,16 @@ export default function CalculadoraNP() {
       perfilRestricciones: perfilActual?.restricciones ?? [],
       tigData,
     })
+  }
+
+  const calcularNutric = () => {
+    const edad = parseInt(form.nutricEdad) || 0
+    const apache = parseInt(form.nutricApache) || 0
+    const sofa = parseInt(form.nutricSofa) || 0
+    const comorbilidades = parseInt(form.nutricComorbilidades) || 0
+    const diasHospUCI = parseInt(form.nutricDiasHospUCI) || 0
+    if (!edad || !apache) return
+    setNutricResult(calcNutricScore({ edad, apache, sofa, comorbilidades, diasHospUCI }))
   }
 
   const resetForm = () => {
@@ -1144,7 +1226,70 @@ export default function CalculadoraNP() {
                   <input type="number" value={form.propofolML} onChange={e => set('propofolML', e.target.value)}
                     className="border border-indigo-200 rounded-lg px-2 py-1.5 text-xs w-full focus:outline-none focus:border-indigo-500 bg-white" placeholder="0" min="0" />
                 </div>
-                <p className="col-span-3 text-[10px] text-indigo-500">La NP cubrirá solo el déficit: Requerimiento total − aportes previos. Propofol aporta 1.1 kcal/mL (vehículo lipídico, ESPEN 2019).</p>
+                <p className="col-span-3 text-[10px] text-indigo-500">La NP cubrirá solo el déficit: Requerimiento total − aportes previos. Propofol aporta 1.1 kcal/mL (vehículo lipídico, ESPEN 2019). NPS indicada cuando aporte previo cubre &lt;66% del requerimiento (Protocolo CCSS 2020).</p>
+              </div>
+            )}
+          </div>
+
+          {/* ── mNUTRIC Score — Heyland 2011 / Rahman 2016 ─────────────────── */}
+          <div className="border border-violet-200 rounded-xl overflow-hidden">
+            <button onClick={() => setShowNutric(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-2.5 bg-violet-50 text-sm font-semibold text-violet-800 hover:bg-violet-100 transition-colors">
+              <span className="flex items-center gap-2">
+                <Activity size={14} className="text-violet-500" />
+                mNUTRIC Score — Riesgo nutricional UCI
+                <span className="text-[10px] font-normal bg-violet-200 text-violet-700 px-1.5 py-0.5 rounded">Heyland 2011</span>
+              </span>
+              {showNutric ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+            {showNutric && (
+              <div className="p-3 space-y-2 bg-white">
+                <p className="text-[10px] text-slate-400">Puntuación para pacientes UCI adultos. Score 0-4: bajo riesgo · 5-9: alto riesgo nutricional. No requiere IL-6 (versión modificada validada por Rahman 2016).</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { field: 'nutricEdad',          label: 'Edad (años)',                   hint: '≥50 → 1pt · ≥75 → 2pt' },
+                    { field: 'nutricApache',         label: 'APACHE II',                     hint: '15-19 → 1pt · 20-27 → 2pt · ≥28 → 3pt' },
+                    { field: 'nutricSofa',           label: 'SOFA score',                    hint: '6-9 → 1pt · ≥10 → 2pt' },
+                    { field: 'nutricComorbilidades', label: 'Nº comorbilidades crónicas',    hint: '≥2 → 1pt' },
+                    { field: 'nutricDiasHospUCI',    label: 'Días hospital → UCI (retraso)', hint: '≥1 día → 1pt' },
+                  ].map(({ field, label, hint }) => (
+                    <div key={field}>
+                      <label className="block text-[10px] font-medium text-slate-600 mb-0.5">{label}</label>
+                      <input type="number" min="0" value={form[field]}
+                        onChange={e => set(field, e.target.value)}
+                        className="border border-slate-200 rounded-lg px-2 py-1.5 text-xs w-full focus:outline-none focus:border-violet-400 bg-white" />
+                      <p className="text-[9px] text-slate-400">{hint}</p>
+                    </div>
+                  ))}
+                  <div className="flex items-end">
+                    <button onClick={calcularNutric}
+                      className="w-full bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">
+                      Calcular mNUTRIC
+                    </button>
+                  </div>
+                </div>
+                {nutricResult && (
+                  <div className={`rounded-xl p-3 mt-1 border ${nutricResult.riesgo === 'alto' ? 'bg-red-50 border-red-300' : 'bg-emerald-50 border-emerald-300'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className={`text-sm font-bold ${nutricResult.riesgo === 'alto' ? 'text-red-800' : 'text-emerald-800'}`}>
+                        Score {nutricResult.score}/9 — {nutricResult.riesgo === 'alto' ? 'ALTO' : 'BAJO'} riesgo nutricional
+                      </p>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${nutricResult.riesgo === 'alto' ? 'bg-red-200 text-red-800' : 'bg-emerald-200 text-emerald-800'}`}>
+                        {nutricResult.score}/9
+                      </span>
+                    </div>
+                    <p className={`text-[10px] mb-2 ${nutricResult.riesgo === 'alto' ? 'text-red-700' : 'text-emerald-700'}`}>{nutricResult.label}</p>
+                    <div className="grid grid-cols-5 gap-1">
+                      {nutricResult.detalle.map((d, i) => (
+                        <div key={i} className={`text-center rounded p-1 ${d.pts > 0 ? 'bg-red-100' : 'bg-slate-100'}`}>
+                          <p className="text-[8px] text-slate-500">{d.var}</p>
+                          <p className="text-[9px] text-slate-600">{d.ref}</p>
+                          <p className={`text-xs font-bold ${d.pts > 0 ? 'text-red-700' : 'text-slate-400'}`}>+{d.pts}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1311,31 +1456,71 @@ export default function CalculadoraNP() {
             </div>
           )}
 
-          {/* Panel NP Parcial — balance de aportes */}
+          {/* Panel NP Parcial — balance de aportes + semáforo CCSS */}
           {resultado.esParcial && (
-            <div className="bg-indigo-50 border border-indigo-300 rounded-xl p-4">
-              <p className="text-xs font-bold text-indigo-800 mb-2 flex items-center gap-1.5">
+            <div className="bg-indigo-50 border border-indigo-300 rounded-xl p-4 space-y-3">
+              <p className="text-xs font-bold text-indigo-800 flex items-center gap-1.5">
                 <AlertCircle size={13} className="text-indigo-500" />
                 NPS — Nutrición Parenteral Suplementaria · Balance de Aportes
               </p>
+
+              {/* Barra de cobertura */}
+              <div>
+                <div className="flex justify-between text-[10px] text-slate-500 mb-0.5">
+                  <span>Cobertura calórica por aportes previos</span>
+                  <span className="font-bold">{resultado.coberturaKcalPct}%</span>
+                </div>
+                <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${
+                    resultado.coberturaKcalPct >= 80 ? 'bg-emerald-500'
+                    : resultado.coberturaKcalPct >= 66 ? 'bg-amber-400'
+                    : 'bg-red-500'
+                  }`} style={{ width: `${Math.min(resultado.coberturaKcalPct, 100)}%` }} />
+                </div>
+                <div className="flex justify-between text-[9px] text-slate-400 mt-0.5">
+                  <span>0%</span><span className="text-red-400">66%</span><span className="text-amber-400">80%</span><span>100%</span>
+                </div>
+              </div>
+
+              {/* Indicación clínica según cobertura */}
+              <div className={`rounded-lg px-3 py-2 text-xs font-semibold flex items-center gap-2 ${
+                resultado.npsIndStatus === 'retirar'  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                : resultado.npsIndStatus === 'opcional' ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                : 'bg-red-100 text-red-800 border border-red-300'
+              }`}>
+                {resultado.npsIndStatus === 'retirar'
+                  ? '✓ Aporte previo ≥80% — Evaluar retiro de NP (Manual CCSS HNN; ESPEN 2019)'
+                  : resultado.npsIndStatus === 'opcional'
+                  ? '~ Aporte previo 66-80% — NPS apropiada, vigilar metas calóricas (ESPEN 2019)'
+                  : '! Aporte previo <66% — NPS indicada (Protocolo Soporte Nutricional CCSS 2020)'}
+              </div>
+
+              {/* Desglose numérico */}
               <div className="grid grid-cols-3 gap-2 text-center text-xs">
                 <div className="bg-white rounded-lg p-2">
-                  <p className="text-slate-400 text-[10px]">Requerimiento total</p>
+                  <p className="text-slate-400 text-[10px]">Requerimiento total (TEN)</p>
                   <p className="font-bold text-slate-800">{resultado.tenTotal} kcal</p>
+                  <p className="text-slate-400 text-[9px]">{resultado.protTotal ?? resultado.protG + resultado.aportePrevProt} g proteína</p>
                 </div>
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-2">
                   <p className="text-orange-600 text-[10px]">Ya recibe (oral/enteral/propofol)</p>
-                  <p className="font-bold text-orange-700">−{resultado.aporteKcalPrev} kcal</p>
-                  <p className="text-orange-500 text-[9px]">−{resultado.aportePrevProt} g proteína</p>
+                  <p className="font-bold text-orange-700">−{resultado.aporteKcalPrev} kcal ({resultado.coberturaKcalPct}%)</p>
+                  {resultado.propofolKcal > 0 && (
+                    <p className="text-orange-400 text-[9px]">propofol: {resultado.propofolKcal} kcal · oral: {resultado.aporteOralKcal} kcal</p>
+                  )}
+                  <p className="text-orange-500 text-[9px]">−{resultado.aportePrevProt} g proteína ({resultado.coberturaProtPct}%)</p>
                 </div>
                 <div className="bg-indigo-100 rounded-lg p-2 ring-2 ring-indigo-400">
                   <p className="text-indigo-600 text-[10px] font-bold">NP prescribe (déficit)</p>
-                  <p className="font-bold text-indigo-800">{resultado.ten} kcal</p>
+                  <p className="font-bold text-indigo-800">{resultado.ten} kcal ({100 - resultado.coberturaKcalPct}%)</p>
                   <p className="text-indigo-600 text-[9px]">{resultado.protG} g proteína</p>
                 </div>
               </div>
+
               {resultado.aporteKcalPrev > resultado.tenTotal && (
-                <p className="text-[10px] text-red-700 mt-2 font-semibold">⚠ Los aportes previos superan el requerimiento calculado. Riesgo de sobrealimentación — revisar con el equipo clínico.</p>
+                <p className="text-[10px] text-red-700 font-semibold bg-red-50 border border-red-200 rounded-lg px-2 py-1.5">
+                  ⚠ Aportes previos superan el requerimiento calculado ({resultado.coberturaKcalPct}%). Riesgo de sobrealimentación — revisar con el equipo clínico. Verificar estimación del gasto energético.
+                </p>
               )}
             </div>
           )}
@@ -1380,6 +1565,32 @@ export default function CalculadoraNP() {
           {resultado.glucosaAltaCCSSAlerta && (
             <div className="bg-red-50 border border-red-300 rounded-xl p-3 text-xs text-red-800">
               <strong>Glucosa excede 18 g/kg/día:</strong> riesgo de esteatosis hepática fulminante (Manual CCSS HNN). Reducir dextrosa y distribuir calorías hacia lípidos.
+            </div>
+          )}
+
+          {/* Concentraciones de electrolitos en mEq/L — visualización explícita */}
+          {Object.values(resultado.concElectrolitos || {}).some(v => v > 0) && (
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3">
+              <p className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1.5">
+                <Info size={12} className="text-slate-400" />
+                Concentraciones en bolsa final — Verificación CCSS (Manual SNF 2018, p. 18)
+              </p>
+              <div className="grid grid-cols-5 gap-2 text-center text-[10px]">
+                {[
+                  { ion: 'Na⁺',   val: resultado.concElectrolitos.na,  max: 154, unit: 'mEq/L' },
+                  { ion: 'K⁺',    val: resultado.concElectrolitos.k,   max: 80,  unit: 'mEq/L' },
+                  { ion: 'Ca²⁺',  val: resultado.concElectrolitos.ca,  max: null, unit: 'mEq/L' },
+                  { ion: 'Mg²⁺',  val: resultado.concElectrolitos.mg,  max: 20,  unit: 'mEq/L' },
+                  { ion: 'PO₄³⁻', val: resultado.concElectrolitos.po4, max: 15,  unit: 'mmol/L' },
+                ].map(({ ion, val, max, unit }) => val > 0 ? (
+                  <div key={ion} className={`rounded-lg p-1.5 border ${max && val > max ? 'bg-red-50 border-red-300' : 'bg-white border-slate-200'}`}>
+                    <p className="text-slate-400">{ion}</p>
+                    <p className={`font-bold text-sm ${max && val > max ? 'text-red-700' : 'text-slate-800'}`}>{val}</p>
+                    <p className="text-slate-400">{unit}</p>
+                    {max && <p className={`text-[8px] ${val > max ? 'text-red-500 font-bold' : 'text-slate-300'}`}>máx {max}</p>}
+                  </div>
+                ) : null)}
+              </div>
             </div>
           )}
 
@@ -1757,19 +1968,35 @@ export default function CalculadoraNP() {
         </div>
       )}
 
-      {/* Alcance y referencias */}
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-500 leading-relaxed">
-        <p className="font-bold text-slate-700 mb-1">Alcance científico y referencias</p>
-        <p>
-          Osmolaridad: ecuación Pereira Da Silva et al. (Nutr Hosp 2015) — mejor correlación clínica vs osmometría real.
-          Umbrales vía: SENPE; ASPEN Clinical Practice Manual.
-          Perfiles patológicos: NKF-KDOQI 2020; ESPEN Renal 2024; ESPEN Liver Disease 2022; ESPEN Cancer 2021.
-          Balance nitrogenado e Índice de Bistrian: SEFH Biblioteca Virtual; protocolos NP hospitalaria ESPEN/ASPEN.
-          Peso ajustado en obesidad: PI + 0.25×(PA−PI) — ASPEN 2016.
-        </p>
-        <p className="mt-2 font-semibold text-red-700">
-          RESULTADO PROVISIONAL — requiere revisión y autorización del equipo de soporte nutricional antes de cualquier acción clínica.
-        </p>
+      {/* Panel de referencias expandible */}
+      <div className="bg-slate-50 border border-slate-200 rounded-xl overflow-hidden">
+        <button onClick={() => setShowRefs(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors">
+          <span className="flex items-center gap-2">
+            <BookOpen size={13} className="text-slate-400" />
+            Fuentes de evidencia clínica consultadas ({REFERENCIAS_CLINICAS.length} documentos verificados)
+          </span>
+          {showRefs ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+        </button>
+        {showRefs && (
+          <div className="px-4 pb-4 space-y-1.5">
+            {REFERENCIAS_CLINICAS.map((r, i) => (
+              <div key={i} className="flex items-start gap-2 text-[10px] text-slate-500">
+                <span className="text-teal-500 font-bold flex-shrink-0 w-4">{i+1}.</span>
+                <div>
+                  <span className="font-semibold text-slate-700">{r.label}</span>
+                  {' — '}{r.descripcion}
+                  {r.uso && <span className="text-teal-600"> · Aplicado en: {r.uso}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="px-4 py-2 bg-red-50 border-t border-red-100">
+          <p className="text-[10px] font-semibold text-red-700">
+            RESULTADO PROVISIONAL — requiere revisión y autorización del equipo de soporte nutricional antes de cualquier acción clínica.
+          </p>
+        </div>
       </div>
     </div>
   )
