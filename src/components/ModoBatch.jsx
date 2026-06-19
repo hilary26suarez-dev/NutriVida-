@@ -35,8 +35,8 @@ function getViaZone(osm) {
   if (osm > 1800) return { label: 'ALERTA crítica',         badge: 'bg-red-200 text-red-900' }
   if (osm > 900)  return { label: 'Central exclusiva',      badge: 'bg-red-100 text-red-800' }
   if (osm > 800)  return { label: 'Central recomendada',    badge: 'bg-orange-100 text-orange-800' }
-  if (osm > 600)  return { label: 'Periférica c/ cautela',  badge: 'bg-amber-100 text-amber-800' }
-  return             { label: 'Periférica segura',           badge: 'bg-emerald-100 text-emerald-800' }
+  if (osm > 700)  return { label: 'Periférica c/ cautela',  badge: 'bg-amber-100 text-amber-800' }
+  return             { label: 'Periférica segura <700',      badge: 'bg-emerald-100 text-emerald-800' }
 }
 
 function calcPaciente(p) {
@@ -61,10 +61,22 @@ function calcPaciente(p) {
   const pesoCal = (!esPediatrico && pesoAjustado) ? pesoAjustado : peso
   const pesoCalDesc = (!esPediatrico && pesoAjustado) ? `ajustado ${pesoAjustado} kg` : 'actual'
 
+  // ── NPS — aporte previo oral/enteral/propofol ────────────────────────────
+  const tipNP          = p.tipNP || 'total'
+  const esParcial      = tipNP === 'parcial'
+  const aporteOralKcal = esParcial ? (parseFloat(p.aporteOralKcal) || 0) : 0
+  const propofolKcal   = esParcial ? (parseFloat(p.propofolML) || 0) * 1.1 : 0
+  const aporteKcalPrev = aporteOralKcal + propofolKcal
+
   // ── Energía y macros ─────────────────────────────────────────────────────
   const kcalKg    = (perfil.kcal[0] + perfil.kcal[1]) / 2
   const protKg    = (perfil.prot[0] + perfil.prot[1]) / 2
-  const ten       = Math.round(kcalKg * pesoCal)
+  const tenTotal  = Math.round(kcalKg * pesoCal)
+  // NP solo cubre el déficit en modo parcial
+  const ten       = esParcial ? Math.max(0, tenTotal - aporteKcalPrev) : tenTotal
+  const coberturaKcalPct = tenTotal > 0 ? Math.round((aporteKcalPrev / tenTotal) * 100) : 0
+  const npsStatus = coberturaKcalPct >= 80 ? 'retirar' : coberturaKcalPct >= 66 ? 'opcional' : 'indicada'
+
   const protG     = Math.round(protKg * pesoCal)
   const kcalProt  = protG * 4
   const npc       = ten - kcalProt
@@ -100,10 +112,11 @@ function calcPaciente(p) {
     alerts.push('Sobrecarga glucídica >3.5 g/kg/día en paciente con DP')
 
   return {
-    ten, protG, protKg: protKg.toFixed(2), kcalKg: kcalKg.toFixed(0),
+    ten, tenTotal, protG, protKg: protKg.toFixed(2), kcalKg: kcalKg.toFixed(0),
     dextrosaG, lipidoG, osm, via, volAA, volDex, volLip,
     imc, esObeso, pesoIdeal, pesoAjustado, pesoCal: parseFloat(pesoCal.toFixed(1)), pesoCalDesc,
     tigVal, tigAlerta, tigMax: perfil.tigMax ?? null, esPediatrico,
+    esParcial, tipNP, aporteKcalPrev: Math.round(aporteKcalPrev), coberturaKcalPct, npsStatus,
     alerts,
   }
 }
@@ -113,6 +126,9 @@ const PACIENTE_VACIO = {
   id: '', peso: '', talla: '', sexo: 'M',
   perfil: 'estandar', volumen: '2000',
   acceso: 'central', pesoSeco: false,
+  tipNP: 'total',         // 'total' | 'parcial'
+  aporteOralKcal: '',     // kcal orales/enterales/día (solo NPS)
+  propofolML: '',         // mL propofol/día — 1.1 kcal/mL (solo NPS)
 }
 
 function nuevoId(n) { return `P${n}` }
@@ -153,10 +169,10 @@ export default function ModoBatch() {
 
   const exportarCSV = () => {
     if (!resultados) return
-    const cab = 'ID,Perfil,Peso real (kg),Talla (cm),Sexo,IMC,Peso cálculo (kg),Tipo peso,Vol (mL),Energía (kcal/d),Proteína (g/d),Prot (g/kg/d),Dex 50% (mL),AA 10% (mL),Lip 20% (mL),Osm (mOsm/L),Vía,TIG (mg/kg/min),Alertas'
+    const cab = 'ID,Perfil,Peso real (kg),Talla (cm),Sexo,IMC,Peso cálculo (kg),Tipo peso,Vol (mL),Tipo NP,Aporte previo (kcal),Req total (kcal),Energía NP (kcal),Cobertura %,Proteína (g/d),Prot (g/kg/d),Dex 50% (mL),AA 10% (mL),Lip 20% (mL),Osm (mOsm/L),Vía,TIG (mg/kg/min),Alertas'
     const filas = resultados.map(r => {
       const c = r.calc
-      if (!c) return `${r.id},—,${r.peso},${r.talla},${r.sexo},—,—,—,${r.volumen},error,error,error,error,error,error,error,error,—,—`
+      if (!c) return `${r.id},—,${r.peso},${r.talla},${r.sexo},—,—,—,${r.volumen},—,—,—,—,—,error,error,error,error,error,error,error,—,—`
       return [
         r.id,
         PERFILES_BATCH.find(p => p.id === r.perfil)?.label ?? r.perfil,
@@ -164,7 +180,12 @@ export default function ModoBatch() {
         c.imc ?? '—',
         c.pesoCal, c.pesoCalDesc,
         r.volumen,
-        c.ten, c.protG, c.protKg,
+        c.tipNP === 'parcial' ? 'NPS' : 'NPT',
+        c.esParcial ? c.aporteKcalPrev : '—',
+        c.tenTotal,
+        c.ten,
+        c.esParcial ? `${c.coberturaKcalPct}%` : '100%',
+        c.protG, c.protKg,
         c.volDex, c.volAA, c.volLip,
         c.osm, c.via.label,
         c.tigVal ?? '—',
@@ -223,15 +244,13 @@ export default function ModoBatch() {
             <tr className="bg-slate-100 text-slate-600">
               <th className="text-left px-2 py-2 rounded-tl-xl font-semibold">ID</th>
               <th className="text-left px-2 py-2 font-semibold">Peso (kg)</th>
-              <th className="text-left px-2 py-2 font-semibold">
-                <span className="flex items-center gap-1">
-                  <Scale size={11} className="text-teal-500" />Talla (cm)
-                </span>
-              </th>
+              <th className="text-left px-2 py-2 font-semibold"><span className="flex items-center gap-1"><Scale size={11} className="text-teal-500" />Talla (cm)</span></th>
               <th className="text-left px-2 py-2 font-semibold">Sexo</th>
               <th className="text-left px-2 py-2 font-semibold">Perfil clínico</th>
               <th className="text-left px-2 py-2 font-semibold">Vol (mL)</th>
               <th className="text-left px-2 py-2 font-semibold">Acceso</th>
+              <th className="text-left px-2 py-2 font-semibold">Tipo NP</th>
+              <th className="text-left px-2 py-2 font-semibold">Oral/Prop (kcal)</th>
               <th className="text-left px-2 py-2 rounded-tr-xl font-semibold"></th>
             </tr>
           </thead>
@@ -239,31 +258,34 @@ export default function ModoBatch() {
             {pacientes.map((p, idx) => {
               const perfil = PERFILES_BATCH.find(x => x.id === p.perfil)
               const esPed = perfil?.grupo === 'pediatrico'
+              const esNPS = p.tipNP === 'parcial'
               return (
-                <tr key={idx} className={`border-b border-slate-100 hover:bg-slate-50 ${esPed ? 'bg-pink-50/40' : ''}`}>
+                <tr key={p.id} className={`border-b border-slate-100 hover:bg-slate-50 ${esPed ? 'bg-pink-50/40' : ''}`}>
                   <td className="px-2 py-1.5">
-                    <input type="text" value={p.id}
+                    <input type="text" value={p.id} autoComplete="off"
                       onChange={e => actualizarFila(idx, 'id', e.target.value)}
                       className={inputCls} placeholder={`Pac-${idx + 1}`} />
                   </td>
                   <td className="px-2 py-1.5">
-                    <input type="number" value={p.peso}
+                    <input type="number" value={p.peso} autoComplete="off"
                       onChange={e => actualizarFila(idx, 'peso', e.target.value)}
                       className={inputCls} placeholder={esPed ? '3.2' : '70'} min="0.3" max="300" step="0.1" />
                   </td>
                   <td className="px-2 py-1.5">
-                    <input type="number" value={p.talla}
+                    <input type="number" value={p.talla} autoComplete="off"
                       onChange={e => actualizarFila(idx, 'talla', e.target.value)}
                       className={inputCls} placeholder={esPed ? '50' : '165'} min="30" max="250" />
                   </td>
                   <td className="px-2 py-1.5">
-                    <select value={p.sexo} onChange={e => actualizarFila(idx, 'sexo', e.target.value)} className={inputCls}>
+                    <select value={p.sexo} autoComplete="off"
+                      onChange={e => actualizarFila(idx, 'sexo', e.target.value)} className={inputCls}>
                       <option value="M">M</option>
                       <option value="F">F</option>
                     </select>
                   </td>
                   <td className="px-2 py-1.5">
-                    <select value={p.perfil} onChange={e => actualizarFila(idx, 'perfil', e.target.value)} className={inputCls}>
+                    <select value={p.perfil} autoComplete="off"
+                      onChange={e => actualizarFila(idx, 'perfil', e.target.value)} className={inputCls}>
                       <optgroup label="Adulto">
                         {PERFILES_BATCH.filter(pf => pf.grupo === 'adulto').map(pf => (
                           <option key={pf.id} value={pf.id}>{pf.label}</option>
@@ -277,15 +299,38 @@ export default function ModoBatch() {
                     </select>
                   </td>
                   <td className="px-2 py-1.5">
-                    <input type="number" value={p.volumen}
+                    <input type="number" value={p.volumen} autoComplete="off"
                       onChange={e => actualizarFila(idx, 'volumen', e.target.value)}
-                      className={inputCls} placeholder="2000" min="50" max="5000" />
+                      className={inputCls} placeholder="2000" min="50" max="3000" />
                   </td>
                   <td className="px-2 py-1.5">
-                    <select value={p.acceso} onChange={e => actualizarFila(idx, 'acceso', e.target.value)} className={inputCls}>
+                    <select value={p.acceso} autoComplete="off"
+                      onChange={e => actualizarFila(idx, 'acceso', e.target.value)} className={inputCls}>
                       <option value="central">Central</option>
                       <option value="periferica">Periférica</option>
                     </select>
+                  </td>
+                  {/* Tipo NP — NPT o NPS */}
+                  <td className="px-2 py-1.5">
+                    <select value={p.tipNP} autoComplete="off"
+                      onChange={e => actualizarFila(idx, 'tipNP', e.target.value)}
+                      className={`${inputCls} ${esNPS ? 'border-indigo-400 bg-indigo-50 font-semibold text-indigo-700' : ''}`}>
+                      <option value="total">NPT</option>
+                      <option value="parcial">NPS</option>
+                    </select>
+                  </td>
+                  {/* Aporte oral/propofol — solo activo en NPS */}
+                  <td className="px-2 py-1.5">
+                    <input type="number" value={p.aporteOralKcal} autoComplete="off"
+                      onChange={e => actualizarFila(idx, 'aporteOralKcal', e.target.value)}
+                      className={`${inputCls} ${!esNPS ? 'opacity-30 cursor-not-allowed' : 'border-indigo-300'}`}
+                      placeholder="kcal" min="0" disabled={!esNPS} />
+                    {esNPS && (
+                      <input type="number" value={p.propofolML} autoComplete="off"
+                        onChange={e => actualizarFila(idx, 'propofolML', e.target.value)}
+                        className={`${inputCls} mt-0.5 border-indigo-300`}
+                        placeholder="prop. mL" min="0" />
+                    )}
                   </td>
                   <td className="px-2 py-1.5">
                     <button onClick={() => eliminarFila(idx)}
@@ -381,14 +426,16 @@ export default function ModoBatch() {
 
           {/* Tabla resultados */}
           <div className="overflow-x-auto">
-            <table className="w-full text-xs border-collapse min-w-[900px]">
+            <table className="w-full text-xs border-collapse min-w-[1050px]">
               <thead>
                 <tr className="bg-slate-100 text-slate-600">
                   <th className="text-left px-2 py-2 rounded-tl-xl font-semibold">ID</th>
                   <th className="text-left px-2 py-2 font-semibold">Perfil</th>
+                  <th className="text-center px-2 py-2 font-semibold">Tipo NP</th>
                   <th className="text-right px-2 py-2 font-semibold">IMC</th>
                   <th className="text-right px-2 py-2 font-semibold">Peso cal.</th>
-                  <th className="text-right px-2 py-2 font-semibold">Energía</th>
+                  <th className="text-right px-2 py-2 font-semibold">Energía NP</th>
+                  <th className="text-right px-2 py-2 font-semibold">Cobertura</th>
                   <th className="text-right px-2 py-2 font-semibold">Proteína</th>
                   <th className="text-right px-2 py-2 font-semibold">Dex 50%</th>
                   <th className="text-right px-2 py-2 font-semibold">AA 10%</th>
@@ -403,18 +450,26 @@ export default function ModoBatch() {
                   const c = r.calc
                   const hasAlerts = c?.alerts?.length > 0
                   return (
-                    <tr key={i} className={`border-b border-slate-100 ${
+                    <tr key={r.id} className={`border-b border-slate-100 ${
                       hasAlerts ? 'bg-red-50' : c?.esPediatrico ? 'bg-pink-50/40' : i % 2 === 0 ? 'bg-white' : 'bg-slate-50'
                     }`}>
                       <td className="px-2 py-2 font-semibold text-slate-700">{r.id || `Pac-${i + 1}`}</td>
-                      <td className="px-2 py-2 text-slate-500 flex items-center gap-1">
-                        {c?.esPediatrico && <Baby size={10} className="text-pink-400 flex-shrink-0" />}
-                        {PERFILES_BATCH.find(p => p.id === r.perfil)?.label}
+                      <td className="px-2 py-2 text-slate-500">
+                        <span className="flex items-center gap-1">
+                          {c?.esPediatrico && <Baby size={10} className="text-pink-400 flex-shrink-0" />}
+                          {PERFILES_BATCH.find(p => p.id === r.perfil)?.label}
+                        </span>
                       </td>
                       {!c ? (
-                        <td colSpan={10} className="px-2 py-2 text-red-500">Error — verificar datos</td>
+                        <td colSpan={12} className="px-2 py-2 text-red-500">Error — verificar datos</td>
                       ) : (
                         <>
+                          {/* Tipo NP — NPT / NPS */}
+                          <td className="px-2 py-2 text-center">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              c.esParcial ? 'bg-indigo-100 text-indigo-700' : 'bg-teal-100 text-teal-700'
+                            }`}>{c.esParcial ? 'NPS' : 'NPT'}</span>
+                          </td>
                           {/* IMC */}
                           <td className="px-2 py-2 text-right">
                             {c.imc != null ? (
@@ -433,7 +488,23 @@ export default function ModoBatch() {
                               <p className="text-[9px] text-amber-500">ajustado</p>
                             )}
                           </td>
-                          <td className="px-2 py-2 text-right font-medium text-slate-700">{c.ten} kcal</td>
+                          {/* Energía NP (déficit en NPS) */}
+                          <td className="px-2 py-2 text-right">
+                            <span className="font-medium text-slate-700">{c.ten} kcal</span>
+                            {c.esParcial && (
+                              <p className="text-[9px] text-indigo-500">req {c.tenTotal} kcal</p>
+                            )}
+                          </td>
+                          {/* Cobertura previa (solo NPS) */}
+                          <td className="px-2 py-2 text-right">
+                            {c.esParcial ? (
+                              <span className={`text-[10px] font-bold px-1 py-0.5 rounded ${
+                                c.coberturaKcalPct >= 80 ? 'bg-green-100 text-green-700'
+                                : c.coberturaKcalPct >= 66 ? 'bg-amber-100 text-amber-700'
+                                : 'bg-red-100 text-red-700'
+                              }`}>{c.coberturaKcalPct}%</span>
+                            ) : <span className="text-slate-300">—</span>}
+                          </td>
                           <td className="px-2 py-2 text-right">
                             <span className="font-medium text-slate-700">{c.protG} g</span>
                             <span className="text-slate-400 ml-1">({c.protKg}/kg)</span>
@@ -477,9 +548,9 @@ export default function ModoBatch() {
           </div>
 
           <p className="text-[10px] text-slate-400 leading-relaxed">
-            Energía = promedio del rango ESPEN/KDOQI del perfil · Proteína = promedio del rango · Macros: 65/35 NPC.
-            Peso ajustado aplicado automáticamente cuando IMC ≥ 30 (PI + 0.25 × [PA − PI], ASPEN 2016).
-            TIG mostrado solo en perfiles pediátricos/neonatales (Manual CCSS HNN 2018 · ASPEN Pediatric Guidelines).
+            Energía NP = requerimiento total − aporte previo oral/enteral/propofol (NPS) · Macros: 65/35 NPC.
+            Cobertura NPS: &lt;66% indicada · 66-80% apropiada · ≥80% evaluar retiro (Protocolo CCSS 2020).
+            Peso ajustado si IMC ≥ 30 (PI + 0.25 × [PA − PI], ASPEN 2016) · TIG en perfiles pediátricos (CCSS HNN 2018).
             <span className="font-semibold text-red-600 ml-1">Requiere validación farmacéutica individual.</span>
           </p>
         </div>

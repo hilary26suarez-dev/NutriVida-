@@ -509,8 +509,8 @@ export default function CalculadoraNP() {
     if (form.modoCalculo === 'kcal_kg') {
       if (!parseFloat(form.kcalKg)) faltantes.push('Objetivo calórico (kcal/kg/día)')
     } else {
-      if (!parseFloat(form.talla)) faltantes.push('Talla (cm)')
-      if (!parseFloat(form.edad))  faltantes.push('Edad (años)')
+      if (!parseFloat(form.talla))  faltantes.push('Talla (cm)')
+      if (form.edad === '')         faltantes.push('Edad (años) — use 0 para neonatos')
     }
     if (faltantes.length > 0) { setErrores(faltantes); return }
     setErrores([])
