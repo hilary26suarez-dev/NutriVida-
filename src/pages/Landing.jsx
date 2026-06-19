@@ -1,4 +1,4 @@
-import { ChevronRight, Dna, FlaskConical, GraduationCap, Heart, ShieldCheck, Star, Stethoscope, Users } from 'lucide-react'
+import { ChevronRight, Dna, FlaskConical, GraduationCap, Heart, ShieldCheck, Stethoscope, Users } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 export default function Landing() {
@@ -12,23 +12,18 @@ export default function Landing() {
           </div>
           <div>
             <span className="font-bold text-teal-800 text-lg block leading-tight">NutriVida Biotech</span>
-            <span className="text-teal-500 text-xs">Costa Rica</span>
+            <span className="text-teal-500 text-xs">Soporte Nutricional Clínico</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <span className="bg-teal-100 text-teal-700 text-xs font-semibold px-3 py-1 rounded-full">
-            Donado a Costa Rica
+            Prototipo Clínico v2.1
           </span>
         </div>
       </header>
 
       {/* Hero */}
       <section className="max-w-5xl mx-auto px-6 pt-10 pb-16 text-center">
-        <div className="inline-flex items-center gap-2 bg-teal-100 text-teal-700 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-          <Star size={14} className="fill-teal-500 text-teal-500" />
-          Primera herramienta de NP con enfoque biotecnológico en Costa Rica
-        </div>
-
         <h1 className="text-4xl md:text-5xl font-bold text-teal-900 leading-tight mb-4">
           Nutrición Parenteral de Precisión,
           <br />
@@ -163,7 +158,7 @@ export default function Landing() {
           <span className="font-bold text-teal-800">NutriVida Biotech</span>
         </div>
         <p className="text-slate-400 text-sm">
-          Herramienta donada a Costa Rica · Uso libre para profesionales y pacientes
+          Plataforma de apoyo clínico en desarrollo · Uso para profesionales y pacientes
         </p>
         <p className="text-slate-400 text-xs mt-1">
           Desarrollada con apoyo de ACONEP y FELANPE · No reemplaza la indicación médica

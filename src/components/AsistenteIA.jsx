@@ -119,7 +119,7 @@ export default function AsistenteIA() {
           </div>
           <div>
             <p className="font-bold text-teal-800 text-base">NutriAsistente</p>
-            <p className="text-xs text-teal-500">Asistente IA · NP Costa Rica</p>
+            <p className="text-xs text-teal-500">Asistente IA · Nutrición Parenteral</p>
           </div>
         </div>
         <button

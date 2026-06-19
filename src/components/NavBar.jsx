@@ -13,7 +13,7 @@ export default function NavBar() {
           </div>
           <div className="leading-tight">
             <span className="font-bold text-teal-800 text-sm block">NutriVida Biotech</span>
-            <span className="text-teal-500 text-xs">Costa Rica</span>
+            <span className="text-teal-500 text-xs">Soporte Nutricional</span>
           </div>
         </Link>
 

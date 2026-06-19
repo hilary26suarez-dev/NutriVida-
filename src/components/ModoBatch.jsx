@@ -1,5 +1,5 @@
 import { AlertCircle, AlertTriangle, CheckCircle, Download, Info, Plus, RotateCcw, Trash2, Users } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 const PERFILES_BATCH = [
   { id: 'estandar',             label: 'Estándar',          kcal: [20, 25], prot: [1.0, 1.5] },
@@ -64,17 +64,20 @@ const PACIENTE_VACIO = {
   acceso: 'central', pesoSeco: false,
 }
 
-let nextId = 1
+function nuevoId(n) { return `P${n}` }
 
 export default function ModoBatch() {
+  const nextIdRef = useRef(2) // 1 ya fue usado en el estado inicial
   const [pacientes, setPacientes] = useState([
-    { ...PACIENTE_VACIO, id: `P${nextId++}` },
+    { ...PACIENTE_VACIO, id: nuevoId(1) },
   ])
   const [resultados, setResultados] = useState(null)
   const [error, setError] = useState('')
 
   const agregarFila = () => {
-    setPacientes(p => [...p, { ...PACIENTE_VACIO, id: `P${nextId++}` }])
+    // ID calculado ANTES del updater para evitar efectos secundarios dentro de setState
+    const id = nuevoId(nextIdRef.current++)
+    setPacientes(prev => [...prev, { ...PACIENTE_VACIO, id }])
     setResultados(null)
   }
 
@@ -279,7 +282,11 @@ export default function ModoBatch() {
               <Download size={14} /> Exportar CSV
             </button>
             <button
-              onClick={() => { setResultados(null); setPacientes([{ ...PACIENTE_VACIO, id: `P${nextId++}` }]) }}
+              onClick={() => {
+                const id = nuevoId(nextIdRef.current++)
+                setResultados(null)
+                setPacientes([{ ...PACIENTE_VACIO, id }])
+              }}
               className="text-slate-400 hover:text-slate-600 px-3 py-2 rounded-xl border border-slate-200 transition-colors"
             >
               <RotateCcw size={15} />
