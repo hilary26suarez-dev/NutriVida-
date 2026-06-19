@@ -1,5 +1,5 @@
 import { Activity, AlertCircle, AlertTriangle, Baby, BookOpen, CheckCircle, ChevronDown, ChevronUp, Clock, Dna, Download, Info, Printer, RotateCcw, Scale, Syringe } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const CONDICIONES = [
   { id: 'reposo',          label: 'Sin estrés / reposo',              factor: 1.0, proteina: [1.0, 1.2], kcalRange: [20, 25] },
@@ -408,6 +408,17 @@ export default function CalculadoraNP() {
   const [resultado, setResultado] = useState(null)
   const [errores, setErrores] = useState([])
 
+  // Identidad profesional — solo en localStorage del dispositivo del usuario, nunca en servidor
+  const [profesional, setProfesional] = useState(() => {
+    try {
+      const s = localStorage.getItem('nutrivida_pro')
+      return s ? JSON.parse(s) : { nombre: '', colegiado: '' }
+    } catch { return { nombre: '', colegiado: '' } }
+  })
+  useEffect(() => {
+    try { localStorage.setItem('nutrivida_pro', JSON.stringify(profesional)) } catch {}
+  }, [profesional])
+
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
   const condActual   = CONDICIONES.find(c => c.id === form.condicion)
@@ -483,7 +494,10 @@ export default function CalculadoraNP() {
     // ── Macronutrientes ───────────────────────────────────────────────────────
     const kcalProt  = protG * 4
     const npc       = ten - kcalProt
-    const dextrosaG = Math.max(0, (npc * 0.65) / 3.4)
+    // Sin lípidos (2-en-1): todo el NPC va a dextrosa (65% sería déficit calórico)
+    const dextrosaG = form.conLipidos
+      ? Math.max(0, (npc * 0.65) / 3.4)
+      : Math.max(0, npc / 3.4)
     const lipidoG   = form.conLipidos ? Math.max(0, (npc * 0.35) / 10) : 0
     const nitrogeno = protG / 6.25
     const npcN      = npc / (nitrogeno || 1)
@@ -545,20 +559,23 @@ export default function CalculadoraNP() {
       }
     }
 
-    // ── TIG — Tasa de Infusión de Glucosa (solo perfiles pediátricos) ────────
+    // ── TIG — Tasa de Infusión de Glucosa ───────────────────────────────────
     // TIG (mg/kg/min) = g glucosa/día × 1000 / (pesoCal × 1440)
+    const tigVal = (dextrosaG * 1000) / (pesoCal * 1440)
     let tigData = null
     if (perfilActual?.tigMax) {
-      const tig = (dextrosaG * 1000) / (pesoCal * 1440)
+      // Perfiles pediátricos/neonatales — panel completo
       tigData = {
-        tig: tig.toFixed(2),
+        tig: tigVal.toFixed(2),
         tigMax: perfilActual.tigMax,
         tigInicio: perfilActual.tigInicio,
-        seguro: tig <= perfilActual.tigMax,
-        nivel: tig > perfilActual.tigMax ? 'critico'
-          : tig > perfilActual.tigMax * 0.85 ? 'limite' : 'seguro',
+        seguro: tigVal <= perfilActual.tigMax,
+        nivel: tigVal > perfilActual.tigMax ? 'critico'
+          : tigVal > perfilActual.tigMax * 0.85 ? 'limite' : 'seguro',
       }
     }
+    // Adultos en NP 2-en-1: la dextrosa asume todo el NPC → verificar límite ASPEN (5 mg/kg/min)
+    const tigAdultoAlerta = !perfilActual?.tigMax && !form.conLipidos && tigVal > 5
 
     // ── Volúmenes comerciales ─────────────────────────────────────────────────
     const volAA     = Math.round(protG    / 0.1)
@@ -566,6 +583,12 @@ export default function CalculadoraNP() {
     const volLipido = form.conLipidos ? Math.round(lipidoG / 0.2) : 0
     const volumenComponentes = volAA + volDex + volLipido
     const porcentajeOcupado  = (volumenComponentes / vol) * 100
+    // Reserva obligatoria para electrolitos + vitaminas + oligoelementos (mínimo 100 mL)
+    const MIN_ADITIVOS_ML    = 100
+    const volumenExcedido    = volumenComponentes > vol
+    // Físicamente posible pero sin espacio para aditivos obligatorios
+    const sinEspacioAditivos = !volumenExcedido && (volumenComponentes > vol - MIN_ADITIVOS_ML)
+    const dextrosaGKg        = dextrosaG / pesoCal
 
     setResultado({
       bee: bee ? Math.round(bee) : null,
@@ -573,19 +596,23 @@ export default function CalculadoraNP() {
       protG: Math.round(protG), protGKg: (protG / pesoCal).toFixed(2),
       protFuente: protFromUUN ? 'UUN (laboratorio)' : 'Ecuación metabólica',
       dextrosaG: Math.round(dextrosaG), lipidoG: Math.round(lipidoG),
+      dextrosaGKg: parseFloat(dextrosaGKg.toFixed(2)),
       nitrogeno: nitrogeno.toFixed(1), npcN: Math.round(npcN),
       volAA, volDex, volLipido,
       volumenComponentes,
       porcentajeOcupado:  Math.round(porcentajeOcupado),
-      volumenExcedido:    volumenComponentes > vol,
-      volumenJusto:       porcentajeOcupado > 90 && volumenComponentes <= vol,
+      volumenExcedido,
+      sinEspacioAditivos,
+      volumenJusto:       !volumenExcedido && !sinEspacioAditivos && porcentajeOcupado > 90,
       volSugerido:        Math.ceil((volumenComponentes + 150) / 100) * 100,
+      alertaDpGlucosa:    perfilActual?.id === 'renal_dp' && dextrosaGKg > 3.5,
       osmolaridad, viaInfo,
       npcNEstado:  npcN < 80 ? 'bajo' : npcN > 150 ? 'alto' : 'optimo',
       estabilidad,
       lipido:      LIPIDOS.find(l => l.id === form.lipido),
       balanceN,
       bistrianData,
+      tigAdultoAlerta, tigAdultoVal: parseFloat(tigVal.toFixed(2)),
       insulina:        form.diabetico ? Math.round(dextrosaG / 10) : null,
       oligoelementos:  form.pediatrico ? { multiOligo: (pesoCal * 0.2).toFixed(2), selenio: (pesoCal * 0.1).toFixed(2) } : null,
       tasaInfusion:    (vol / horas).toFixed(1),
@@ -705,7 +732,7 @@ export default function CalculadoraNP() {
         }] : []),
       ],
       note: [
-        { time: now, text: 'Generado por NutriVida Biotech v2.1 — Estimación educativa basada en ESPEN/ASPEN. NO constituye prescripción médica. Requiere validación del equipo de soporte nutricional.' },
+        { time: now, text: `Generado por NutriVida Biotech v2.1 — Estimación educativa basada en ESPEN/ASPEN. NO constituye prescripción médica. Requiere validación del equipo de soporte nutricional.${profesional.nombre ? ` Calculado por: ${profesional.nombre}` : ''}${profesional.colegiado ? ` · Colegio Profesional: ${profesional.colegiado}` : ''}` },
         { text: `Osmolaridad calculada por ecuación Pereira Da Silva et al. (Nutr Hosp 2015). Perfil: ${resultado.perfilLabel}. Peso de cálculo: ${resultado.pesoCal} kg (${resultado.pesoCalDesc}).` },
       ],
     }
@@ -726,6 +753,34 @@ export default function CalculadoraNP() {
 
   return (
     <div className="space-y-6">
+
+      {/* Identificación profesional — localStorage del dispositivo */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+        <p className="text-xs font-semibold text-slate-500 flex items-center gap-1.5 mb-3">
+          <BookOpen size={13} className="text-teal-500" />
+          Identificación profesional
+          <span className="ml-auto text-[10px] font-normal text-slate-400 flex items-center gap-1">
+            <Scale size={10} /> Solo en este dispositivo · No se envía al servidor
+          </span>
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="text"
+            placeholder="Nombre completo"
+            value={profesional.nombre}
+            onChange={e => setProfesional(p => ({ ...p, nombre: e.target.value }))}
+            className={inputSmCls}
+          />
+          <input
+            type="text"
+            placeholder="Código de colegio profesional"
+            value={profesional.colegiado}
+            onChange={e => setProfesional(p => ({ ...p, colegiado: e.target.value }))}
+            className={inputSmCls}
+          />
+        </div>
+      </div>
+
       {/* Disclaimer */}
       <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-2xl p-4 text-xs text-amber-900">
         <AlertTriangle size={15} className="flex-shrink-0 mt-0.5" />
@@ -1045,14 +1100,14 @@ export default function CalculadoraNP() {
 
             <div className="grid grid-cols-5 gap-2">
               {[
-                { key: 'na',  label: 'Na⁺',   placeholder: '70' },
-                { key: 'k',   label: 'K⁺',    placeholder: '40' },
-                { key: 'ca',  label: 'Ca²⁺',  placeholder: '10' },
-                { key: 'mg',  label: 'Mg²⁺',  placeholder: '8'  },
-                { key: 'po4', label: 'PO₄³⁻', placeholder: '20' },
+                { key: 'na',  label: 'Na⁺',   placeholder: '70', unit: 'mEq' },
+                { key: 'k',   label: 'K⁺',    placeholder: '40', unit: 'mEq' },
+                { key: 'ca',  label: 'Ca²⁺',  placeholder: '10', unit: 'mEq' },
+                { key: 'mg',  label: 'Mg²⁺',  placeholder: '8',  unit: 'mEq' },
+                { key: 'po4', label: 'PO₄³⁻', placeholder: '20', unit: 'mmol' },
               ].map(e => (
                 <div key={e.key}>
-                  <label className="block text-[10px] text-slate-500 mb-1 font-medium">{e.label} mEq</label>
+                  <label className="block text-[10px] text-slate-500 mb-1 font-medium">{e.label} {e.unit}</label>
                   <input type="number" value={form[e.key]} onChange={ev => set(e.key, ev.target.value)}
                     className="w-full border border-slate-200 rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-violet-400 bg-white"
                     placeholder={e.placeholder} min="0" />
@@ -1060,7 +1115,7 @@ export default function CalculadoraNP() {
               ))}
             </div>
             <p className="text-[10px] text-violet-600 mt-1.5 flex items-center gap-1">
-              <Info size={10} /> Osmolaridad: glucosa×5.55 + AA×8.0 + Σelectrolitos×2 (lípidos=0, son isotónicos)
+              <Info size={10} /> Osmolaridad: glucosa×5.55 + AA×8.0 + Σelectrolitos×2 (lípidos=0, isotónicos) · PO₄ en <strong>mmol</strong> — Na/K/Ca/Mg en mEq
             </p>
           </div>
 
@@ -1156,6 +1211,22 @@ export default function CalculadoraNP() {
             </div>
           </div>
 
+          {/* Encabezado de identidad profesional en resultados */}
+          {(profesional.nombre || profesional.colegiado) && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs bg-teal-50 border border-teal-200 rounded-xl px-4 py-2.5">
+              <BookOpen size={13} className="text-teal-500 flex-shrink-0" />
+              {profesional.nombre && (
+                <span className="text-teal-800">Calculado por: <strong>{profesional.nombre}</strong></span>
+              )}
+              {profesional.colegiado && (
+                <span className="text-teal-700">Colegio: <strong>{profesional.colegiado}</strong></span>
+              )}
+              <span className="ml-auto text-teal-500">
+                {new Date().toLocaleDateString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+              </span>
+            </div>
+          )}
+
           {/* Tarjetas principales */}
           <div className="bg-teal-50 rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 gap-3 border border-teal-100">
             {[
@@ -1214,6 +1285,20 @@ export default function CalculadoraNP() {
                   </p>
                   <p className="text-xs text-red-800 font-semibold mt-1">
                     Opciones: aumentar volumen a ≥{resultado.volSugerido} mL · o solicitar AA 15% / Dextrosa 70%.
+                  </p>
+                </div>
+              </div>
+            ) : resultado.sinEspacioAditivos ? (
+              <div className="mt-3 flex items-start gap-3 bg-orange-50 border border-orange-300 rounded-xl p-4 text-sm">
+                <AlertTriangle size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-orange-800">Sin espacio para aditivos obligatorios</p>
+                  <p className="text-xs text-orange-700 mt-1">
+                    Componentes: <strong>{resultado.volumenComponentes} mL</strong> — remanente: <strong>{resultado.volTotal - resultado.volumenComponentes} mL</strong>.
+                    Se requieren mínimo 100 mL para electrolitos, vitaminas y oligoelementos.
+                  </p>
+                  <p className="text-xs text-orange-800 font-semibold mt-1">
+                    Aumentar bolsa a ≥{resultado.volSugerido} mL · o reducir aporte de macronutrientes.
                   </p>
                 </div>
               </div>
@@ -1402,6 +1487,23 @@ export default function CalculadoraNP() {
             </div>
           )}
 
+          {/* TIG adulto — alerta en NP 2-en-1 */}
+          {resultado.tigAdultoAlerta && (
+            <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-300 rounded-xl text-sm">
+              <AlertTriangle size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-orange-800">Carga glucídica elevada — NP 2-en-1</p>
+                <p className="text-xs text-orange-700 mt-1">
+                  TIG calculada: <strong>{resultado.tigAdultoVal} mg/kg/min</strong> — supera el límite recomendado de 5 mg/kg/min (ASPEN 2016).
+                  Sin lípidos, toda la energía no proteica se entrega como glucosa.
+                </p>
+                <p className="text-xs text-orange-800 font-semibold mt-1">
+                  Revisar: agregar emulsión lipídica (NP 3-en-1) o reducir el objetivo calórico. Riesgo de esteatosis hepática y retención de CO₂.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Insulina */}
           {resultado.insulina !== null && (
             <div className="flex items-start gap-3 p-3 bg-purple-50 border border-purple-200 rounded-xl text-sm">
@@ -1411,6 +1513,25 @@ export default function CalculadoraNP() {
                 <p className="text-purple-700 font-bold text-base mt-0.5">{resultado.insulina} UI</p>
                 <p className="text-xs text-purple-600 mt-0.5">
                   Dextrosa ({resultado.dextrosaG}g) ÷ 10 = {resultado.insulina} UI — Ajustar según glicemia capilar c/2h. Requiere validación médica.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Alerta de sobrecarga glucídica — Diálisis Peritoneal */}
+          {resultado.alertaDpGlucosa && (
+            <div className="flex items-start gap-3 p-4 bg-orange-50 border border-orange-300 rounded-xl text-sm">
+              <AlertTriangle size={18} className="text-orange-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-orange-800">Sobrecarga glucídica — Perfil Diálisis Peritoneal</p>
+                <p className="text-xs text-orange-700 mt-1">
+                  Carga de dextrosa parenteral: <strong>{resultado.dextrosaGKg} g/kg/día</strong> — supera 3.5 g/kg/día en paciente con DP.
+                  Estos pacientes absorben 60–80% de la glucosa del dializante peritoneal, predisponiendo a
+                  hiperglucemia sostenida, hipertrigliceridemia grave y esteatosis hepática.
+                </p>
+                <p className="text-xs text-orange-800 font-semibold mt-1">
+                  Revisar: reducir dextrosa parenteral e incrementar proporción de calorías lipídicas (lípidos IV).
+                  Fuente: ISPD Nutrition Guidelines 2021 · NKF-KDOQI 2020.
                 </p>
               </div>
             </div>
