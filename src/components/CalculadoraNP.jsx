@@ -119,9 +119,9 @@ const PERFILES_PATOLOGICOS = [
     tipoPesoSugerido: 'actual',
     fuente: 'Manual CCSS HNN 2018 · ASPEN Pediatric Guidelines',
     nota: 'Al nacer cesa la infusión placentaria de nutrientes. Sin AA desde las primeras horas se produce catabolismo severo que afecta irreversiblemente el neurodesarrollo.',
-    restricciones: ['TIG inicio: 4–6 mg/kg/min → máx 12–14 mg/kg/min', 'Exceder TIG 14 → lipogénesis hepática + retención CO₂ → falla en extubación', 'Calcio y fósforo: curva de solubilidad crítica en prematuros'],
+    restricciones: ['TIG inicio: 4–6 mg/kg/min → máx 11–12 mg/kg/min (Manual CCSS HNN)', 'Exceder TIG 12 → lipogénesis hepática + retención CO₂ → falla en extubación', 'Calcio y fósforo: curva de solubilidad crítica en prematuros', 'Nunca exceder 16–18 g glucosa/kg/día (riesgo de esteatosis hepática fulminante)'],
     tigInicio: [4, 6],
-    tigMax: 14,
+    tigMax: 12,
   },
   {
     id: 'neonato_termino',
@@ -132,9 +132,9 @@ const PERFILES_PATOLOGICOS = [
     tipoPesoSugerido: 'actual',
     fuente: 'Manual CCSS HNN 2018 · ASPEN Pediatric Guidelines',
     nota: 'Iniciar AA en las primeras 24h. Aporte calórico no proteico suficiente es obligatorio para evitar que los AA se usen como energía.',
-    restricciones: ['TIG inicio: 6–8 mg/kg/min → máx 12–14 mg/kg/min', 'Glucosa >14 mg/kg/min → esteatosis hepática fulminante', 'Oligoelementos: Cu, Mn, Zn, Se (0.2 mL/kg/día multi-oligo)'],
+    restricciones: ['TIG inicio: 6–8 mg/kg/min → máx 11–12 mg/kg/min (Manual CCSS HNN)', 'Glucosa >12 mg/kg/min → esteatosis hepática; nunca exceder 16–18 g/kg/día', 'Oligoelementos: Cu, Mn, Zn, Se (0.2 mL/kg/día multi-oligo pediátrico)'],
     tigInicio: [6, 8],
-    tigMax: 14,
+    tigMax: 12,
   },
   {
     id: 'pediatrico_infante',
@@ -356,13 +356,14 @@ function calcEstabilidad(caTotal, po4Total, mgTotal, volumen, conLipidos) {
   return { nivel, caConc: caConc.toFixed(1), po4Conc: po4Conc.toFixed(1), mgConc: mgConc.toFixed(1), producto: Math.round(producto), mensajes }
 }
 
-// 5-level osmolarity classification (Pereira Da Silva / SENPE / ASPEN)
+// 5-level osmolarity classification (Pereira Da Silva / CCSS Manual SNF 2018 / SENPE / ASPEN)
+// CCSS establece <700 mOsm/L para vía periférica segura (Manual Farmacias Soporte Nutricional, 2018)
 function getViaZone(osm) {
   if (osm > 1800) return { zone: 'critica', color: 'red',     label: 'CVC OBLIGATORIO — alerta fisicoquímica crítica', desc: 'Riesgo de inestabilidad fisicoquímica y precipitación de sales. Revisar dilución volumétrica urgente.' }
   if (osm > 900)  return { zone: 'alta',    color: 'red',     label: 'Venosa central exclusiva (CVC / PICC)',           desc: 'Osmolaridad >900 mOsm/L: riesgo grave de tromboflebitis en venas periféricas. CVC obligatorio (ESPEN/ASPEN).' }
   if (osm > 800)  return { zone: 'riesgo',  color: 'orange',  label: 'Transición a central — periférica contraindicada', desc: 'Zona de alto riesgo. Límite absoluto tolerado periféricamente. Alta incidencia de esclerosis vascular si se mantiene.' }
-  if (osm > 600)  return { zone: 'media',   color: 'amber',   label: 'Periférica con cautela (≤ 5 días)',                desc: 'Tolerable en venas de buen calibre. Requiere rotación de sitios de punción. Máximo 5 días periférico (SENPE).' }
-  return             { zone: 'baja',    color: 'emerald', label: 'Periférica segura',                                desc: 'Solución isotónica o ligeramente hipertónica. Riesgo mínimo de daño endotelial periférico.' }
+  if (osm > 700)  return { zone: 'media',   color: 'amber',   label: 'Periférica con cautela (≤ 5 días)',                desc: 'Tolerable en venas de buen calibre. Requiere rotación de sitios de punción. Máximo 5 días periférico (SENPE). CCSS establece <700 como límite seguro.' }
+  return             { zone: 'baja',    color: 'emerald', label: 'Periférica segura (<700 mOsm/L — CCSS)',           desc: 'Dentro del límite CCSS (<700 mOsm/L). Solución con riesgo mínimo de daño endotelial periférico.' }
 }
 
 const VIA_ZONE_STYLES = {
@@ -404,6 +405,9 @@ export default function CalculadoraNP() {
     perfilPatologico: 'estandar',
     tipoPeso: 'actual',
     pesoSeco: '',
+    // NP Parcial / Suplementaria — aportes previos orales/enterales/propofol
+    tipNP: 'total',
+    aporteOralKcal: '', aporteOralProt: '', propofolML: '',
   })
   const [resultado, setResultado] = useState(null)
   const [errores, setErrores] = useState([])
@@ -461,6 +465,12 @@ export default function CalculadoraNP() {
     if (faltantes.length > 0) { setErrores(faltantes); return }
     setErrores([])
 
+    // ── Validación volumen máximo CCSS (Manual Farmacias SNF 2018, p.12) ─────
+    if (vol > 3000) {
+      setErrores([`Volumen ${vol} mL supera el máximo de 3000 mL por bolsa establecido por el Manual CCSS de Farmacias de Soporte Nutricional (p. 12). Ajustar volumen o dividir en dos bolsas.`])
+      return
+    }
+
     // ── Peso de cálculo ──────────────────────────────────────────────────────
     let pesoCal = peso
     let pesoCalDesc = 'Peso actual'
@@ -472,24 +482,34 @@ export default function CalculadoraNP() {
       pesoCalDesc = `Peso ajustado (obeso)`
     }
 
+    // ── NP Parcial — aportes previos que la NP debe descontar ────────────────
+    const esParcial      = form.tipNP === 'parcial'
+    const aporteKcalPrev = esParcial ? (parseFloat(form.aporteOralKcal) || 0) + (parseFloat(form.propofolML) || 0) * 1.1 : 0
+    const aportePrevProt = esParcial ? (parseFloat(form.aporteOralProt) || 0) : 0
+
     // ── Energía ──────────────────────────────────────────────────────────────
-    let ten, bee
+    let tenTotal, bee
     if (form.modoCalculo === 'kcal_kg') {
       bee = null
-      ten = parseFloat(form.kcalKg) * pesoCal
+      tenTotal = parseFloat(form.kcalKg) * pesoCal
     } else {
       const talla = parseFloat(form.talla)
       const edad  = parseFloat(form.edad)
       bee = calcBEE(pesoCal, talla, edad, form.sexo)
-      ten = bee * condActual.factor
+      tenTotal = bee * condActual.factor
     }
+    // La NP solo cubre el déficit en modo parcial
+    const ten = Math.max(0, tenTotal - aporteKcalPrev)
 
     // ── Proteína ─────────────────────────────────────────────────────────────
-    const corrFactor  = parseFloat(form.corrFactor) || 2
-    const uun         = parseFloat(form.uun24h)
-    const protFormula = (parseFloat(form.proteinaGKg) || ((protMin + protMax) / 2)) * pesoCal
-    const protFromUUN = uun > 0 ? (uun + corrFactor) * 6.25 : null
-    const protG       = protFromUUN ?? protFormula
+    const corrFactor    = parseFloat(form.corrFactor) || 2
+    const uun           = parseFloat(form.uun24h)
+    const protFormulaTotal = (parseFloat(form.proteinaGKg) || ((protMin + protMax) / 2)) * pesoCal
+    const protFromUUN   = uun > 0 ? (uun + corrFactor) * 6.25 : null
+    const protTotal     = protFromUUN ?? protFormulaTotal
+    // NP Parcial: descontar proteína ya recibida vía oral/enteral
+    const protG         = Math.max(0, protTotal - aportePrevProt)
+    const protFormula   = Math.max(0, protFormulaTotal - aportePrevProt)
 
     // ── Macronutrientes ───────────────────────────────────────────────────────
     const kcalProt  = protG * 4
@@ -590,9 +610,29 @@ export default function CalculadoraNP() {
     const sinEspacioAditivos = !volumenExcedido && (volumenComponentes > vol - MIN_ADITIVOS_ML)
     const dextrosaGKg        = dextrosaG / pesoCal
 
+    // ── Validación concentración electrolitos — Manual CCSS Farmacias SNF 2018, p.18 ──
+    // Límites de seguridad fisicoquímica (en mEq/L del volumen final de la bolsa)
+    const volL = vol / 1000
+    const alertasElectrolitos = []
+    if (naTotal / volL > 154)
+      alertasElectrolitos.push(`Na⁺ ${(naTotal/volL).toFixed(0)} mEq/L > límite CCSS 154 mEq/L`)
+    if (kTotal / volL > 80)
+      alertasElectrolitos.push(`K⁺ ${(kTotal/volL).toFixed(0)} mEq/L > límite CCSS 80 mEq/L`)
+    if (mgTotal_e / volL > 20)
+      alertasElectrolitos.push(`Mg²⁺ ${(mgTotal_e/volL).toFixed(0)} mEq/L > límite CCSS 20 mEq/L`)
+    if (po4Total_e / volL > 15 && form.conLipidos)
+      alertasElectrolitos.push(`PO₄³⁻ ${(po4Total_e/volL).toFixed(0)} mmol/L > límite CCSS 15 mmol/L en NP 3-en-1`)
+
+    // ── Concentración de glucosa en bolsa (CCSS: mínimo 5% en 3-en-1) ────────
+    const glucosaConc = (dextrosaG / vol) * 100
+    const glucosaBajaCCSSAlerta = form.conLipidos && glucosaConc < 5
+    const glucosaAltaCCSSAlerta = (dextrosaG / pesoCal) > 18 && perfilActual?.grupo === 'pediatrico'
+
     setResultado({
       bee: bee ? Math.round(bee) : null,
       ten: Math.round(ten),
+      tenTotal: Math.round(tenTotal),
+      esParcial, aporteKcalPrev: Math.round(aporteKcalPrev), aportePrevProt: Math.round(aportePrevProt),
       protG: Math.round(protG), protGKg: (protG / pesoCal).toFixed(2),
       protFuente: protFromUUN ? 'UUN (laboratorio)' : 'Ecuación metabólica',
       dextrosaG: Math.round(dextrosaG), lipidoG: Math.round(lipidoG),
@@ -603,6 +643,8 @@ export default function CalculadoraNP() {
       porcentajeOcupado:  Math.round(porcentajeOcupado),
       volumenExcedido,
       sinEspacioAditivos,
+      alertasElectrolitos, glucosaBajaCCSSAlerta, glucosaAltaCCSSAlerta,
+      glucosaConc: parseFloat(glucosaConc.toFixed(1)),
       volumenJusto:       !volumenExcedido && !sinEspacioAditivos && porcentajeOcupado > 90,
       volSugerido:        Math.ceil((volumenComponentes + 150) / 100) * 100,
       alertaDpGlucosa:    perfilActual?.id === 'renal_dp' && dextrosaGKg > 3.5,
@@ -1065,6 +1107,48 @@ export default function CalculadoraNP() {
             Lípidos, Electrolitos y Opciones
           </h3>
 
+          {/* Toggle NP Total vs NP Parcial — ESPEN 2019; Manual CCSS SNF 2018 */}
+          <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3 space-y-2">
+            <p className="text-xs font-bold text-indigo-800 flex items-center gap-1.5">
+              <span className="bg-indigo-200 text-indigo-900 px-1.5 py-0.5 rounded text-[10px] font-bold">CCSS</span>
+              Tipo de Soporte Nutricional Parenteral
+            </p>
+            <div className="flex gap-2">
+              {[
+                { val: 'total',   label: 'NPT — Total',                   desc: '100% requerimientos vía NP' },
+                { val: 'parcial', label: 'NPS — Parcial / Suplementaria', desc: 'Complementa aporte oral o enteral' },
+              ].map(opt => (
+                <button key={opt.val} onClick={() => set('tipNP', opt.val)}
+                  className={`flex-1 rounded-lg px-3 py-2 text-left transition-all border ${form.tipNP === opt.val
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'}`}>
+                  <p className="text-xs font-bold">{opt.label}</p>
+                  <p className={`text-[10px] ${form.tipNP === opt.val ? 'text-indigo-200' : 'text-slate-400'}`}>{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+            {form.tipNP === 'parcial' && (
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                <div>
+                  <label className="block text-[10px] font-medium text-indigo-700 mb-1">Aporte oral/enteral (kcal/día)</label>
+                  <input type="number" value={form.aporteOralKcal} onChange={e => set('aporteOralKcal', e.target.value)}
+                    className="border border-indigo-200 rounded-lg px-2 py-1.5 text-xs w-full focus:outline-none focus:border-indigo-500 bg-white" placeholder="800" min="0" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-medium text-indigo-700 mb-1">Proteína oral/enteral (g/día)</label>
+                  <input type="number" value={form.aporteOralProt} onChange={e => set('aporteOralProt', e.target.value)}
+                    className="border border-indigo-200 rounded-lg px-2 py-1.5 text-xs w-full focus:outline-none focus:border-indigo-500 bg-white" placeholder="30" min="0" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-medium text-indigo-700 mb-1">Propofol (mL/día) → 1.1 kcal/mL</label>
+                  <input type="number" value={form.propofolML} onChange={e => set('propofolML', e.target.value)}
+                    className="border border-indigo-200 rounded-lg px-2 py-1.5 text-xs w-full focus:outline-none focus:border-indigo-500 bg-white" placeholder="0" min="0" />
+                </div>
+                <p className="col-span-3 text-[10px] text-indigo-500">La NP cubrirá solo el déficit: Requerimiento total − aportes previos. Propofol aporta 1.1 kcal/mL (vehículo lipídico, ESPEN 2019).</p>
+              </div>
+            )}
+          </div>
+
           <div className="flex items-center gap-3 p-3 bg-teal-50 rounded-xl border border-teal-100">
             <input type="checkbox" id="conLipidos" checked={form.conLipidos} onChange={e => set('conLipidos', e.target.checked)}
               className="w-4 h-4 accent-teal-600 rounded" />
@@ -1227,11 +1311,40 @@ export default function CalculadoraNP() {
             </div>
           )}
 
+          {/* Panel NP Parcial — balance de aportes */}
+          {resultado.esParcial && (
+            <div className="bg-indigo-50 border border-indigo-300 rounded-xl p-4">
+              <p className="text-xs font-bold text-indigo-800 mb-2 flex items-center gap-1.5">
+                <AlertCircle size={13} className="text-indigo-500" />
+                NPS — Nutrición Parenteral Suplementaria · Balance de Aportes
+              </p>
+              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="bg-white rounded-lg p-2">
+                  <p className="text-slate-400 text-[10px]">Requerimiento total</p>
+                  <p className="font-bold text-slate-800">{resultado.tenTotal} kcal</p>
+                </div>
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-2">
+                  <p className="text-orange-600 text-[10px]">Ya recibe (oral/enteral/propofol)</p>
+                  <p className="font-bold text-orange-700">−{resultado.aporteKcalPrev} kcal</p>
+                  <p className="text-orange-500 text-[9px]">−{resultado.aportePrevProt} g proteína</p>
+                </div>
+                <div className="bg-indigo-100 rounded-lg p-2 ring-2 ring-indigo-400">
+                  <p className="text-indigo-600 text-[10px] font-bold">NP prescribe (déficit)</p>
+                  <p className="font-bold text-indigo-800">{resultado.ten} kcal</p>
+                  <p className="text-indigo-600 text-[9px]">{resultado.protG} g proteína</p>
+                </div>
+              </div>
+              {resultado.aporteKcalPrev > resultado.tenTotal && (
+                <p className="text-[10px] text-red-700 mt-2 font-semibold">⚠ Los aportes previos superan el requerimiento calculado. Riesgo de sobrealimentación — revisar con el equipo clínico.</p>
+              )}
+            </div>
+          )}
+
           {/* Tarjetas principales */}
           <div className="bg-teal-50 rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 gap-3 border border-teal-100">
             {[
               resultado.bee !== null && { label: 'Gasto Basal (Harris-B.)', value: resultado.bee, unit: 'kcal/día' },
-              { label: 'Energía Total (TEN)', value: resultado.ten, unit: 'kcal/día', highlight: true },
+              { label: resultado.esParcial ? 'Energía NP (déficit)' : 'Energía Total (TEN)', value: resultado.ten, unit: 'kcal/día', highlight: true },
               { label: `Proteína (${resultado.protFuente})`, value: `${resultado.protG}g`, unit: `${resultado.protGKg} g/kg/día` },
               { label: 'Osmolaridad (Pereira Da Silva)', value: resultado.osmolaridad, unit: 'mOsm/L' },
             ].filter(Boolean).map((item, i) => (
@@ -1242,6 +1355,33 @@ export default function CalculadoraNP() {
               </div>
             ))}
           </div>
+
+          {/* Alertas concentración electrolitos — Manual CCSS SNF 2018, p.18 */}
+          {resultado.alertasElectrolitos?.length > 0 && (
+            <div className="bg-red-50 border border-red-300 rounded-xl p-3">
+              <p className="text-xs font-bold text-red-800 mb-1.5">Concentración de electrolitos excede límites CCSS (Manual Farmacias SNF 2018, p. 18)</p>
+              {resultado.alertasElectrolitos.map((a, i) => (
+                <div key={i} className="flex items-start gap-1.5 text-xs text-red-700">
+                  <AlertTriangle size={11} className="flex-shrink-0 mt-0.5 text-red-500" />{a}
+                </div>
+              ))}
+              <p className="text-[10px] text-red-500 mt-1">Concentraciones altas de cationes desestabilizan la emulsión lipídica y aumentan el riesgo de precipitación de sales.</p>
+            </div>
+          )}
+
+          {/* Alerta glucosa mínima 5% en 3-en-1 (CCSS) */}
+          {resultado.glucosaBajaCCSSAlerta && (
+            <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 text-xs text-amber-800">
+              <strong>Glucosa por debajo del mínimo CCSS:</strong> {resultado.glucosaConc}% en bolsa — el Manual CCSS exige mínimo 5% en NP 3-en-1 para estabilidad de la emulsión lipídica. Aumentar dextrosa o reducir lípidos.
+            </div>
+          )}
+
+          {/* Alerta glucosa máxima pediátrica */}
+          {resultado.glucosaAltaCCSSAlerta && (
+            <div className="bg-red-50 border border-red-300 rounded-xl p-3 text-xs text-red-800">
+              <strong>Glucosa excede 18 g/kg/día:</strong> riesgo de esteatosis hepática fulminante (Manual CCSS HNN). Reducir dextrosa y distribuir calorías hacia lípidos.
+            </div>
+          )}
 
           {/* Restricciones del perfil (si aplica) */}
           {resultado.perfilRestricciones.length > 0 && (

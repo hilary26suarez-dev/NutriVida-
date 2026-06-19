@@ -1,156 +1,192 @@
-import { AlertCircle, AlertTriangle, CheckCircle, Download, Info, Plus, RotateCcw, Trash2, Users } from 'lucide-react'
+import { AlertCircle, AlertTriangle, Baby, CheckCircle, Download, Info, Plus, RotateCcw, Scale, Trash2, Users } from 'lucide-react'
 import { useState, useRef } from 'react'
 
+// ── Perfiles clínicos con rangos ESPEN/KDOQI/ASPEN ──────────────────────────
 const PERFILES_BATCH = [
-  { id: 'estandar',             label: 'Estándar',          kcal: [20, 25], prot: [1.0, 1.5] },
-  { id: 'renal_prediálisis',    label: 'Renal pre-HD',      kcal: [30, 35], prot: [0.60, 0.75] },
-  { id: 'renal_hd',             label: 'Renal HD',          kcal: [30, 35], prot: [1.2, 1.2] },
-  { id: 'renal_dp',             label: 'Renal DP',          kcal: [30, 35], prot: [1.2, 1.3] },
-  { id: 'renal_trrc',           label: 'Renal TRRC',        kcal: [25, 35], prot: [1.5, 2.5] },
-  { id: 'hepatico_compensado',  label: 'Hepático comp.',    kcal: [30, 35], prot: [1.2, 1.5] },
-  { id: 'hepatico_descomp',     label: 'Hepático descomp.', kcal: [35, 40], prot: [1.2, 1.5] },
-  { id: 'oncologico',           label: 'Oncológico',        kcal: [20, 25], prot: [1.0, 1.5] },
+  // Adultos generales
+  { id: 'estandar',              label: 'Estándar',               grupo: 'adulto',    kcal: [20, 25], prot: [1.0, 1.5] },
+  { id: 'renal_prediálisis',     label: 'Renal pre-HD',           grupo: 'adulto',    kcal: [30, 35], prot: [0.60, 0.75] },
+  { id: 'renal_hd',              label: 'Renal HD',               grupo: 'adulto',    kcal: [30, 35], prot: [1.2, 1.2] },
+  { id: 'renal_dp',              label: 'Renal DP',               grupo: 'adulto',    kcal: [30, 35], prot: [1.2, 1.3] },
+  { id: 'renal_trrc',            label: 'Renal TRRC',             grupo: 'adulto',    kcal: [25, 35], prot: [1.5, 2.5] },
+  { id: 'hepatico_compensado',   label: 'Hepático comp.',         grupo: 'adulto',    kcal: [30, 35], prot: [1.2, 1.5] },
+  { id: 'hepatico_descomp',      label: 'Hepático descomp.',      grupo: 'adulto',    kcal: [35, 40], prot: [1.2, 1.5] },
+  { id: 'oncologico',            label: 'Oncológico',             grupo: 'adulto',    kcal: [20, 25], prot: [1.0, 1.5] },
+  // Pediátrico / Neonatal — fuente: Manual CCSS HNN 2018; ASPEN Pediatric Guidelines
+  { id: 'neonato_prematuro',     label: 'Neonatal — Prematuro',   grupo: 'pediatrico', kcal: [110, 150], prot: [3.5, 4.0], tigMax: 12, tigInicio: [4, 6]  },
+  { id: 'neonato_termino',       label: 'Neonatal — Término',     grupo: 'pediatrico', kcal: [90,  100], prot: [2.5, 3.5], tigMax: 12, tigInicio: [6, 8]  },
+  { id: 'pediatrico_infante',    label: 'Pediátrico — Infante',   grupo: 'pediatrico', kcal: [75,  90],  prot: [1.5, 2.0], tigMax: 12, tigInicio: [6, 8]  },
+  { id: 'pediatrico_escolar',    label: 'Pediátrico — Escolar',   grupo: 'pediatrico', kcal: [60,  75],  prot: [1.5, 2.0], tigMax: 10, tigInicio: [5, 7]  },
+  { id: 'pediatrico_adolescente',label: 'Pediátrico — Adolescente',grupo:'pediatrico', kcal: [35,  50],  prot: [1.0, 1.5], tigMax:  7, tigInicio: [4, 6]  },
 ]
 
-// Osmolarity (Pereira Da Silva — simplified for batch without electrolytes)
+// ── Utilidades de cálculo ────────────────────────────────────────────────────
+function calcPesoIdeal(talla, sexo) {
+  if (!talla) return null
+  return sexo === 'M' ? talla - 100 : talla - 105
+}
+
 function estimarOsm(dextrosaG, protG, vol) {
   if (!vol) return 0
   return Math.round((dextrosaG / vol * 1000 * 5.55) + (protG / vol * 1000 * 8.0))
 }
 
 function getViaZone(osm) {
-  if (osm > 1800) return { label: 'ALERTA crítica',          color: 'red',     badge: 'bg-red-200 text-red-900' }
-  if (osm > 900)  return { label: 'Central exclusiva',       color: 'red',     badge: 'bg-red-100 text-red-800' }
-  if (osm > 800)  return { label: 'Central recomendada',     color: 'orange',  badge: 'bg-orange-100 text-orange-800' }
-  if (osm > 600)  return { label: 'Periférica c/ cautela',  color: 'amber',   badge: 'bg-amber-100 text-amber-800' }
-  return             { label: 'Periférica segura',           color: 'emerald', badge: 'bg-emerald-100 text-emerald-800' }
+  if (osm > 1800) return { label: 'ALERTA crítica',         badge: 'bg-red-200 text-red-900' }
+  if (osm > 900)  return { label: 'Central exclusiva',      badge: 'bg-red-100 text-red-800' }
+  if (osm > 800)  return { label: 'Central recomendada',    badge: 'bg-orange-100 text-orange-800' }
+  if (osm > 600)  return { label: 'Periférica c/ cautela',  badge: 'bg-amber-100 text-amber-800' }
+  return             { label: 'Periférica segura',           badge: 'bg-emerald-100 text-emerald-800' }
 }
 
 function calcPaciente(p) {
   const peso   = parseFloat(p.peso)
+  const talla  = parseFloat(p.talla)  || 0
   const vol    = parseFloat(p.volumen) || 2000
+  const sexo   = p.sexo || 'M'
   const perfil = PERFILES_BATCH.find(x => x.id === p.perfil) || PERFILES_BATCH[0]
 
   if (!peso || peso <= 0) return null
 
-  const kcalKg   = (perfil.kcal[0] + perfil.kcal[1]) / 2
-  const protKg   = (perfil.prot[0] + perfil.prot[1]) / 2
-  const ten      = Math.round(kcalKg * peso)
-  const protG    = Math.round(protKg * peso)
-  const kcalProt = protG * 4
-  const npc      = ten - kcalProt
+  // ── IMC y peso de cálculo ────────────────────────────────────────────────
+  const imc = talla > 0 ? parseFloat((peso / ((talla / 100) ** 2)).toFixed(1)) : null
+  const esObeso = imc !== null && imc >= 30
+  const pesoIdeal = talla > 0 ? calcPesoIdeal(talla, sexo) : null
+  const pesoAjustado = (esObeso && pesoIdeal && peso > pesoIdeal)
+    ? parseFloat((pesoIdeal + 0.25 * (peso - pesoIdeal)).toFixed(1))
+    : null
+
+  // Usar peso ajustado en adultos obesos; peso actual en pediátrico/neonatal
+  const esPediatrico = perfil.grupo === 'pediatrico'
+  const pesoCal = (!esPediatrico && pesoAjustado) ? pesoAjustado : peso
+  const pesoCalDesc = (!esPediatrico && pesoAjustado) ? `ajustado ${pesoAjustado} kg` : 'actual'
+
+  // ── Energía y macros ─────────────────────────────────────────────────────
+  const kcalKg    = (perfil.kcal[0] + perfil.kcal[1]) / 2
+  const protKg    = (perfil.prot[0] + perfil.prot[1]) / 2
+  const ten       = Math.round(kcalKg * pesoCal)
+  const protG     = Math.round(protKg * pesoCal)
+  const kcalProt  = protG * 4
+  const npc       = ten - kcalProt
   const dextrosaG = Math.max(0, Math.round((npc * 0.65) / 3.4))
   const lipidoG   = Math.max(0, Math.round((npc * 0.35) / 10))
   const osm       = estimarOsm(dextrosaG, protG, vol)
   const via       = getViaZone(osm)
 
-  const volAA   = Math.round(protG    / 0.1)
-  const volDex  = Math.round(dextrosaG / 0.5)
-  const volLip  = Math.round(lipidoG  / 0.2)
+  const volAA  = Math.round(protG     / 0.1)
+  const volDex = Math.round(dextrosaG / 0.5)
+  const volLip = Math.round(lipidoG   / 0.2)
 
+  // ── TIG — solo perfiles pediátricos/neonatales ───────────────────────────
+  let tigVal = null, tigAlerta = false
+  if (perfil.tigMax) {
+    tigVal = parseFloat(((dextrosaG * 1000) / (pesoCal * 1440)).toFixed(2))
+    tigAlerta = tigVal > perfil.tigMax
+  }
+
+  // ── Alertas clínicas ─────────────────────────────────────────────────────
   const alerts = []
   if (p.acceso === 'periferica' && osm > 800)
-    alerts.push(`Osmolaridad ${osm} mOsm/L incompatible con acceso periférico declarado`)
-  if (perfil.id.startsWith('renal') && !p.pesoSeco)
-    alerts.push('Perfil renal: se recomienda verificar que el peso ingresado sea el peso seco')
+    alerts.push(`Osmolaridad ${osm} mOsm/L incompatible con acceso periférico`)
   if (osm > 1800)
-    alerts.push('Osmolaridad extrema — revisar dilución volumétrica urgente')
+    alerts.push('Osmolaridad extrema — revisar dilución urgente')
+  if (perfil.id.startsWith('renal') && !p.pesoSeco)
+    alerts.push('Perfil renal: verificar que el peso sea el peso seco')
+  if (esObeso && !pesoAjustado)
+    alerts.push('IMC ≥ 30 pero falta talla para calcular peso ajustado — ingrese talla')
+  if (tigAlerta)
+    alerts.push(`TIG ${tigVal} mg/kg/min supera límite ${perfil.tigMax} mg/kg/min — reducir dextrosa`)
+  if (perfil.id === 'renal_dp' && (dextrosaG / pesoCal) > 3.5)
+    alerts.push('Sobrecarga glucídica >3.5 g/kg/día en paciente con DP')
 
-  return { ten, protG, protKg: protKg.toFixed(2), kcalKg: kcalKg.toFixed(0), dextrosaG, lipidoG, osm, via, volAA, volDex, volLip, alerts }
+  return {
+    ten, protG, protKg: protKg.toFixed(2), kcalKg: kcalKg.toFixed(0),
+    dextrosaG, lipidoG, osm, via, volAA, volDex, volLip,
+    imc, esObeso, pesoIdeal, pesoAjustado, pesoCal: parseFloat(pesoCal.toFixed(1)), pesoCalDesc,
+    tigVal, tigAlerta, tigMax: perfil.tigMax ?? null, esPediatrico,
+    alerts,
+  }
 }
 
+// ── Estado vacío por paciente ────────────────────────────────────────────────
 const PACIENTE_VACIO = {
-  id: '', peso: '', perfil: 'estandar', volumen: '2000',
+  id: '', peso: '', talla: '', sexo: 'M',
+  perfil: 'estandar', volumen: '2000',
   acceso: 'central', pesoSeco: false,
 }
 
 function nuevoId(n) { return `P${n}` }
 
 export default function ModoBatch() {
-  const nextIdRef = useRef(2) // 1 ya fue usado en el estado inicial
+  const nextIdRef = useRef(2)
   const [pacientes, setPacientes] = useState([
     { ...PACIENTE_VACIO, id: nuevoId(1) },
   ])
   const [resultados, setResultados] = useState(null)
-  const [error, setError] = useState('')
+  const [error, setError]           = useState('')
 
   const agregarFila = () => {
-    // ID calculado ANTES del updater para evitar efectos secundarios dentro de setState
     const id = nuevoId(nextIdRef.current++)
     setPacientes(prev => [...prev, { ...PACIENTE_VACIO, id }])
     setResultados(null)
   }
 
   const eliminarFila = (idx) => {
-    setPacientes(p => p.filter((_, i) => i !== idx))
+    setPacientes(prev => prev.filter((_, i) => i !== idx))
     setResultados(null)
   }
 
   const actualizarFila = (idx, campo, valor) => {
-    setPacientes(p => p.map((row, i) => i === idx ? { ...row, [campo]: valor } : row))
+    setPacientes(prev => prev.map((row, i) => i === idx ? { ...row, [campo]: valor } : row))
     setResultados(null)
   }
 
   const calcularLote = () => {
-    const filasSinPeso = pacientes.filter(p => !parseFloat(p.peso))
-    if (filasSinPeso.length > 0) {
-      setError(`Complete el peso de todos los pacientes antes de calcular.`)
+    const sinPeso = pacientes.filter(p => !parseFloat(p.peso))
+    if (sinPeso.length > 0) {
+      setError('Complete el peso de todos los pacientes antes de calcular.')
       return
     }
     setError('')
-
-    const res = pacientes.map(p => ({
-      ...p,
-      calc: calcPaciente(p),
-    }))
-    setResultados(res)
+    setResultados(pacientes.map(p => ({ ...p, calc: calcPaciente(p) })))
   }
 
   const exportarCSV = () => {
     if (!resultados) return
-    const cabecera = 'ID,Perfil,Peso (kg),Vol (mL),Energía (kcal/día),Proteína (g/día),Prot (g/kg/día),Dextrosa (g),Lípidos (g),Vol AA 10% (mL),Vol Dex 50% (mL),Vol Lip 20% (mL),Osmolaridad (mOsm/L),Vía recomendada,Alertas'
+    const cab = 'ID,Perfil,Peso real (kg),Talla (cm),Sexo,IMC,Peso cálculo (kg),Tipo peso,Vol (mL),Energía (kcal/d),Proteína (g/d),Prot (g/kg/d),Dex 50% (mL),AA 10% (mL),Lip 20% (mL),Osm (mOsm/L),Vía,TIG (mg/kg/min),Alertas'
     const filas = resultados.map(r => {
       const c = r.calc
-      if (!c) return `${r.id},—,${r.peso},${r.volumen},error,error,error,error,error,error,error,error,error,error,—`
+      if (!c) return `${r.id},—,${r.peso},${r.talla},${r.sexo},—,—,—,${r.volumen},error,error,error,error,error,error,error,error,—,—`
       return [
         r.id,
         PERFILES_BATCH.find(p => p.id === r.perfil)?.label ?? r.perfil,
-        r.peso,
+        r.peso, r.talla || '—', r.sexo,
+        c.imc ?? '—',
+        c.pesoCal, c.pesoCalDesc,
         r.volumen,
-        c.ten,
-        c.protG,
-        c.protKg,
-        c.dextrosaG,
-        c.lipidoG,
-        c.volAA,
-        c.volDex,
-        c.volLip,
-        c.osm,
-        c.via.label,
+        c.ten, c.protG, c.protKg,
+        c.volDex, c.volAA, c.volLip,
+        c.osm, c.via.label,
+        c.tigVal ?? '—',
         c.alerts.join(' | '),
       ].join(',')
     })
-
-    const csv = [cabecera, ...filas].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const blob = new Blob([[cab, ...filas].join('\n')], { type: 'text/csv;charset=utf-8;' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href     = url
-    a.download = `nutrivida-batch-${new Date().toISOString().slice(0,10)}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    a.download = `nutrivida-batch-${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(a); a.click()
+    document.body.removeChild(a); URL.revokeObjectURL(url)
   }
 
-  // Summary of total supplies
   const totalInsumos = resultados ? resultados.reduce((acc, r) => {
     if (!r.calc) return acc
     return {
-      aaG:   acc.aaG   + r.calc.protG,
-      dexG:  acc.dexG  + r.calc.dextrosaG,
-      lipG:  acc.lipG  + r.calc.lipidoG,
-      volAA: acc.volAA + r.calc.volAA,
+      aaG:    acc.aaG    + r.calc.protG,
+      dexG:   acc.dexG   + r.calc.dextrosaG,
+      lipG:   acc.lipG   + r.calc.lipidoG,
+      volAA:  acc.volAA  + r.calc.volAA,
       volDex: acc.volDex + r.calc.volDex,
       volLip: acc.volLip + r.calc.volLip,
       alertas: acc.alertas + r.calc.alerts.length,
@@ -161,134 +197,136 @@ export default function ModoBatch() {
 
   return (
     <div className="space-y-5">
+
       {/* Header */}
       <div className="flex items-start gap-3 bg-teal-50 border border-teal-200 rounded-2xl p-4">
         <Users size={20} className="text-teal-600 flex-shrink-0 mt-0.5" />
         <div>
           <p className="font-bold text-teal-800 text-sm">Modo Farmacéutico — Cálculo en Lote</p>
           <p className="text-xs text-teal-700 mt-1">
-            Procesa múltiples pacientes simultáneamente aplicando la ecuación de Pereira Da Silva para osmolaridad
-            y los rangos KDOQI/ESPEN por perfil patológico. Reduce de 15–20 min/paciente a segundos.
+            Procesa múltiples pacientes — adultos, pediátricos y neonatales. Talla y sexo activan
+            ajuste automático de peso en obesidad (IMC ≥ 30). TIG calculado para perfiles pediátricos.
           </p>
         </div>
       </div>
 
       <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
         <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
-        <p>Cálculos basados en promedios de rangos ESPEN/KDOQI. Cada prescripción final debe ser validada individualmente por el farmacéutico o médico tratante. Osmolaridad estimada sin electrolitos individuales (para cálculo de precisión, usar la Calculadora NP individual).</p>
+        <p>Cálculos basados en promedios de rangos ESPEN/KDOQI/ASPEN y Manual CCSS HNN. Cada prescripción
+          debe ser validada individualmente. Osmolaridad estimada sin electrolitos individuales.</p>
       </div>
 
       {/* Tabla de entrada */}
       <div className="overflow-x-auto">
-        <table className="w-full text-xs border-collapse">
+        <table className="w-full text-xs border-collapse min-w-[860px]">
           <thead>
             <tr className="bg-slate-100 text-slate-600">
-              <th className="text-left px-3 py-2 rounded-tl-xl font-semibold">ID / Nombre</th>
-              <th className="text-left px-3 py-2 font-semibold">Peso (kg)</th>
-              <th className="text-left px-3 py-2 font-semibold">Perfil clínico</th>
-              <th className="text-left px-3 py-2 font-semibold">Volumen (mL)</th>
-              <th className="text-left px-3 py-2 font-semibold">Acceso venoso</th>
-              <th className="text-left px-3 py-2 rounded-tr-xl font-semibold"></th>
+              <th className="text-left px-2 py-2 rounded-tl-xl font-semibold">ID</th>
+              <th className="text-left px-2 py-2 font-semibold">Peso (kg)</th>
+              <th className="text-left px-2 py-2 font-semibold">
+                <span className="flex items-center gap-1">
+                  <Scale size={11} className="text-teal-500" />Talla (cm)
+                </span>
+              </th>
+              <th className="text-left px-2 py-2 font-semibold">Sexo</th>
+              <th className="text-left px-2 py-2 font-semibold">Perfil clínico</th>
+              <th className="text-left px-2 py-2 font-semibold">Vol (mL)</th>
+              <th className="text-left px-2 py-2 font-semibold">Acceso</th>
+              <th className="text-left px-2 py-2 rounded-tr-xl font-semibold"></th>
             </tr>
           </thead>
           <tbody>
-            {pacientes.map((p, idx) => (
-              <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="px-3 py-2">
-                  <input
-                    type="text"
-                    value={p.id}
-                    onChange={e => actualizarFila(idx, 'id', e.target.value)}
-                    className={inputCls}
-                    placeholder={`Pac-${idx + 1}`}
-                  />
-                </td>
-                <td className="px-3 py-2">
-                  <input
-                    type="number"
-                    value={p.peso}
-                    onChange={e => actualizarFila(idx, 'peso', e.target.value)}
-                    className={inputCls}
-                    placeholder="70"
-                    min="1" max="300"
-                  />
-                </td>
-                <td className="px-3 py-2">
-                  <select
-                    value={p.perfil}
-                    onChange={e => actualizarFila(idx, 'perfil', e.target.value)}
-                    className={inputCls}
-                  >
-                    {PERFILES_BATCH.map(pf => (
-                      <option key={pf.id} value={pf.id}>{pf.label}</option>
-                    ))}
-                  </select>
-                </td>
-                <td className="px-3 py-2">
-                  <input
-                    type="number"
-                    value={p.volumen}
-                    onChange={e => actualizarFila(idx, 'volumen', e.target.value)}
-                    className={inputCls}
-                    placeholder="2000"
-                    min="500" max="5000"
-                  />
-                </td>
-                <td className="px-3 py-2">
-                  <select
-                    value={p.acceso}
-                    onChange={e => actualizarFila(idx, 'acceso', e.target.value)}
-                    className={inputCls}
-                  >
-                    <option value="central">Central (CVC/PICC)</option>
-                    <option value="periferica">Periférica</option>
-                  </select>
-                </td>
-                <td className="px-3 py-2">
-                  <button
-                    onClick={() => eliminarFila(idx)}
-                    disabled={pacientes.length === 1}
-                    className="text-slate-300 hover:text-red-500 transition-colors disabled:cursor-not-allowed"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {pacientes.map((p, idx) => {
+              const perfil = PERFILES_BATCH.find(x => x.id === p.perfil)
+              const esPed = perfil?.grupo === 'pediatrico'
+              return (
+                <tr key={idx} className={`border-b border-slate-100 hover:bg-slate-50 ${esPed ? 'bg-pink-50/40' : ''}`}>
+                  <td className="px-2 py-1.5">
+                    <input type="text" value={p.id}
+                      onChange={e => actualizarFila(idx, 'id', e.target.value)}
+                      className={inputCls} placeholder={`Pac-${idx + 1}`} />
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <input type="number" value={p.peso}
+                      onChange={e => actualizarFila(idx, 'peso', e.target.value)}
+                      className={inputCls} placeholder={esPed ? '3.2' : '70'} min="0.3" max="300" step="0.1" />
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <input type="number" value={p.talla}
+                      onChange={e => actualizarFila(idx, 'talla', e.target.value)}
+                      className={inputCls} placeholder={esPed ? '50' : '165'} min="30" max="250" />
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <select value={p.sexo} onChange={e => actualizarFila(idx, 'sexo', e.target.value)} className={inputCls}>
+                      <option value="M">M</option>
+                      <option value="F">F</option>
+                    </select>
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <select value={p.perfil} onChange={e => actualizarFila(idx, 'perfil', e.target.value)} className={inputCls}>
+                      <optgroup label="Adulto">
+                        {PERFILES_BATCH.filter(pf => pf.grupo === 'adulto').map(pf => (
+                          <option key={pf.id} value={pf.id}>{pf.label}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Pediátrico / Neonatal">
+                        {PERFILES_BATCH.filter(pf => pf.grupo === 'pediatrico').map(pf => (
+                          <option key={pf.id} value={pf.id}>{pf.label}</option>
+                        ))}
+                      </optgroup>
+                    </select>
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <input type="number" value={p.volumen}
+                      onChange={e => actualizarFila(idx, 'volumen', e.target.value)}
+                      className={inputCls} placeholder="2000" min="50" max="5000" />
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <select value={p.acceso} onChange={e => actualizarFila(idx, 'acceso', e.target.value)} className={inputCls}>
+                      <option value="central">Central</option>
+                      <option value="periferica">Periférica</option>
+                    </select>
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <button onClick={() => eliminarFila(idx)}
+                      disabled={pacientes.length === 1}
+                      className="text-slate-300 hover:text-red-500 transition-colors disabled:cursor-not-allowed">
+                      <Trash2 size={14} />
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
 
+      <p className="text-[10px] text-slate-400 flex items-center gap-1">
+        <Scale size={10} className="text-teal-400" />
+        Talla + Sexo activan IMC automático y peso ajustado (obesidad). Filas rosadas = perfil pediátrico/neonatal.
+      </p>
+
       {/* Controles */}
       <div className="flex gap-3 flex-wrap">
-        <button
-          onClick={agregarFila}
-          className="flex items-center gap-1.5 text-sm text-teal-700 border border-teal-300 bg-teal-50 hover:bg-teal-100 px-3 py-2 rounded-xl transition-colors"
-        >
+        <button onClick={agregarFila}
+          className="flex items-center gap-1.5 text-sm text-teal-700 border border-teal-300 bg-teal-50 hover:bg-teal-100 px-3 py-2 rounded-xl transition-colors">
           <Plus size={15} /> Agregar paciente
         </button>
-        <button
-          onClick={calcularLote}
-          className="flex-1 min-w-[180px] bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 px-4 rounded-xl transition-colors text-sm"
-        >
+        <button onClick={calcularLote}
+          className="flex-1 min-w-[180px] bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 px-4 rounded-xl transition-colors text-sm">
           Calcular lote ({pacientes.length} paciente{pacientes.length !== 1 ? 's' : ''})
         </button>
         {resultados && (
           <>
-            <button
-              onClick={exportarCSV}
-              className="flex items-center gap-1.5 text-sm text-teal-600 border border-teal-200 px-3 py-2 rounded-xl hover:bg-teal-50 transition-colors font-medium"
-            >
+            <button onClick={exportarCSV}
+              className="flex items-center gap-1.5 text-sm text-teal-600 border border-teal-200 px-3 py-2 rounded-xl hover:bg-teal-50 transition-colors font-medium">
               <Download size={14} /> Exportar CSV
             </button>
-            <button
-              onClick={() => {
-                const id = nuevoId(nextIdRef.current++)
-                setResultados(null)
-                setPacientes([{ ...PACIENTE_VACIO, id }])
-              }}
-              className="text-slate-400 hover:text-slate-600 px-3 py-2 rounded-xl border border-slate-200 transition-colors"
-            >
+            <button onClick={() => {
+              const id = nuevoId(nextIdRef.current++)
+              setResultados(null)
+              setPacientes([{ ...PACIENTE_VACIO, id }])
+            }} className="text-slate-400 hover:text-slate-600 px-3 py-2 rounded-xl border border-slate-200 transition-colors">
               <RotateCcw size={15} />
             </button>
           </>
@@ -305,54 +343,59 @@ export default function ModoBatch() {
       {resultados && (
         <div className="space-y-4">
 
-          {/* Resumen de insumos */}
+          {/* Resumen insumos */}
           {totalInsumos && (
             <div className="bg-teal-700 text-white rounded-2xl p-5">
               <p className="font-bold text-sm mb-3 flex items-center gap-2">
                 <Info size={15} className="text-teal-300" />
                 Resumen de Insumos — Central de Mezclas
-                <span className="text-teal-300 font-normal text-xs ml-auto">{resultados.length} pacientes · {new Date().toLocaleDateString('es-CR')}</span>
+                <span className="text-teal-300 font-normal text-xs ml-auto">
+                  {resultados.length} paciente{resultados.length !== 1 ? 's' : ''} · {new Date().toLocaleDateString('es-CR')}
+                </span>
               </p>
               <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
                 {[
-                  { label: 'AA (g totales)',       value: totalInsumos.aaG,   unit: 'g' },
-                  { label: 'Dextrosa (g totales)', value: totalInsumos.dexG,  unit: 'g' },
-                  { label: 'Lípidos (g totales)',  value: totalInsumos.lipG,  unit: 'g' },
-                  { label: 'AA 10% (mL)',           value: totalInsumos.volAA,  unit: 'mL' },
-                  { label: 'Dex 50% (mL)',          value: totalInsumos.volDex, unit: 'mL' },
-                  { label: 'Lip 20% (mL)',          value: totalInsumos.volLip, unit: 'mL' },
+                  { label: 'AA (g)',       value: totalInsumos.aaG   },
+                  { label: 'Dextrosa (g)', value: totalInsumos.dexG  },
+                  { label: 'Lípidos (g)',  value: totalInsumos.lipG  },
+                  { label: 'AA 10% (mL)',  value: totalInsumos.volAA  },
+                  { label: 'Dex 50% (mL)',  value: totalInsumos.volDex },
+                  { label: 'Lip 20% (mL)',  value: totalInsumos.volLip },
                 ].map((s, i) => (
                   <div key={i} className="bg-teal-600 rounded-xl p-3 text-center">
                     <p className="text-teal-200 text-[10px] mb-1">{s.label}</p>
-                    <p className="font-bold text-lg text-white">{s.value.toLocaleString()}</p>
-                    <p className="text-teal-300 text-[10px]">{s.unit}</p>
+                    <p className="font-bold text-lg">{s.value.toLocaleString()}</p>
                   </div>
                 ))}
               </div>
               {totalInsumos.alertas > 0 && (
                 <div className="mt-3 flex items-center gap-2 bg-red-500/30 rounded-xl px-3 py-2 text-sm">
                   <AlertTriangle size={15} className="text-red-200" />
-                  <span className="text-red-100 font-semibold">{totalInsumos.alertas} alerta{totalInsumos.alertas !== 1 ? 's' : ''} clínica{totalInsumos.alertas !== 1 ? 's' : ''} — revisar filas marcadas en rojo</span>
+                  <span className="text-red-100 font-semibold">
+                    {totalInsumos.alertas} alerta{totalInsumos.alertas !== 1 ? 's' : ''} clínica{totalInsumos.alertas !== 1 ? 's' : ''} — revisar filas marcadas
+                  </span>
                 </div>
               )}
             </div>
           )}
 
-          {/* Tabla de resultados */}
+          {/* Tabla resultados */}
           <div className="overflow-x-auto">
-            <table className="w-full text-xs border-collapse">
+            <table className="w-full text-xs border-collapse min-w-[900px]">
               <thead>
                 <tr className="bg-slate-100 text-slate-600">
-                  <th className="text-left px-3 py-2 rounded-tl-xl font-semibold">ID</th>
-                  <th className="text-left px-3 py-2 font-semibold">Perfil</th>
-                  <th className="text-right px-3 py-2 font-semibold">Energía</th>
-                  <th className="text-right px-3 py-2 font-semibold">Proteína</th>
-                  <th className="text-right px-3 py-2 font-semibold">Dex 50%</th>
-                  <th className="text-right px-3 py-2 font-semibold">AA 10%</th>
-                  <th className="text-right px-3 py-2 font-semibold">Lip 20%</th>
-                  <th className="text-right px-3 py-2 font-semibold">Osm.</th>
-                  <th className="text-left px-3 py-2 font-semibold">Vía</th>
-                  <th className="text-left px-3 py-2 rounded-tr-xl font-semibold">Alertas</th>
+                  <th className="text-left px-2 py-2 rounded-tl-xl font-semibold">ID</th>
+                  <th className="text-left px-2 py-2 font-semibold">Perfil</th>
+                  <th className="text-right px-2 py-2 font-semibold">IMC</th>
+                  <th className="text-right px-2 py-2 font-semibold">Peso cal.</th>
+                  <th className="text-right px-2 py-2 font-semibold">Energía</th>
+                  <th className="text-right px-2 py-2 font-semibold">Proteína</th>
+                  <th className="text-right px-2 py-2 font-semibold">Dex 50%</th>
+                  <th className="text-right px-2 py-2 font-semibold">AA 10%</th>
+                  <th className="text-right px-2 py-2 font-semibold">Lip 20%</th>
+                  <th className="text-right px-2 py-2 font-semibold">Osm.</th>
+                  <th className="text-left px-2 py-2 font-semibold">Vía</th>
+                  <th className="text-left px-2 py-2 rounded-tr-xl font-semibold">Alertas / TIG</th>
                 </tr>
               </thead>
               <tbody>
@@ -360,39 +403,65 @@ export default function ModoBatch() {
                   const c = r.calc
                   const hasAlerts = c?.alerts?.length > 0
                   return (
-                    <tr
-                      key={i}
-                      className={`border-b border-slate-100 ${hasAlerts ? 'bg-red-50' : i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}
-                    >
-                      <td className="px-3 py-2 font-semibold text-slate-700">{r.id || `Pac-${i + 1}`}</td>
-                      <td className="px-3 py-2 text-slate-500">{PERFILES_BATCH.find(p => p.id === r.perfil)?.label}</td>
+                    <tr key={i} className={`border-b border-slate-100 ${
+                      hasAlerts ? 'bg-red-50' : c?.esPediatrico ? 'bg-pink-50/40' : i % 2 === 0 ? 'bg-white' : 'bg-slate-50'
+                    }`}>
+                      <td className="px-2 py-2 font-semibold text-slate-700">{r.id || `Pac-${i + 1}`}</td>
+                      <td className="px-2 py-2 text-slate-500 flex items-center gap-1">
+                        {c?.esPediatrico && <Baby size={10} className="text-pink-400 flex-shrink-0" />}
+                        {PERFILES_BATCH.find(p => p.id === r.perfil)?.label}
+                      </td>
                       {!c ? (
-                        <td colSpan={8} className="px-3 py-2 text-red-500">Error — verificar datos de entrada</td>
+                        <td colSpan={10} className="px-2 py-2 text-red-500">Error — verificar datos</td>
                       ) : (
                         <>
-                          <td className="px-3 py-2 text-right font-medium text-slate-700">{c.ten} kcal</td>
-                          <td className="px-3 py-2 text-right">
+                          {/* IMC */}
+                          <td className="px-2 py-2 text-right">
+                            {c.imc != null ? (
+                              <span className={`font-semibold ${c.esObeso ? 'text-amber-700' : 'text-slate-600'}`}>
+                                {c.imc}
+                                {c.esObeso && <span className="text-[9px] ml-0.5">▲</span>}
+                              </span>
+                            ) : <span className="text-slate-300">—</span>}
+                          </td>
+                          {/* Peso de cálculo */}
+                          <td className="px-2 py-2 text-right">
+                            <span className={`font-medium ${c.esObeso && c.pesoAjustado ? 'text-amber-700' : 'text-slate-700'}`}>
+                              {c.pesoCal} kg
+                            </span>
+                            {c.esObeso && c.pesoAjustado && (
+                              <p className="text-[9px] text-amber-500">ajustado</p>
+                            )}
+                          </td>
+                          <td className="px-2 py-2 text-right font-medium text-slate-700">{c.ten} kcal</td>
+                          <td className="px-2 py-2 text-right">
                             <span className="font-medium text-slate-700">{c.protG} g</span>
                             <span className="text-slate-400 ml-1">({c.protKg}/kg)</span>
                           </td>
-                          <td className="px-3 py-2 text-right text-slate-600">{c.volDex} mL</td>
-                          <td className="px-3 py-2 text-right text-slate-600">{c.volAA} mL</td>
-                          <td className="px-3 py-2 text-right text-slate-600">{c.volLip} mL</td>
-                          <td className="px-3 py-2 text-right font-mono font-semibold text-slate-700">{c.osm}</td>
-                          <td className="px-3 py-2">
+                          <td className="px-2 py-2 text-right text-slate-600">{c.volDex} mL</td>
+                          <td className="px-2 py-2 text-right text-slate-600">{c.volAA} mL</td>
+                          <td className="px-2 py-2 text-right text-slate-600">{c.volLip} mL</td>
+                          <td className="px-2 py-2 text-right font-mono font-semibold text-slate-700">{c.osm}</td>
+                          <td className="px-2 py-2">
                             <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${c.via.badge}`}>
                               {c.via.label}
                             </span>
                           </td>
-                          <td className="px-3 py-2">
+                          {/* Alertas y TIG */}
+                          <td className="px-2 py-2">
+                            {c.tigVal !== null && (
+                              <div className={`flex items-center gap-1 mb-1 text-[10px] font-semibold ${c.tigAlerta ? 'text-red-700' : 'text-emerald-700'}`}>
+                                <Baby size={10} />
+                                TIG {c.tigVal} / máx {c.tigMax} mg/kg/min
+                              </div>
+                            )}
                             {c.alerts.length === 0 ? (
                               <CheckCircle size={13} className="text-emerald-500" />
                             ) : (
                               <div className="space-y-0.5">
                                 {c.alerts.map((a, ai) => (
                                   <div key={ai} className="flex items-start gap-1 text-[10px] text-red-700">
-                                    <AlertTriangle size={10} className="flex-shrink-0 mt-0.5" />
-                                    {a}
+                                    <AlertTriangle size={10} className="flex-shrink-0 mt-0.5" />{a}
                                   </div>
                                 ))}
                               </div>
@@ -408,9 +477,10 @@ export default function ModoBatch() {
           </div>
 
           <p className="text-[10px] text-slate-400 leading-relaxed">
-            Energía = promedio del rango ESPEN/KDOQI del perfil. Proteína = promedio del rango del perfil. Macronutrientes: 65% NPC → dextrosa, 35% NPC → lípidos.
-            Osmolaridad estimada por Pereira Da Silva sin electrolitos individuales — para cálculo de precisión, usar Calculadora NP individual.
-            <span className="font-semibold text-red-600 ml-1">Cada prescripción requiere validación farmacéutica individual.</span>
+            Energía = promedio del rango ESPEN/KDOQI del perfil · Proteína = promedio del rango · Macros: 65/35 NPC.
+            Peso ajustado aplicado automáticamente cuando IMC ≥ 30 (PI + 0.25 × [PA − PI], ASPEN 2016).
+            TIG mostrado solo en perfiles pediátricos/neonatales (Manual CCSS HNN 2018 · ASPEN Pediatric Guidelines).
+            <span className="font-semibold text-red-600 ml-1">Requiere validación farmacéutica individual.</span>
           </p>
         </div>
       )}
