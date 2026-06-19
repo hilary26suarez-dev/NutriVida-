@@ -86,8 +86,11 @@ function calcPaciente(p) {
   const tenTotal  = Math.round(kcalKg * pesoCal)
   // NP solo cubre el déficit en modo parcial
   const ten       = esParcial ? Math.max(0, tenTotal - aporteKcalPrev) : tenTotal
-  const coberturaKcalPct = tenTotal > 0 ? Math.round((aporteKcalPrev / tenTotal) * 100) : 0
-  const npsStatus = coberturaKcalPct >= 80 ? 'retirar' : coberturaKcalPct >= 66 ? 'opcional' : 'indicada'
+  // coberturaOralPct: para decisión clínica NPS (Protocolo CCSS 2020: <66% oral → NPS indicada)
+  const coberturaOralPct  = tenTotal > 0 ? Math.round((aporteKcalPrev / tenTotal) * 100) : 0
+  // coberturaKcalPct: qué % cubre la NP del requerimiento total (lo que se muestra en tabla)
+  const coberturaKcalPct  = tenTotal > 0 ? Math.round((ten / tenTotal) * 100) : 100
+  const npsStatus = coberturaOralPct >= 80 ? 'retirar' : coberturaOralPct >= 66 ? 'opcional' : 'indicada'
 
   const protG     = Math.round(protKg * pesoCal)
   const kcalProt  = protG * 4
@@ -128,7 +131,7 @@ function calcPaciente(p) {
     dextrosaG, lipidoG, osm, via, volAA, volDex, volLip,
     imc, esObeso, pesoIdeal, pesoAjustado, pesoCal: parseFloat(pesoCal.toFixed(1)), pesoCalDesc,
     tigVal, tigAlerta, tigMax: perfil.tigMax ?? null, esPediatrico,
-    esParcial, tipNP, aporteKcalPrev: Math.round(aporteKcalPrev), coberturaKcalPct, npsStatus,
+    esParcial, tipNP, aporteKcalPrev: Math.round(aporteKcalPrev), coberturaKcalPct, coberturaOralPct, npsStatus,
     alerts,
   }
 }
@@ -449,7 +452,7 @@ export default function ModoBatch() {
                   <th className="text-right px-2 py-2 font-semibold">IMC</th>
                   <th className="text-right px-2 py-2 font-semibold">Peso cal.</th>
                   <th className="text-right px-2 py-2 font-semibold">Energía NP</th>
-                  <th className="text-right px-2 py-2 font-semibold">Cobertura</th>
+                  <th className="text-right px-2 py-2 font-semibold">NP cubre</th>
                   <th className="text-right px-2 py-2 font-semibold">Proteína</th>
                   <th className="text-right px-2 py-2 font-semibold">Dex 50%</th>
                   <th className="text-right px-2 py-2 font-semibold">AA 10%</th>
@@ -512,7 +515,8 @@ export default function ModoBatch() {
                           {/* Cobertura previa (solo NPS) */}
                           <td className="px-2 py-2 text-right">
                             {c.esParcial ? (
-                              <span className={`text-[10px] font-bold px-1 py-0.5 rounded ${
+                              <span title={`Oral cubre ${c.coberturaOralPct}% del req. (NPS ${c.npsStatus})`}
+                                className={`text-[10px] font-bold px-1 py-0.5 rounded cursor-help ${
                                 c.coberturaKcalPct >= 80 ? 'bg-green-100 text-green-700'
                                 : c.coberturaKcalPct >= 66 ? 'bg-amber-100 text-amber-700'
                                 : 'bg-red-100 text-red-700'
