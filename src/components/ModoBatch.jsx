@@ -3,22 +3,34 @@ import { useState, useRef } from 'react'
 
 // ── Perfiles clínicos con rangos ESPEN/KDOQI/ASPEN ──────────────────────────
 const PERFILES_BATCH = [
-  // Adultos generales
-  { id: 'estandar',              label: 'Estándar',               grupo: 'adulto',    kcal: [20, 25], prot: [1.0, 1.5] },
-  { id: 'renal_prediálisis',     label: 'Renal pre-HD',           grupo: 'adulto',    kcal: [30, 35], prot: [0.60, 0.75] },
-  { id: 'renal_hd',              label: 'Renal HD',               grupo: 'adulto',    kcal: [30, 35], prot: [1.2, 1.2] },
-  { id: 'renal_dp',              label: 'Renal DP',               grupo: 'adulto',    kcal: [30, 35], prot: [1.2, 1.3] },
-  { id: 'renal_trrc',            label: 'Renal TRRC',             grupo: 'adulto',    kcal: [25, 35], prot: [1.5, 2.5] },
-  { id: 'hepatico_compensado',   label: 'Hepático comp.',         grupo: 'adulto',    kcal: [30, 35], prot: [1.2, 1.5] },
-  { id: 'hepatico_descomp',      label: 'Hepático descomp.',      grupo: 'adulto',    kcal: [35, 40], prot: [1.2, 1.5] },
-  { id: 'oncologico',            label: 'Oncológico',             grupo: 'adulto',    kcal: [20, 25], prot: [1.0, 1.5] },
-  // Pediátrico / Neonatal — fuente: Manual CCSS HNN 2018; ASPEN Pediatric Guidelines
-  { id: 'neonato_prematuro',     label: 'Neonatal — Prematuro',   grupo: 'pediatrico', kcal: [110, 150], prot: [3.5, 4.0], tigMax: 12, tigInicio: [4, 6]  },
-  { id: 'neonato_termino',       label: 'Neonatal — Término',     grupo: 'pediatrico', kcal: [90,  100], prot: [2.5, 3.5], tigMax: 12, tigInicio: [6, 8]  },
-  { id: 'pediatrico_infante',    label: 'Pediátrico — Infante',   grupo: 'pediatrico', kcal: [75,  90],  prot: [1.5, 2.0], tigMax: 12, tigInicio: [6, 8]  },
-  { id: 'pediatrico_escolar',    label: 'Pediátrico — Escolar',   grupo: 'pediatrico', kcal: [60,  75],  prot: [1.5, 2.0], tigMax: 10, tigInicio: [5, 7]  },
-  { id: 'pediatrico_adolescente',label: 'Pediátrico — Adolescente',grupo:'pediatrico', kcal: [35,  50],  prot: [1.0, 1.5], tigMax:  7, tigInicio: [4, 6]  },
+  // ── Adulto — General ────────────────────────────────────────────────────────
+  { id: 'estandar',              label: 'Estándar / General',          grupo: 'adulto', sub: 'General',       kcal: [20, 25], prot: [1.0, 1.2] },
+  // ── Adulto — UCI / Agudo (ESPEN ICU 2021 · ASPEN Critical Care) ─────────────
+  { id: 'postop_menor',          label: 'Posoperatorio menor',         grupo: 'adulto', sub: 'UCI / Agudo',   kcal: [20, 25], prot: [1.2, 1.5] },
+  { id: 'trauma_moderado',       label: 'Infección / Trauma moderado', grupo: 'adulto', sub: 'UCI / Agudo',   kcal: [22, 28], prot: [1.5, 1.8] },
+  { id: 'cirugia_mayor',         label: 'Cirugía mayor / UCI quirúrg.',grupo: 'adulto', sub: 'UCI / Agudo',   kcal: [25, 30], prot: [1.5, 2.0] },
+  { id: 'sepsis',                label: 'Sepsis / Trauma severo',      grupo: 'adulto', sub: 'UCI / Agudo',   kcal: [25, 30], prot: [1.5, 2.0] },
+  { id: 'quemaduras',            label: 'Quemaduras (>40% SCT)',       grupo: 'adulto', sub: 'UCI / Agudo',   kcal: [30, 35], prot: [1.5, 2.5] },
+  // ── Adulto — Renal (KDOQI 2020 · ESPEN Renal 2024) ─────────────────────────
+  { id: 'renal_prediálisis',     label: 'Renal — Pre-diálisis',        grupo: 'adulto', sub: 'Renal',         kcal: [30, 35], prot: [0.60, 0.75] },
+  { id: 'renal_hd',              label: 'Renal — HD crónica',          grupo: 'adulto', sub: 'Renal',         kcal: [30, 35], prot: [1.2,  1.2]  },
+  { id: 'renal_dp',              label: 'Renal — Diálisis peritoneal', grupo: 'adulto', sub: 'Renal',         kcal: [30, 35], prot: [1.2,  1.3]  },
+  { id: 'renal_trrc',            label: 'Renal — TRRC (UCI)',          grupo: 'adulto', sub: 'Renal',         kcal: [25, 35], prot: [1.5,  2.5]  },
+  // ── Adulto — Hepático (ESPEN Liver 2022) ────────────────────────────────────
+  { id: 'hepatico_compensado',   label: 'Hepático — Compensado',       grupo: 'adulto', sub: 'Hepático',      kcal: [30, 35], prot: [1.2, 1.5] },
+  { id: 'hepatico_descompensado',label: 'Hepático — Descompensado',    grupo: 'adulto', sub: 'Hepático',      kcal: [35, 40], prot: [1.2, 1.5] },
+  // ── Adulto — Oncológico (ESPEN Cancer 2021) ──────────────────────────────────
+  { id: 'oncologico',            label: 'Oncológico / Caquexia tumoral',grupo:'adulto', sub: 'Oncológico',    kcal: [20, 25], prot: [1.0, 1.5] },
+  // ── Pediátrico / Neonatal — Manual CCSS HNN 2018 · ASPEN Pediatric ──────────
+  { id: 'neonato_prematuro',     label: 'Neonatal — Prematuro',        grupo: 'pediatrico', sub: 'Neonatal',  kcal: [110, 150], prot: [3.5, 4.0], tigMax: 12, tigInicio: [4, 6] },
+  { id: 'neonato_termino',       label: 'Neonatal — Término (0–1 a)',  grupo: 'pediatrico', sub: 'Neonatal',  kcal: [90,  100], prot: [2.5, 3.5], tigMax: 12, tigInicio: [6, 8] },
+  { id: 'pediatrico_infante',    label: 'Pediátrico — Infante (1–7 a)',grupo: 'pediatrico', sub: 'Pediátrico',kcal: [75,   90], prot: [1.5, 2.0], tigMax: 12, tigInicio: [6, 8] },
+  { id: 'pediatrico_escolar',    label: 'Pediátrico — Escolar (7–12 a)',grupo:'pediatrico', sub: 'Pediátrico',kcal: [60,   75], prot: [1.5, 2.0], tigMax: 10, tigInicio: [5, 7] },
+  { id: 'pediatrico_adolescente',label: 'Pediátrico — Adolescente (12–18 a)',grupo:'pediatrico',sub:'Pediátrico',kcal:[35,50],prot:[1.0,1.5],tigMax:7,tigInicio:[4,6] },
 ]
+
+// Subgrupos para el dropdown organizado
+const SUBGRUPOS_ADULTO = ['General', 'UCI / Agudo', 'Renal', 'Hepático', 'Oncológico']
 
 // ── Utilidades de cálculo ────────────────────────────────────────────────────
 function calcPesoIdeal(talla, sexo) {
@@ -286,11 +298,13 @@ export default function ModoBatch() {
                   <td className="px-2 py-1.5">
                     <select value={p.perfil} autoComplete="off"
                       onChange={e => actualizarFila(idx, 'perfil', e.target.value)} className={inputCls}>
-                      <optgroup label="Adulto">
-                        {PERFILES_BATCH.filter(pf => pf.grupo === 'adulto').map(pf => (
-                          <option key={pf.id} value={pf.id}>{pf.label}</option>
-                        ))}
-                      </optgroup>
+                      {SUBGRUPOS_ADULTO.map(sub => (
+                        <optgroup key={sub} label={`Adulto — ${sub}`}>
+                          {PERFILES_BATCH.filter(pf => pf.grupo === 'adulto' && pf.sub === sub).map(pf => (
+                            <option key={pf.id} value={pf.id}>{pf.label}</option>
+                          ))}
+                        </optgroup>
+                      ))}
                       <optgroup label="Pediátrico / Neonatal">
                         {PERFILES_BATCH.filter(pf => pf.grupo === 'pediatrico').map(pf => (
                           <option key={pf.id} value={pf.id}>{pf.label}</option>
