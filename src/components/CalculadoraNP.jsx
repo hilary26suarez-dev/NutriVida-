@@ -415,8 +415,8 @@ const REFERENCIAS_CLINICAS = [
   { label: 'Harris-Benedict (1919), revisión Roza 1984',  descripcion: 'Ecuación predictiva del gasto energético basal (GEB/BEE) según peso, talla, edad y sexo.',                                                                                           uso: 'GEB en todos los perfiles adultos cuando se usa método Harris-Benedict' },
   { label: 'ASPEN Clinical Nutrition Guidelines 2016',     descripcion: 'American Society for Parenteral and Enteral Nutrition. Clinical Nutrition Guidelines. 2016.',                                                                                           uso: 'Peso ajustado obesidad: PI + 0.25×(PA−PI) con IMC ≥30 · TIG adultos ≤5 mg/kg/min en NP 2-en-1' },
   { label: 'ESPEN Guidelines ICU 2019',                    descripcion: 'Clin Nutr. 2019;38(1):48-79. ESPEN guideline on clinical nutrition in the ICU.',                                                                                                       uso: 'Propofol: 1.1 kcal/mL (vehículo lipídico) · NP suplementaria · Retiro NP cuando enteral ≥66-80%' },
-  { label: 'ESPEN Liver Disease 2020',                     descripcion: 'Clin Nutr. 2020. ESPEN clinical nutrition guideline on clinical nutrition in liver disease.',                                                                                           uso: 'Perfil hepático: proteína 1.2-1.5 g/kg/día · kcal 25-35 · calorías nocturnas' },
-  { label: 'ESPEN Oncology 2021',                          descripcion: 'Clin Nutr. 2021. ESPEN guideline on clinical nutrition in cancer.',                                                                                                                    uso: 'Perfil oncológico: kcal 25-30 · proteína 1.2-2.0 g/kg/día' },
+  { label: 'ESPEN Liver Disease 2022',                     descripcion: 'Clin Nutr. 2022. ESPEN practical guideline: Clinical nutrition in liver disease. Actualización de la guía 2019.',                                                  uso: 'Perfil hepático: proteína 1.2-1.5 g/kg/día · kcal 30-35 (compensado) / 35-40 (descompensado) · evitar ayuno >3h' },
+  { label: 'ESPEN Oncology 2021',                          descripcion: 'Clin Nutr. 2021. ESPEN guideline on clinical nutrition in cancer.',                                                                                                                    uso: 'Perfil oncológico: kcal 20-25 (evitar sobrealimentación — agrava insulinorresistencia tumoral) · proteína 1.0-1.5 g/kg/día' },
   { label: 'NKF-KDOQI 2020',                              descripcion: 'National Kidney Foundation — Kidney Disease Outcomes Quality Initiative. Clinical Practice Guidelines for Nutrition in CKD 2020.',                                                       uso: 'Perfil renal: restricción K, P, Na · kcal 25-35 · proteína según modalidad diálisis' },
   { label: 'Bistrian BR et al., JPEN 1979',               descripcion: 'Bistrian BR, Blackburn GL, Scrimshaw NS. Cellular immunity in semistarved states in hospitalized adults. Am J Clin Nutr.',                                                          uso: 'Índice de Estrés Metabólico: NUU_obs − (0.5 × N_ingerido + 3)' },
   { label: 'Heyland DK et al., JPEN 2011 (mNUTRIC)',      descripcion: 'Heyland DK et al. Identifying critically ill patients who benefit the most from nutritional therapy. Crit Care Med. 2011. Modificado por Rahman 2016 (sin IL-6).',                 uso: 'mNUTRIC Score: edad · APACHE II · SOFA · comorbilidades · días hospital→UCI. 0-4 bajo riesgo · 5-9 alto riesgo' },
@@ -1375,11 +1375,11 @@ export default function CalculadoraNP() {
             </div>
             <div className="p-2 space-y-1 text-[10px]">
               {[
-                { rango: '< 600',       color: 'text-emerald-700 bg-emerald-50', via: 'Periférica segura' },
-                { rango: '600–800',     color: 'text-amber-700 bg-amber-50',     via: 'Periférica c/ cautela (≤5 días)' },
-                { rango: '800–900',     color: 'text-orange-700 bg-orange-50',   via: 'Central — periférica contraindicada' },
-                { rango: '900–1800',    color: 'text-red-700 bg-red-50',         via: 'Venosa central exclusiva' },
-                { rango: '> 1800',      color: 'text-red-900 bg-red-100 font-bold', via: 'ALERTA fisicoquímica crítica' },
+                { rango: '< 700',       color: 'text-emerald-700 bg-emerald-50',       via: 'Periférica segura (límite CCSS)' },
+                { rango: '700–800',     color: 'text-amber-700 bg-amber-50',           via: 'Periférica con cautela (≤5 días · SENPE)' },
+                { rango: '800–900',     color: 'text-orange-700 bg-orange-50',         via: 'Central — periférica contraindicada' },
+                { rango: '900–1800',    color: 'text-red-700 bg-red-50',               via: 'Venosa central exclusiva (ESPEN/ASPEN)' },
+                { rango: '> 1800',      color: 'text-red-900 bg-red-100 font-bold',    via: 'ALERTA fisicoquímica crítica' },
               ].map((t, i) => (
                 <div key={i} className={`flex items-center justify-between rounded-lg px-2 py-1 ${t.color}`}>
                   <span className="font-mono font-semibold">{t.rango} mOsm/L</span>
@@ -1387,7 +1387,7 @@ export default function CalculadoraNP() {
                 </div>
               ))}
             </div>
-            <p className="text-[9px] text-violet-500 px-3 pb-2">Fuente: Pereira Da Silva et al. Nutr Hosp 2015; SENPE; ASPEN Clinical Practice</p>
+            <p className="text-[9px] text-violet-500 px-3 pb-2">Fuente: Manual CCSS Farmacias SNF 2018 (&lt;700 mOsm/L periférica) · Pereira Da Silva et al. Nutr Hosp 2015 · SENPE · ASPEN Clinical Practice</p>
           </div>
         </div>
       </div>

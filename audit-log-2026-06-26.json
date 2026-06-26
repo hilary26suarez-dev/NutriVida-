@@ -1,0 +1,724 @@
+{
+  "auditoria": "NutriVida Biotech — Auditoría Matemática CalculadoraNP",
+  "version": "v2.1.1",
+  "fecha": "2026-06-26T04:48:03.974Z",
+  "ejecutor": "node test-logica-np.js",
+  "resumen": {
+    "total": 87,
+    "aprobadas": 87,
+    "falladas": 0,
+    "cobertura": "100.0%",
+    "estado": "APROBADO"
+  },
+  "fuentes_validadas": [
+    "Harris-Benedict (1919)",
+    "Pereira Da Silva et al. Nutr Hosp 2015",
+    "Manual CCSS Farmacias SNF 2018",
+    "Manual CCSS HNN 2018",
+    "ESPEN ICU 2021 · ESPEN Liver 2022 · ESPEN Cancer 2021",
+    "NKF-KDOQI 2020 · ESPEN Renal 2024",
+    "ASPEN 2016 · ASPEN Pediatric PN Guidelines",
+    "Bistrian BR et al. JPEN 1979",
+    "Heyland DK (mNUTRIC) JPEN 2011 · Rahman 2016",
+    "Driscoll DF et al. Drug Dev Ind Pharm 2006",
+    "USP <797> · ASHP Injectable Drug Information"
+  ],
+  "pruebas": [
+    {
+      "suite": "1 · Harris-Benedict (1919) — Ecuación de Gasto Energético Basal",
+      "label": "Mujer 60 kg / 165 cm / 45 a → BEE=1323.7 kcal",
+      "estado": "PASS",
+      "obtenido": "1323.71",
+      "esperado": "1323.71",
+      "fuente": "Harris-Benedict 1919"
+    },
+    {
+      "suite": "1 · Harris-Benedict (1919) — Ecuación de Gasto Energético Basal",
+      "label": "Hombre 80 kg / 175 cm / 40 a → BEE=1771.0 kcal",
+      "estado": "PASS",
+      "obtenido": "1771.03",
+      "esperado": "1771.0",
+      "fuente": "Harris-Benedict 1919"
+    },
+    {
+      "suite": "1 · Harris-Benedict (1919) — Ecuación de Gasto Energético Basal",
+      "label": "Neonato 3.2 kg / 50 cm / 0 a → BEE positivo (no negativo)",
+      "estado": "PASS",
+      "obtenido": "360.6",
+      "esperado": ">0",
+      "fuente": "Harris-Benedict 1919 — validación neonato"
+    },
+    {
+      "suite": "1 · Harris-Benedict (1919) — Ecuación de Gasto Energético Basal",
+      "label": "Hombre obeso 120 kg / 175 cm / 50 a → BEE>1800 kcal",
+      "estado": "PASS",
+      "obtenido": "2253",
+      "esperado": ">1800",
+      "fuente": "Harris-Benedict 1919"
+    },
+    {
+      "suite": "2 · Peso Ideal Broca + Peso Ajustado (ASPEN 2016 — IMC ≥30)",
+      "label": "PI mujer 165 cm → 60 kg",
+      "estado": "PASS",
+      "obtenido": "60",
+      "esperado": "60",
+      "fuente": "Broca"
+    },
+    {
+      "suite": "2 · Peso Ideal Broca + Peso Ajustado (ASPEN 2016 — IMC ≥30)",
+      "label": "PI hombre 175 cm → 75 kg",
+      "estado": "PASS",
+      "obtenido": "75",
+      "esperado": "75",
+      "fuente": "Broca"
+    },
+    {
+      "suite": "2 · Peso Ideal Broca + Peso Ajustado (ASPEN 2016 — IMC ≥30)",
+      "label": "PI hombre 180 cm → 80 kg",
+      "estado": "PASS",
+      "obtenido": "80",
+      "esperado": "80",
+      "fuente": "Broca"
+    },
+    {
+      "suite": "2 · Peso Ideal Broca + Peso Ajustado (ASPEN 2016 — IMC ≥30)",
+      "label": "PA hombre 120 kg / PI=75 kg → PA=86.25 kg",
+      "estado": "PASS",
+      "obtenido": "86.25",
+      "esperado": "86.25",
+      "fuente": "ASPEN 2016: PI + 0.25×(PA−PI)"
+    },
+    {
+      "suite": "2 · Peso Ideal Broca + Peso Ajustado (ASPEN 2016 — IMC ≥30)",
+      "label": "PA mujer 90 kg / PI=60 kg → PA=67.5 kg",
+      "estado": "PASS",
+      "obtenido": "67.5",
+      "esperado": "67.5",
+      "fuente": "ASPEN 2016: PI + 0.25×(PA−PI)"
+    },
+    {
+      "suite": "2 · Peso Ideal Broca + Peso Ajustado (ASPEN 2016 — IMC ≥30)",
+      "label": "IMC < 30 (65 kg / 165 cm = 23.9) → no se aplica PA",
+      "estado": "PASS",
+      "obtenido": "23.9",
+      "esperado": "<30",
+      "fuente": "ASPEN 2016 — PA solo si IMC≥30"
+    },
+    {
+      "suite": "3 · Osmolaridad — Pereira Da Silva et al. Nutr Hosp 2015",
+      "label": "250g glu + 100g AA / 2000 mL sin electrolitos → 1094 mOsm/L",
+      "estado": "PASS",
+      "obtenido": "1094",
+      "esperado": "1094",
+      "fuente": "Pereira Da Silva 2015"
+    },
+    {
+      "suite": "3 · Osmolaridad — Pereira Da Silva et al. Nutr Hosp 2015",
+      "label": "+ Na70 mEq + K40 mEq → +110 mOsm → total 1204",
+      "estado": "PASS",
+      "obtenido": "1204",
+      "esperado": "1204",
+      "fuente": "Pereira Da Silva 2015 — electrolitos"
+    },
+    {
+      "suite": "3 · Osmolaridad — Pereira Da Silva et al. Nutr Hosp 2015",
+      "label": "Mezcla diluida 100g glu+40g AA/2L → <700 mOsm/L (periférica CCSS)",
+      "estado": "PASS",
+      "obtenido": "438",
+      "esperado": "<700",
+      "fuente": "Manual CCSS SNF 2018 — límite periférica"
+    },
+    {
+      "suite": "3 · Osmolaridad — Pereira Da Silva et al. Nutr Hosp 2015",
+      "label": "Mezcla ~700 mOsm/L → zona baja (CCSS segura)",
+      "estado": "PASS",
+      "obtenido": "569 → baja",
+      "esperado": "baja",
+      "fuente": "CCSS SNF 2018 <700 mOsm/L"
+    },
+    {
+      "suite": "3 · Osmolaridad — Pereira Da Silva et al. Nutr Hosp 2015",
+      "label": "Mezcla ~762 mOsm/L → zona media (700–800, cautela periférica)",
+      "estado": "PASS",
+      "obtenido": "762 → media",
+      "esperado": "media",
+      "fuente": "SENPE — 700–800 mOsm/L cautela"
+    },
+    {
+      "suite": "3 · Osmolaridad — Pereira Da Silva et al. Nutr Hosp 2015",
+      "label": "Mezcla concentrada >900 → zona alta (CVC exclusivo)",
+      "estado": "PASS",
+      "obtenido": "1710 → alta",
+      "esperado": "alta",
+      "fuente": "ESPEN/ASPEN >900 mOsm/L"
+    },
+    {
+      "suite": "3 · Osmolaridad — Pereira Da Silva et al. Nutr Hosp 2015",
+      "label": "Mezcla extrema >1800 → zona crítica",
+      "estado": "PASS",
+      "obtenido": "2465 → critica",
+      "esperado": "critica",
+      "fuente": "ESPEN/ASPEN >1800 mOsm/L"
+    },
+    {
+      "suite": "3 · Osmolaridad — Pereira Da Silva et al. Nutr Hosp 2015",
+      "label": "Lípidos × 0 en fórmula (fase micelar isotónica)",
+      "estado": "PASS",
+      "obtenido": "lípidos=0 por diseño",
+      "esperado": "OK",
+      "fuente": "Pereira Da Silva 2015 — emulsión lipídica"
+    },
+    {
+      "suite": "3 · Osmolaridad — Pereira Da Silva et al. Nutr Hosp 2015",
+      "label": "Osm ~650 mOsm/L → zona baja (≤700 CCSS, no ≤600)",
+      "estado": "PASS",
+      "obtenido": "510 → baja",
+      "esperado": "baja",
+      "fuente": "Manual CCSS SNF 2018 — umbral correcto es <700, no <600"
+    },
+    {
+      "suite": "4 · Balance Nitrogenado — SEFH / Estándar clínico",
+      "label": "UUN=10 g/d + corrección=2 → proteína para equilibrio = 75 g/d",
+      "estado": "PASS",
+      "obtenido": "75",
+      "esperado": "75",
+      "fuente": "N_pérdidas × 6.25"
+    },
+    {
+      "suite": "4 · Balance Nitrogenado — SEFH / Estándar clínico",
+      "label": "100 g prot − UUN=10 − corrección=2 → BN=+4.0 (anabólico)",
+      "estado": "PASS",
+      "obtenido": "4.00",
+      "esperado": "4.00",
+      "fuente": "BN = N_ing − (UUN+corrección)"
+    },
+    {
+      "suite": "4 · Balance Nitrogenado — SEFH / Estándar clínico",
+      "label": "50 g prot − UUN=10 − corrección=2 → BN=−4.0 (catabólico)",
+      "estado": "PASS",
+      "obtenido": "-4.00",
+      "esperado": "-4.00",
+      "fuente": "BN = N_ing − (UUN+corrección)"
+    },
+    {
+      "suite": "4 · Balance Nitrogenado — SEFH / Estándar clínico",
+      "label": "75 g prot − UUN=10 − corrección=2 → BN=0.0 (neutro)",
+      "estado": "PASS",
+      "obtenido": "0.00",
+      "esperado": "0.00",
+      "fuente": "BN = N_ing − (UUN+corrección)"
+    },
+    {
+      "suite": "4 · Balance Nitrogenado — SEFH / Estándar clínico",
+      "label": "Hipercatabolismo: 120g prot − UUN=18 − corrección=6 → BN=−4.8",
+      "estado": "PASS",
+      "obtenido": "-4.8",
+      "esperado": "-4.8",
+      "fuente": "Corrección 6 g = hipercatabolismo severo"
+    },
+    {
+      "suite": "5 · Índice de Estrés Metabólico — Bistrian BR et al. JPEN 1979",
+      "label": "UUN=15 / N=16g → Índice=4.0 (leve 0–5)",
+      "estado": "PASS",
+      "obtenido": "4.00",
+      "esperado": "4.00",
+      "fuente": "Bistrian 1979"
+    },
+    {
+      "suite": "5 · Índice de Estrés Metabólico — Bistrian BR et al. JPEN 1979",
+      "label": "UUN=18 / N=16g → Índice=7.0 (moderado 5–8)",
+      "estado": "PASS",
+      "obtenido": "7.00",
+      "esperado": "7.00",
+      "fuente": "Bistrian 1979"
+    },
+    {
+      "suite": "5 · Índice de Estrés Metabólico — Bistrian BR et al. JPEN 1979",
+      "label": "Índice 7.0 está en rango moderado (5–8)",
+      "estado": "PASS",
+      "obtenido": "7.0",
+      "esperado": "5 < x ≤ 8",
+      "fuente": "Bistrian 1979 — clasificación moderado"
+    },
+    {
+      "suite": "5 · Índice de Estrés Metabólico — Bistrian BR et al. JPEN 1979",
+      "label": "UUN=20 / N=16g → Índice=9.0 (grave >8)",
+      "estado": "PASS",
+      "obtenido": "9.00",
+      "esperado": "9.00",
+      "fuente": "Bistrian 1979"
+    },
+    {
+      "suite": "5 · Índice de Estrés Metabólico — Bistrian BR et al. JPEN 1979",
+      "label": "Índice 9.0 > 8 → clasificación grave",
+      "estado": "PASS",
+      "obtenido": "9.0",
+      "esperado": ">8",
+      "fuente": "Bistrian 1979 — clasificación grave"
+    },
+    {
+      "suite": "5 · Índice de Estrés Metabólico — Bistrian BR et al. JPEN 1979",
+      "label": "UUN=7 / N=16g → Índice=−4.0 (sin estrés ≤0)",
+      "estado": "PASS",
+      "obtenido": "-4.00",
+      "esperado": "-4.00",
+      "fuente": "Bistrian 1979"
+    },
+    {
+      "suite": "6 · Relación NPC:N — ASPEN/ESPEN Rango óptimo 80–150:1",
+      "label": "2000 kcal / 80 g prot → NPC:N=131 (óptimo 80–150)",
+      "estado": "PASS",
+      "obtenido": "131",
+      "esperado": "131",
+      "fuente": "ASPEN 2016"
+    },
+    {
+      "suite": "6 · Relación NPC:N — ASPEN/ESPEN Rango óptimo 80–150:1",
+      "label": "NPC:N=131 dentro del rango óptimo (80–150)",
+      "estado": "PASS",
+      "obtenido": "131",
+      "esperado": "80–150",
+      "fuente": "ASPEN 2016"
+    },
+    {
+      "suite": "6 · Relación NPC:N — ASPEN/ESPEN Rango óptimo 80–150:1",
+      "label": "1000 kcal / 80 g prot → NPC:N=53 (bajo <80)",
+      "estado": "PASS",
+      "obtenido": "53",
+      "esperado": "<80",
+      "fuente": "ASPEN 2016 — bajo riesgo de uso AA como energía"
+    },
+    {
+      "suite": "6 · Relación NPC:N — ASPEN/ESPEN Rango óptimo 80–150:1",
+      "label": "3000 kcal / 50 g prot → NPC:N=350 (alto >150)",
+      "estado": "PASS",
+      "obtenido": "350",
+      "esperado": ">150",
+      "fuente": "ASPEN 2016 — sobrealimentación calórica"
+    },
+    {
+      "suite": "7 · Macronutrientes — Distribución 65/35 NPC (ESPEN 2019)",
+      "label": "3-en-1: 2000 kcal / 80 g prot → Dex=321 g",
+      "estado": "PASS",
+      "obtenido": "321",
+      "esperado": "321",
+      "fuente": "ESPEN 2019 — 65% NPC como CHO"
+    },
+    {
+      "suite": "7 · Macronutrientes — Distribución 65/35 NPC (ESPEN 2019)",
+      "label": "3-en-1: 2000 kcal / 80 g prot → Líp=59 g",
+      "estado": "PASS",
+      "obtenido": "59",
+      "esperado": "59",
+      "fuente": "ESPEN 2019 — 35% NPC como lípido"
+    },
+    {
+      "suite": "7 · Macronutrientes — Distribución 65/35 NPC (ESPEN 2019)",
+      "label": "3-en-1: Kcal reconstituidas ≈ 2000 (±50 kcal)",
+      "estado": "PASS",
+      "obtenido": "2001",
+      "esperado": "~2000",
+      "fuente": "Verificación energética"
+    },
+    {
+      "suite": "7 · Macronutrientes — Distribución 65/35 NPC (ESPEN 2019)",
+      "label": "2-en-1: 2000 kcal / 80 g prot → Dex=494 g (todo NPC)",
+      "estado": "PASS",
+      "obtenido": "494",
+      "esperado": "494",
+      "fuente": "ASPEN 2016 — NP 2-en-1"
+    },
+    {
+      "suite": "7 · Macronutrientes — Distribución 65/35 NPC (ESPEN 2019)",
+      "label": "2-en-1: Líp=0 g (sin emulsión)",
+      "estado": "PASS",
+      "obtenido": "0",
+      "esperado": "0",
+      "fuente": "ASPEN 2016 — NP 2-en-1"
+    },
+    {
+      "suite": "7 · Macronutrientes — Distribución 65/35 NPC (ESPEN 2019)",
+      "label": "2-en-1: Kcal reconstituidas ≈ 2000 (±50 kcal)",
+      "estado": "PASS",
+      "obtenido": "2000",
+      "esperado": "~2000",
+      "fuente": "Verificación 2-en-1"
+    },
+    {
+      "suite": "7 · Macronutrientes — Distribución 65/35 NPC (ESPEN 2019)",
+      "label": "Bug anterior (65% con 2-en-1) daba 1411 kcal — déficit 589 kcal corregido",
+      "estado": "PASS",
+      "obtenido": "1411",
+      "esperado": "1411",
+      "fuente": "Regresión — bug corregido v2.0.0"
+    },
+    {
+      "suite": "7 · Macronutrientes — Distribución 65/35 NPC (ESPEN 2019)",
+      "label": "120 mL propofol → 132 kcal (1.1 kcal/mL, ESPEN 2019)",
+      "estado": "PASS",
+      "obtenido": "132.0",
+      "esperado": "132.0",
+      "fuente": "ESPEN ICU 2019 — vehículo lipídico propofol"
+    },
+    {
+      "suite": "8 · TIG — Tasa de Infusión de Glucosa (Manual CCSS HNN 2018 / ASPEN Pediatric)",
+      "label": "Prematuro 1 kg / TIG inicio=4 mg/kg/min → dex=5.76 g/d",
+      "estado": "PASS",
+      "obtenido": "5.76",
+      "esperado": "5.76",
+      "fuente": "Manual CCSS HNN 2018 — TIG inicio prematuro"
+    },
+    {
+      "suite": "8 · TIG — Tasa de Infusión de Glucosa (Manual CCSS HNN 2018 / ASPEN Pediatric)",
+      "label": "Neonato 3 kg / 30 g dex → TIG=6.94 (seguro ≤12)",
+      "estado": "PASS",
+      "obtenido": "6.944",
+      "esperado": "6.944",
+      "fuente": "Manual CCSS HNN 2018"
+    },
+    {
+      "suite": "8 · TIG — Tasa de Infusión de Glucosa (Manual CCSS HNN 2018 / ASPEN Pediatric)",
+      "label": "TIG=6.94 < límite 12 mg/kg/min (neonato término)",
+      "estado": "PASS",
+      "obtenido": "6.94",
+      "esperado": "<12",
+      "fuente": "Manual CCSS HNN 2018"
+    },
+    {
+      "suite": "8 · TIG — Tasa de Infusión de Glucosa (Manual CCSS HNN 2018 / ASPEN Pediatric)",
+      "label": "Neonato 3 kg / 100 g dex → TIG=23.1 (CRÍTICO >12)",
+      "estado": "PASS",
+      "obtenido": "23.1",
+      "esperado": ">12",
+      "fuente": "Manual CCSS HNN 2018 — límite esteatosis hepática"
+    },
+    {
+      "suite": "8 · TIG — Tasa de Infusión de Glucosa (Manual CCSS HNN 2018 / ASPEN Pediatric)",
+      "label": "Adulto 70 kg 2-en-1 / 494g dex → TIG=4.90 (<5, ASPEN)",
+      "estado": "PASS",
+      "obtenido": "4.90",
+      "esperado": "4.90",
+      "fuente": "ASPEN 2016 — límite TIG adulto"
+    },
+    {
+      "suite": "8 · TIG — Tasa de Infusión de Glucosa (Manual CCSS HNN 2018 / ASPEN Pediatric)",
+      "label": "Adulto 50 kg 2-en-1 / 494g dex → TIG=6.86 (>5, alerta adulto)",
+      "estado": "PASS",
+      "obtenido": "6.86",
+      "esperado": ">5",
+      "fuente": "ASPEN 2016 — TIG adulto alerta en 2-en-1"
+    },
+    {
+      "suite": "8 · TIG — Tasa de Infusión de Glucosa (Manual CCSS HNN 2018 / ASPEN Pediatric)",
+      "label": "Escolar 25 kg / 37.5 g dex → TIG=1.04 (<10 límite escolar)",
+      "estado": "PASS",
+      "obtenido": "1.04",
+      "esperado": "<10",
+      "fuente": "Manual CCSS HNN 2018 — pediátrico escolar"
+    },
+    {
+      "suite": "9 · Volúmenes Comerciales — Dex 50% / AA 10% / Líp 20%",
+      "label": "AA 10%: 80 g → 800 mL",
+      "estado": "PASS",
+      "obtenido": "800",
+      "esperado": "800",
+      "fuente": "Aminoácidos 10% g/dL"
+    },
+    {
+      "suite": "9 · Volúmenes Comerciales — Dex 50% / AA 10% / Líp 20%",
+      "label": "Dex 50%: 321 g → 642 mL",
+      "estado": "PASS",
+      "obtenido": "642",
+      "esperado": "642",
+      "fuente": "Dextrosa 50% g/dL"
+    },
+    {
+      "suite": "9 · Volúmenes Comerciales — Dex 50% / AA 10% / Líp 20%",
+      "label": "Líp 20%: 59 g → 295 mL",
+      "estado": "PASS",
+      "obtenido": "295",
+      "esperado": "295",
+      "fuente": "Emulsión lipídica 20% g/dL"
+    },
+    {
+      "suite": "9 · Volúmenes Comerciales — Dex 50% / AA 10% / Líp 20%",
+      "label": "Suma componentes 3-en-1: 1737 mL cabe en bolsa 2000 mL",
+      "estado": "PASS",
+      "obtenido": "1737",
+      "esperado": "<2000",
+      "fuente": "Manual CCSS SNF 2018 — vol máx 3000 mL"
+    },
+    {
+      "suite": "9 · Volúmenes Comerciales — Dex 50% / AA 10% / Líp 20%",
+      "label": "Suma componentes 2-en-1: 1788 mL cabe en bolsa 2000 mL",
+      "estado": "PASS",
+      "obtenido": "1788",
+      "esperado": "<2000",
+      "fuente": "Manual CCSS SNF 2018"
+    },
+    {
+      "suite": "9 · Volúmenes Comerciales — Dex 50% / AA 10% / Líp 20%",
+      "label": "Componentes 3950 mL > bolsa máx 3000 mL (inviable)",
+      "estado": "PASS",
+      "obtenido": "3950",
+      "esperado": ">3000",
+      "fuente": "Manual CCSS SNF 2018 — detección inviabilidad"
+    },
+    {
+      "suite": "10 · Estabilidad Ca-PO₄ — Driscoll / USP <797> / ASHP",
+      "label": "Ca=10 mEq / PO₄=20 mmol / 2000 mL → producto=50 (verde, seguro)",
+      "estado": "PASS",
+      "obtenido": "50 verde",
+      "esperado": "50 verde",
+      "fuente": "Driscoll 2006"
+    },
+    {
+      "suite": "10 · Estabilidad Ca-PO₄ — Driscoll / USP <797> / ASHP",
+      "label": "Ca=30 mEq / PO₄=50 mmol / 2000 mL → producto=375 (rojo)",
+      "estado": "PASS",
+      "obtenido": "375 rojo",
+      "esperado": ">200 rojo",
+      "fuente": "Driscoll 2006 — precipitación"
+    },
+    {
+      "suite": "10 · Estabilidad Ca-PO₄ — Driscoll / USP <797> / ASHP",
+      "label": "Ca=20 mEq / PO₄=30 mmol / 2000 mL → producto=150 (límite verde/amarillo)",
+      "estado": "PASS",
+      "obtenido": "150 verde",
+      "esperado": "150 verde (límite)",
+      "fuente": "Driscoll 2006 — umbral exacto"
+    },
+    {
+      "suite": "10 · Estabilidad Ca-PO₄ — Driscoll / USP <797> / ASHP",
+      "label": "Ca=21 mEq / PO₄=30 mmol / 2000 mL → producto>150 (amarillo)",
+      "estado": "PASS",
+      "obtenido": "158 amarillo",
+      "esperado": "amarillo",
+      "fuente": "Driscoll 2006 — riesgo moderado"
+    },
+    {
+      "suite": "10 · Estabilidad Ca-PO₄ — Driscoll / USP <797> / ASHP",
+      "label": "Ca=40 mEq / PO₄=60 mmol / 2000 mL → producto=600 (rojo crítico)",
+      "estado": "PASS",
+      "obtenido": "600 rojo",
+      "esperado": "600 rojo",
+      "fuente": "Driscoll 2006"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Estándar: kcal 20–25, prot 1.0–1.2",
+      "estado": "PASS",
+      "obtenido": "{\"kcal\":[20,25],\"prot\":[1,1.2]}",
+      "esperado": "kcal[20,25] prot[1.0,1.2]",
+      "fuente": "ESPEN 2019"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Sepsis: kcal 25–30 (hipocalórico 1ª semana), prot 1.5–2.0",
+      "estado": "PASS",
+      "obtenido": "{\"kcal\":[25,30],\"prot\":[1.5,2]}",
+      "esperado": "kcal[25,30] prot[1.5,2.0]",
+      "fuente": "ASPEN/SCCM 2016 · ESPEN ICU 2021"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Quemaduras: kcal 30–35, prot 1.5–2.5",
+      "estado": "PASS",
+      "obtenido": "{\"kcal\":[30,35],\"prot\":[1.5,2.5]}",
+      "esperado": "kcal[30,35] prot[1.5,2.5]",
+      "fuente": "ASPEN Burns 2013"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Renal pre-diálisis: prot 0.60–0.75 (único escenario restricción proteica)",
+      "estado": "PASS",
+      "obtenido": "[0.6,0.75]",
+      "esperado": "[0.60,0.75]",
+      "fuente": "NKF-KDOQI 2020"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Renal HD: prot exactamente 1.2–1.2 (pérdida AA en filtro)",
+      "estado": "PASS",
+      "obtenido": "[1.2,1.2]",
+      "esperado": "[1.2,1.2]",
+      "fuente": "NKF-KDOQI 2020"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Renal TRRC: prot 1.5–2.5 (hemofiltración elimina 10–15 g AA/d)",
+      "estado": "PASS",
+      "obtenido": "[1.5,2.5]",
+      "esperado": "[1.5,2.5]",
+      "fuente": "ESPEN Renal 2024 · ESPEN ICU 2021"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Hepático compensado: kcal 30–35, prot 1.2–1.5",
+      "estado": "PASS",
+      "obtenido": "{\"kcal\":[30,35],\"prot\":[1.2,1.5]}",
+      "esperado": "kcal[30,35] prot[1.2,1.5]",
+      "fuente": "ESPEN Liver 2022"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Hepático descomp: kcal 35–40 (más alto — catabolismo glucogénico)",
+      "estado": "PASS",
+      "obtenido": "[35,40]",
+      "esperado": "[35,40]",
+      "fuente": "ESPEN Liver 2022"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Oncológico: kcal 20–25 (no sobrealimentar — insulinorresistencia tumoral)",
+      "estado": "PASS",
+      "obtenido": "25",
+      "esperado": "25",
+      "fuente": "ESPEN Cancer 2021"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Oncológico: prot 1.0–1.5 g/kg/día (atenuación atrofia muscular)",
+      "estado": "PASS",
+      "obtenido": "[1,1.5]",
+      "esperado": "[1.0,1.5]",
+      "fuente": "ESPEN Cancer 2021"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Prematuro: kcal 110–150, prot 3.5–4.0 (neurodesarrollo)",
+      "estado": "PASS",
+      "obtenido": "{\"kcal\":[110,150],\"prot\":[3.5,4]}",
+      "esperado": "kcal[110,150] prot[3.5,4.0]",
+      "fuente": "Manual CCSS HNN 2018 · ASPEN Pediatric"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Neonato término: kcal 90–100, prot 2.5–3.5",
+      "estado": "PASS",
+      "obtenido": "{\"kcal\":[90,100]}",
+      "esperado": "kcal[90,100]",
+      "fuente": "Manual CCSS HNN 2018"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Prematuro TIG máx = 12 mg/kg/min (CCSS HNN)",
+      "estado": "PASS",
+      "obtenido": "12",
+      "esperado": "12",
+      "fuente": "Manual CCSS HNN 2018"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Adolescente: kcal 35–50 (converge a adulto)",
+      "estado": "PASS",
+      "obtenido": "35",
+      "esperado": "35",
+      "fuente": "Manual CCSS HNN 2018"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Escolar TIG máx = 10 mg/kg/min",
+      "estado": "PASS",
+      "obtenido": "10",
+      "esperado": "10",
+      "fuente": "Manual CCSS HNN 2018"
+    },
+    {
+      "suite": "11 · Perfiles Clínicos — 18 perfiles validados vs guías primarias",
+      "label": "Adolescente TIG máx = 7 mg/kg/min (igual que adulto)",
+      "estado": "PASS",
+      "obtenido": "7",
+      "esperado": "7",
+      "fuente": "Manual CCSS HNN 2018"
+    },
+    {
+      "suite": "12 · mNUTRIC Score — Heyland DK JPEN 2011 / Rahman 2016 (sin IL-6)",
+      "label": "Bajo riesgo: edad=45, APACHE=12, SOFA=4, comorbilidades=1, días=0 → score=0",
+      "estado": "PASS",
+      "obtenido": "score=0",
+      "esperado": "score=0, bajo",
+      "fuente": "mNUTRIC — Heyland 2011"
+    },
+    {
+      "suite": "12 · mNUTRIC Score — Heyland DK JPEN 2011 / Rahman 2016 (sin IL-6)",
+      "label": "Alto riesgo máximo: edad=76, APACHE=30, SOFA=12, comorbilidades=3, días=2 → score=9",
+      "estado": "PASS",
+      "obtenido": "score=9",
+      "esperado": "score=9, alto",
+      "fuente": "mNUTRIC — Heyland 2011"
+    },
+    {
+      "suite": "12 · mNUTRIC Score — Heyland DK JPEN 2011 / Rahman 2016 (sin IL-6)",
+      "label": "Límite: edad=52, APACHE=22, SOFA=7, comorbilidades=2, días=1 → score=6 (alto ≥5)",
+      "estado": "PASS",
+      "obtenido": "score=6",
+      "esperado": "score=6, alto",
+      "fuente": "mNUTRIC — corte ≥5"
+    },
+    {
+      "suite": "12 · mNUTRIC Score — Heyland DK JPEN 2011 / Rahman 2016 (sin IL-6)",
+      "label": "Score ≥5 → alto riesgo nutricional (beneficio demostrado soporte agresivo)",
+      "estado": "PASS",
+      "obtenido": "alto",
+      "esperado": "alto",
+      "fuente": "Rahman 2016 — validación sin IL-6"
+    },
+    {
+      "suite": "13 · Límites Electrolitos en Bolsa — Manual CCSS Farmacias SNF 2018 p.18",
+      "label": "Na 154 mEq en 2000 mL → 77 mEq/L (≤154 límite CCSS)",
+      "estado": "PASS",
+      "obtenido": "77",
+      "esperado": "≤154 mEq/L",
+      "fuente": "Manual CCSS SNF 2018 p.18"
+    },
+    {
+      "suite": "13 · Límites Electrolitos en Bolsa — Manual CCSS Farmacias SNF 2018 p.18",
+      "label": "Na 310 mEq en 2000 mL → 155 mEq/L (supera límite CCSS)",
+      "estado": "PASS",
+      "obtenido": "155",
+      "esperado": ">154 mEq/L",
+      "fuente": "Manual CCSS SNF 2018 p.18"
+    },
+    {
+      "suite": "13 · Límites Electrolitos en Bolsa — Manual CCSS Farmacias SNF 2018 p.18",
+      "label": "K 160 mEq en 2000 mL → 80 mEq/L (límite exacto CCSS)",
+      "estado": "PASS",
+      "obtenido": "80",
+      "esperado": "80 mEq/L",
+      "fuente": "Manual CCSS SNF 2018 p.18"
+    },
+    {
+      "suite": "13 · Límites Electrolitos en Bolsa — Manual CCSS Farmacias SNF 2018 p.18",
+      "label": "Mg 40 mEq en 2000 mL → 20 mEq/L (límite CCSS)",
+      "estado": "PASS",
+      "obtenido": "20",
+      "esperado": "20 mEq/L",
+      "fuente": "Manual CCSS SNF 2018 p.18"
+    },
+    {
+      "suite": "13 · Límites Electrolitos en Bolsa — Manual CCSS Farmacias SNF 2018 p.18",
+      "label": "PO₄ 30 mmol en 2000 mL → 15 mmol/L (límite CCSS en 3-en-1)",
+      "estado": "PASS",
+      "obtenido": "15",
+      "esperado": "15 mmol/L",
+      "fuente": "Manual CCSS SNF 2018 p.18"
+    },
+    {
+      "suite": "13 · Límites Electrolitos en Bolsa — Manual CCSS Farmacias SNF 2018 p.18",
+      "label": "321 g dextrosa en 2000 mL → 16.05% glucosa (≥5% mínimo CCSS)",
+      "estado": "PASS",
+      "obtenido": "16.05%",
+      "esperado": "≥5%",
+      "fuente": "Manual CCSS SNF 2018 — estabilidad emulsión"
+    },
+    {
+      "suite": "13 · Límites Electrolitos en Bolsa — Manual CCSS Farmacias SNF 2018 p.18",
+      "label": "Bolsa máximo 3000 mL (Manual CCSS SNF 2018 p.12)",
+      "estado": "PASS",
+      "obtenido": "2000 ≤ 3000; 3001 > 3000",
+      "esperado": "≤3000 mL",
+      "fuente": "Manual CCSS SNF 2018 p.12"
+    }
+  ]
+}

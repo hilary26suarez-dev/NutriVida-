@@ -37,7 +37,7 @@ export default function Compatibilidad() {
     <div className="space-y-4">
       <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700">
         <Info size={15} className="flex-shrink-0" />
-        Base de datos inicial (50 fármacos). Siempre verificar con el farmacéutico de nutrición clínica.
+        Base de datos ({datos.length} fármacos) basada en Trissel's, King Guide y ASHP Injectable Drug Information. Siempre verificar con el farmacéutico de nutrición clínica.
       </div>
 
       {/* Búsqueda */}
@@ -117,6 +117,11 @@ export default function Compatibilidad() {
                   <p className={`text-xs font-medium p-2 rounded-lg ${CONFIG[d.np_ternaria]?.color}`}>
                     <span className="font-bold">Recomendación:</span> {d.recomendacion}
                   </p>
+                  {d.fuente && (
+                    <p className="text-[10px] text-slate-400 italic border-t border-slate-100 pt-1.5">
+                      Fuente: {d.fuente}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

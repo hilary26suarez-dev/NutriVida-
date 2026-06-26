@@ -4,10 +4,10 @@
 > Cálculo con rigor científico · Seguridad del paciente domiciliario · Interoperabilidad FHIR R4
 
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
-![Version](https://img.shields.io/badge/versión-2.1.0--beta-teal)
+![Version](https://img.shields.io/badge/versión-2.1.1-teal)
 ![Stack](https://img.shields.io/badge/stack-React%2019%20%2B%20Vite%208-blue)
 ![Standards](https://img.shields.io/badge/estándares-ESPEN%20%7C%20ASPEN%20%7C%20KDOQI-indigo)
-![Tests](https://img.shields.io/badge/pruebas%20matemáticas-50%2F50%20✓-success)
+![Tests](https://img.shields.io/badge/pruebas%20matemáticas-87%2F87%20✓-success)
 ![License](https://img.shields.io/badge/licencia-uso%20clínico%20restringido-orange)
 
 ---
@@ -16,7 +16,7 @@
 
 NutriVida Biotech es una herramienta web de apoyo al equipo de soporte nutricional de Costa Rica. Integra tres audiencias en una sola plataforma: el **profesional clínico** que formula y valida la NP, el **paciente o cuidador** que la administra en casa, y el **estudiante de ciencias de la salud** que construye su base fisiopatológica.
 
-El motor de cálculo está auditado matemáticamente (50 pruebas de regresión), documentado con referencias primarias (ESPEN/ASPEN/KDOQI) y validado contra casos clínicos reales del contexto costarricense. No diagnostica, no prescribe y no reemplaza la validación del farmacéutico.
+El motor de cálculo está auditado matemáticamente (87 pruebas de regresión en 13 suites), documentado con referencias primarias (ESPEN/ASPEN/KDOQI) y validado contra casos clínicos reales del contexto costarricense. No diagnostica, no prescribe y no reemplaza la validación del farmacéutico.
 
 ---
 
@@ -83,12 +83,13 @@ El núcleo computacional del sistema. Genera formulaciones de nutrición parente
 
 **Alertas de seguridad automáticas:**
 
-- 5 zonas de osmolaridad (periférica segura → alerta fisicoquímica crítica >1800 mOsm/L)
-- Semáforo Ca-PO₄ con 3 niveles (precipitación, riesgo moderado, seguro)
-- TIG con límite por grupo de edad (neonatal: 14 mg/kg/min; pediátrico: 7–12 mg/kg/min)
+- 5 zonas de osmolaridad con umbral CCSS `<700 mOsm/L` periférica segura (Manual SNF 2018)
+- Semáforo Ca-PO₄ con 3 niveles (producto iónico Driscoll); cationes divalentes Ca²⁺+Mg²⁺ <10 mEq/L
+- TIG con límite por grupo de edad (neonatal: 12 mg/kg/min CCSS HNN 2018; pediátrico: 7–12 mg/kg/min)
 - TIG adulto en NP 2-en-1 cuando supera 5 mg/kg/min (ASPEN 2016)
 - Sobrecarga glucídica en diálisis peritoneal (>3.5 g/kg/día, absorción peritoneal 60–80%)
 - Validación de volumen con reserva mínima obligatoria de 100 mL para aditivos
+- Límites electrolitos en bolsa referenciados al Manual CCSS SNF 2018 p.18: Na ≤154 · K ≤80 · Mg ≤20 mEq/L · PO₄ ≤15 mmol/L · glucosa mínima 5% en 3-en-1
 
 **Exportaciones:**
 - **FHIR R4** `NutritionOrder` — interoperabilidad con sistemas clínicos
@@ -135,35 +136,41 @@ Portal educativo integrado con el **Atlas Bioinformático Interactivo** — plat
 
 ## Auditoría matemática
 
-El archivo `test-logica-np.js` contiene 50 pruebas de regresión que cubren cada función del motor de cálculo. Ejecutable con Node.js sin dependencias adicionales.
+El archivo `test-logica-np.js` contiene **87 pruebas de regresión en 13 suites** que cubren cada función del motor de cálculo. Ejecutable con Node.js nativo (módulos ES) sin dependencias adicionales. Genera automáticamente un log JSON con fecha y resultado de cada prueba.
 
 ```bash
 node test-logica-np.js
+# Genera: audit-log-YYYY-MM-DD.json
 ```
 
-**Áreas cubiertas:**
+**Suites cubiertas (v2.1.1):**
 
-| Módulo | Pruebas | Resultado |
-|---|---|---|
-| Harris-Benedict (ambos sexos) | 2 | ✅ |
-| Peso ideal Broca / ABW obesidad | 3 | ✅ |
-| Osmolaridad Pereira Da Silva | 5 | ✅ |
-| Balance nitrogenado | 4 | ✅ |
-| Índice de Bistrian | 3 | ✅ |
-| Relación NPC:N | 3 | ✅ |
-| TIG neonatal (casos límite) | 4 | ✅ |
-| Distribución macros 3-en-1 | 3 | ✅ |
-| Distribución macros 2-en-1 | 4 | ✅ |
-| TIG adulto en 2-en-1 | 2 | ✅ |
-| Volúmenes comerciales | 5 | ✅ |
-| Estabilidad Ca-PO₄ | 4 | ✅ |
-| Rangos clínicos por perfil | 6 | ✅ |
-| **Total** | **50** | **50/50** |
+| Suite | Descripción | Pruebas | Estado |
+|---|---|---|---|
+| 1 | Harris-Benedict 1919 — BEE ambos sexos, casos límite | 4 | ✅ |
+| 2 | Peso ideal Broca + Peso ajustado obesidad (ASPEN 2016) | 6 | ✅ |
+| 3 | Osmolaridad Pereira Da Silva 2015 — 5 zonas vasculares | 9 | ✅ |
+| 4 | Balance nitrogenado — anabólico, catabólico, neutro, hipercatabolismo | 5 | ✅ |
+| 5 | Índice de Bistrian 1979 — 4 niveles de estrés metabólico | 6 | ✅ |
+| 6 | Relación NPC:N — óptimo / bajo / alto | 4 | ✅ |
+| 7 | Distribución macros 3-en-1 y 2-en-1 + propofol | 8 | ✅ |
+| 8 | TIG neonatal/pediátrico/adulto — límites CCSS HNN 2018 | 7 | ✅ |
+| 9 | Volúmenes comerciales + detección inviabilidad física | 6 | ✅ |
+| 10 | Estabilidad Ca-PO₄ — producto iónico Driscoll (5 casos) | 5 | ✅ |
+| 11 | Perfiles clínicos — 18 perfiles vs guías primarias | 16 | ✅ |
+| 12 | mNUTRIC Score — Heyland 2011 / Rahman 2016 | 4 | ✅ |
+| 13 | Límites electrolitos CCSS SNF 2018 p.18 + glucosa mínima | 7 | ✅ |
+| | **Total** | **87** | **87/87** |
 
-**Correcciones aplicadas (v2.1.0-beta):**
+**Correcciones aplicadas en el historial:**
 
-- **NP 2-en-1**: corregido error crítico donde la dextrosa se calculaba como el 65% del NPC aun sin lípidos, generando un déficit de 589 kcal/día respecto al objetivo calórico declarado.
-- **PO₄**: etiqueta corregida de "mEq" a "mmol", consistente con la práctica clínica de farmacia hospitalaria en la CCSS y con el estándar Pereira Da Silva.
+| Versión | Corrección |
+|---|---|
+| v2.0.0 | **NP 2-en-1**: dextrosa calculada al 65% del NPC aun sin lípidos → déficit de 589 kcal/día. Corregido: sin lípidos todo NPC → dextrosa. |
+| v2.0.0 | **PO₄**: etiqueta corregida de "mEq" a "mmol" (estándar clínico farmacia hospitalaria / Pereira Da Silva). |
+| v2.1.1 | **Tabla de osmolaridad**: umbral visual corregido de `<600` a `<700 mOsm/L` (límite real del Manual CCSS SNF 2018). |
+| v2.1.1 | **REFERENCIAS oncológico**: valores alineados con el perfil activo (20–25 kcal, 1.0–1.5 g prot). |
+| v2.1.1 | **REFERENCIAS hepático**: año corregido de 2020 a 2022 (ESPEN Liver Disease 2022). |
 
 ---
 
@@ -263,11 +270,12 @@ OPENROUTER_API_KEY=sk-or-...
 ALLOWED_ORIGINS=https://nutri-vida-khaki.vercel.app
 ```
 
-### Pruebas matemáticas
+### Pruebas matemáticas + log de auditoría
 
 ```bash
 node test-logica-np.js
-# Resultado esperado: 50/50 pruebas — Total errores: 0
+# Resultado esperado: 87/87 pruebas — Total errores: 0
+# Genera: audit-log-YYYY-MM-DD.json (registro estructurado por suite)
 ```
 
 ### Build de producción

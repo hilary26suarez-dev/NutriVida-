@@ -165,6 +165,7 @@ export default async function handler(req, res) {
   const clientIp = getClientIp(req.headers)
   if (isRateLimited(clientIp)) {
     console.warn('Rate limit exceeded for IP:', clientIp)
+    res.setHeader('Retry-After', '60')
     res.status(429).json({ message: 'Ha realizado demasiadas consultas en poco tiempo. Por favor espere un minuto antes de continuar.' })
     return
   }
@@ -176,6 +177,13 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Reject oversized payloads (Vercel auto-parses but content-length is still readable)
+    const MAX_BODY_BYTES = 4096
+    const contentLength = parseInt(req.headers['content-length'] || '0', 10)
+    if (contentLength > MAX_BODY_BYTES) {
+      res.status(413).json({ message: 'La solicitud excede el tamaño permitido.' })
+      return
+    }
     // Vercel auto-parses JSON body; guard against string body just in case
     const body        = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
     const safeMessages = sanitizeMessages(body?.messages)
