@@ -199,7 +199,10 @@ export default async function handler(req, res) {
     }
 
     const MODELS = [
+      'deepseek/deepseek-chat-v3-0324:free',
+      'google/gemini-2.0-flash-exp:free',
       'meta-llama/llama-3.3-70b-instruct:free',
+      'qwen/qwen3-8b:free',
       'z-ai/glm-4.5-air:free',
     ]
 
