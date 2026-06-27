@@ -208,6 +208,7 @@ export default async function handler(req, res) {
 
     const callOpenRouter = async (model) => fetch(OPENROUTER_API_URL, {
       method: 'POST',
+      signal: AbortSignal.timeout(9000),
       headers: {
         Authorization:  `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
@@ -225,11 +226,16 @@ export default async function handler(req, res) {
 
     let response = null
     for (const model of MODELS) {
-      response = await callOpenRouter(model)
-      if (response.ok) break
-      const errText = await response.text().catch(() => `Status ${response.status}`)
-      console.warn(`Model ${model} failed (${response.status}):`, errText)
-      response = null
+      try {
+        response = await callOpenRouter(model)
+        if (response.ok) break
+        const errText = await response.text().catch(() => `Status ${response.status}`)
+        console.warn(`Model ${model} failed (${response.status}):`, errText)
+        response = null
+      } catch (modelErr) {
+        console.warn(`Model ${model} threw:`, modelErr?.message || modelErr)
+        response = null
+      }
     }
 
     if (!response?.ok) throw new Error('All models unavailable')
