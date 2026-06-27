@@ -199,11 +199,10 @@ export default async function handler(req, res) {
     }
 
     const MODELS = [
+      'google/gemma-4-31b-it:free',
+      'google/gemma-4-26b-a4b-it:free',
+      'openai/gpt-oss-20b:free',
       'meta-llama/llama-3.3-70b-instruct:free',
-      'meta-llama/llama-3.1-8b-instruct:free',
-      'mistralai/mistral-7b-instruct:free',
-      'google/gemma-2-9b-it:free',
-      'microsoft/phi-3-mini-128k-instruct:free',
     ]
 
     const callOpenRouter = async (model) => fetch(OPENROUTER_API_URL, {
